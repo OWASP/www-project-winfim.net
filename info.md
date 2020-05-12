@@ -47,5 +47,5 @@ The characteristics of this small application are:
 * Developer's blog: [https://redblueteam.wordpress.com/](https://redblueteam.wordpress.com/)
 
 ### Change Log
-* [2020-03-11 Initial release.](#)
+* 2020-03-11 Initial release.
 
