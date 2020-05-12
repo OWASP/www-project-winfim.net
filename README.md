@@ -50,8 +50,7 @@ The characteristics of this small application are:
   <li>Event ID 7777 – File modification</li>
   <li>Event ID 7778 – File / Directory deletion</li>
   
- 
- Enjoy!
+ <br>Enjoy!
  
  Cheers<br>
  Henry
