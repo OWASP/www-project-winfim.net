@@ -4,8 +4,8 @@ layout: col-sidebar
 title: OWASP WinFIM.NET
 tags: example-tag
 level: 1
-type: 
-pitch: A very brief, one-line description of your project
+type: tool
+pitch: File Integrity Monitoring For Windows
 
 ---
 
