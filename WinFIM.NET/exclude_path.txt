@@ -1,0 +1,4 @@
+C:\Windows\System32\LogFiles
+C:\Windows\System32\winevt\Logs
+C:\Windows\System32\WDI\LogFiles
+C:\Windows\System32\wbem
