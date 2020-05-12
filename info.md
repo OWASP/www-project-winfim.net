@@ -1,17 +1,17 @@
-### WinFIM.NET Information test
+### WinFIM.NET Information
 WinFIM.NET - File Integrity Monitoring For Windows
 
 For detail introduction, please visit my <a href="https://redblueteam.wordpress.com/2020/03/11/winfim-net-windows-file-integrity-monitoring/">Cyber Security Corner</a> technical blog.
 
-<b>#Introduction</b><p>
+<b>#Introduction</b>
 There are plenty of commercial tools to do file integrity monitoring (FIM). But, for freeware / Open Source, especially for Windows, it seems not much options.
 
-I have developed a small Windows Service named “WinFIM.NET” (https://github.com/redblueteam/WinFIM.NET) trying to fill up this gap.
+I have developed a small Windows Service named [“WinFIM.NET”](https://github.com/OWASP/www-project-winfim.net/tree/master/WinFIM.NET) trying to fill up this gap.
 
-<b>#characteristics</b><p>
+<b>#characteristics</b>
 The characteristics of this small application are:
 
-- It will identify add / remove / modify of files and directories
+<li>It will identify add / remove / modify of files and directories</li>
 - Monitoring scope could be easily customized
 - Path exclusion (e.g. sub-directory) could be configured
 - File extension exclusion could be configured (e.g. *.bak, *.tmp, *.log, *.mdf, *.ldf, *.xel, *. installlog)
