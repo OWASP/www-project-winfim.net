@@ -44,7 +44,7 @@ The characteristics of this small application are:
   Event ID 7778 – File / Directory deletion<p>
 
 ### Downloads or Social Links
-* [Developer's blog: https://redblueteam.wordpress.com/](#)
+* Developer's blog: [https://redblueteam.wordpress.com/](#)
 
 ### Change Log
 * [2020-03-11 Initial release.](#)
