@@ -44,16 +44,17 @@ The characteristics of this small application are:
   3) Unblock the “WinFIM.NET Service.exe”
   
   4) Install the Windows Service
-    <li>Bring up an Administrator command prompt and navigate to the deployed folder, then execute “install_service.bat”</li>
+    - Bring up an Administrator command prompt and navigate to the deployed folder, then execute “install_service.bat”
     
   5) Verify if the Windows Service is up and running
   
   6) Please make sure maximum log size is configured according to your deployment environment. By default, it only reserves around 1MB for it.
-    <li>%SystemRoot%\System32\Winevt\Logs\WinFIM.NET.evtx</li>
+    - %SystemRoot%\System32\Winevt\Logs\WinFIM.NET.evtx
   
 <b>#Uninstallation</b>
-  <li>Bring up an Administrator command prompt and navigate to the deployed folder, then execute “uninstall_service.bat”</li>
-  
+Bring up an Administrator command prompt and navigate to the deployed folder, then execute “uninstall_service.bat”
+
+
 <b>#Windows Event ID for file / directory changes</b>
   <li>Event ID 7776 – File / Directory creation</li>
   <li>Event ID 7777 – File modification</li>
