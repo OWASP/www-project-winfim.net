@@ -1,0 +1,7 @@
+﻿[*.cs]
+
+# CA1707: In member WinFIM.NET_Service.Service1.WriteToLogFile(string), remove the underscores from parameter name log_message.
+dotnet_diagnostic.CA1707.severity = none
+
+# IDE0055: Fix formatting
+dotnet_diagnostic.IDE0055.severity = none

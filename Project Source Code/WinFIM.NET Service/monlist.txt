@@ -1,0 +1,3 @@
+C:\Windows\System32
+C:\Program Files
+C:\Program Files (x86)
