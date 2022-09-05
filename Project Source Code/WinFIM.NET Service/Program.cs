@@ -17,8 +17,12 @@ namespace WinFIM.NET_Service
             if (Environment.UserInteractive)
             {
                 // Startup as application
-                Service1 service1 = new Service1();
-                service1.TestStartupAndStop(null);
+                using (Service1 service1 = new Service1())
+                {
+                    Console.WriteLine("Running in console app mode");
+                    service1.TestStartupAndStop(null);
+                    Console.WriteLine("Exiting");
+                }
             }
             else
             {

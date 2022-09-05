@@ -47,7 +47,7 @@ namespace WinFIM.NET_Service
         internal void TestStartupAndStop(string[] args)
         {
             this.OnStart(args);
-            Console.ReadLine();
+            ServiceStart();
             this.OnStop();
         }
 
