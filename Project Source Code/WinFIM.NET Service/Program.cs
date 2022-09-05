@@ -14,12 +14,23 @@ namespace WinFIM.NET_Service
         /// </summary>
         static void Main()
         {
-            ServiceBase[] ServicesToRun;
-            ServicesToRun = new ServiceBase[]
+            if (Environment.UserInteractive)
             {
-                new Service1()
-            };
-            ServiceBase.Run(ServicesToRun);
+                // Startup as application
+                Service1 service1 = new Service1();
+                service1.TestStartupAndStop(null);
+            }
+            else
+            {
+                // Startup as service
+                ServiceBase[] ServicesToRun;
+                ServicesToRun = new ServiceBase[]
+                {
+                    new Service1()
+                };
+                ServiceBase.Run(ServicesToRun);
+
+            }
         }
     }
 }

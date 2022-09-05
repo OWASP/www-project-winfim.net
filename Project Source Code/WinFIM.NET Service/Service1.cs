@@ -43,6 +43,14 @@ namespace WinFIM.NET_Service
             eventLog1.Log = "WinFIM.NET";
         }
 
+        // runs as a console application if a user interactively runs the "WinFIM.NET Service.exe" executable
+        internal void TestStartupAndStop(string[] args)
+        {
+            this.OnStart(args);
+            Console.ReadLine();
+            this.OnStop();
+        }
+
         protected override void OnStart(string[] args)
         {
             // TODO: Add code here to start your service.
