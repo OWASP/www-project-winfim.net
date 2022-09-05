@@ -1,9 +1,0 @@
-bak
-tmp
-log
-mdf
-ldf
-xel
-db
-installlog
-db-journal
