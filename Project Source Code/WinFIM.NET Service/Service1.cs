@@ -20,7 +20,6 @@ using System.Threading;
 //change to use SQLite instead of MDF database
 using System.Data.SQLite;
 
-
 namespace WinFIM.NET_Service
 {
     public partial class Service1 : ServiceBase
@@ -46,7 +45,7 @@ namespace WinFIM.NET_Service
         // runs as a console application if a user interactively runs the "WinFIM.NET Service.exe" executable
         internal void TestStartupAndStop(string[] args)
         {
-            this.OnStart(args);
+            // this.OnStart(args);
             ServiceStart();
             this.OnStop();
         }
@@ -54,12 +53,12 @@ namespace WinFIM.NET_Service
         protected override void OnStart(string[] args)
         {
             // TODO: Add code here to start your service.
-            
+
             Thread MyThread = new Thread(new ThreadStart(ServiceStart));
             MyThread.Name = "Worker Thread";
             MyThread.IsBackground = true;
             MyThread.Start();
-            
+
             /*
             //Read if there is any valid schedule timer (in minute)
             initialise();
@@ -108,7 +107,7 @@ namespace WinFIM.NET_Service
                 }
             }
             */
-            
+
         }
 
         //testing service monitor
@@ -161,7 +160,7 @@ namespace WinFIM.NET_Service
                 }
             }
         }
-        
+
 
         public void OnTimer(object sender, ElapsedEventArgs args)
         {
@@ -210,7 +209,7 @@ namespace WinFIM.NET_Service
         {
             string output = "ERROR in running CMD \"query user\"";
             try
-            {               
+            {
                 using (Process process = new Process())
                 {
                     IntPtr val = IntPtr.Zero;
@@ -244,7 +243,7 @@ namespace WinFIM.NET_Service
         }
 
         //get file owner information
-        public string get_file_owner (string path)
+        public string get_file_owner(string path)
         {
             try
             {
@@ -284,25 +283,25 @@ namespace WinFIM.NET_Service
                 string[] lines = File.ReadAllLines(ext_exclude_list);
                 lines = lines.Distinct().ToArray();
                 string temp = "";
-                List<string> ext_name = new List<string>() { }; 
+                List<string> ext_name = new List<string>() { };
 
                 foreach (string line in lines) if (!string.IsNullOrWhiteSpace(line))
-                {
-                    temp = line.TrimEnd('\r', '\n');
+                    {
+                        temp = line.TrimEnd('\r', '\n');
 
-                    var match = Regex.Match(temp, @"/^[a-zA-Z0-9-_]+$/", RegexOptions.IgnoreCase);
+                        var match = Regex.Match(temp, @"/^[a-zA-Z0-9-_]+$/", RegexOptions.IgnoreCase);
                         //if the file extension does not match the exclusion
-                    if (!match.Success)
-                    {
-                        //WriteToLogFile("Regex success: " + temp);
-                        temp = "[.]" + temp;
-                        ext_name.Add(temp);
+                        if (!match.Success)
+                        {
+                            //WriteToLogFile("Regex success: " + temp);
+                            temp = "[.]" + temp;
+                            ext_name.Add(temp);
+                        }
+                        else
+                        {
+                            eventLog1.WriteEntry("Extension \"" + temp + "\" is invalid, file extension should be alphanumeric and '_' + '-' only.", EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                        }
                     }
-                    else
-                    {
-                        eventLog1.WriteEntry("Extension \"" + temp + "\" is invalid, file extension should be alphanumeric and '_' + '-' only." , EventLogEntryType.Error, 7773); //setting the Event ID as 7773
-                    }  
-                }
 
                 bool isEmpty = !ext_name.Any();
                 if (isEmpty)
@@ -359,6 +358,8 @@ namespace WinFIM.NET_Service
             string dbfile = workdir + "\\fimdb.db";
             string cs = @"URI=file:" + dbfile + ";PRAGMA journal_mode=WAL;";
 
+            _ = new SQLiteHelper(dbfile, cs);
+
             string ex_ext_hash = "";
             string ex_path_hash = "";
             string mon_hash = "";
@@ -372,9 +373,9 @@ namespace WinFIM.NET_Service
             }
             catch (Exception e)
             {
-                eventLog1.WriteEntry("Exception: " +e.Message + "\nConfig files: exclude_extension.txt | exclude_path.txt | monlist.txt is / are missing or having issue to access.", EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                eventLog1.WriteEntry("Exception: " + e.Message + "\nConfig files: exclude_extension.txt | exclude_path.txt | monlist.txt is / are missing or having issue to access.", EventLogEntryType.Error, 7773); //setting the Event ID as 7773
             }
-            
+
 
             //compare the checksum with those stored in the DB
             /*
@@ -419,7 +420,7 @@ namespace WinFIM.NET_Service
 
                 if (!output.Equals("3")) //suppose there should be 3 rows, if previous checksum exist
                 {
-                    
+
                     //no checksum or incompetent checksum, empty all table
                     //sql = "DELETE FROM dbo.conf_file_checksum";
                     sql = "DELETE FROM conf_file_checksum";
@@ -706,7 +707,7 @@ namespace WinFIM.NET_Service
 
                 }
 
-            } 
+            }
             catch (Exception e)
             {
                 //con = new System.Data.SqlClient.SqlConnection();
@@ -800,7 +801,7 @@ namespace WinFIM.NET_Service
 
             //debug - printout the sql return result
             //WriteToLogFile(output);
-            
+
             //create variable to store the full file list
             string filelist = "";
             string exfilelist = "";
@@ -825,38 +826,45 @@ namespace WinFIM.NET_Service
                 eventLog1.WriteEntry("Exception : " + e.Message + "\nPlease make sure all input entries are correct under \"monlist.txt\".\nPlease restart the service after correction.", EventLogEntryType.Error, 7773); //setting the Event ID as 7773
                 return false;
             }
-            
+
 
             try
             {
                 //get the full file mon list for further processing
                 foreach (string line in lines) if (!string.IsNullOrWhiteSpace(line))
-                {
-                    //1. check the line entry is a file or a directory
-                    attr = File.GetAttributes(line);
-                    if (attr.HasFlag(FileAttributes.Directory))
                     {
-                        //2. if it is a directory
-                        //try to use cmd to get a full files (including hidden files) and all level of sub-directories list from a directory
-                        using (Process process = new Process())
+                        // Check if base path from monlist.txt exists. If not, 
+                        if (!(Directory.Exists(line) || File.Exists(line)))
                         {
-                            process.StartInfo.FileName = @"cmd.exe";
-                            process.StartInfo.Arguments = @"/c dir /a: /b /s " + "\"" + line + "\"";
-                            process.StartInfo.CreateNoWindow = true;
-                            process.StartInfo.UseShellExecute = false;
-                            process.StartInfo.RedirectStandardOutput = true;
-                            process.Start();
-                            filelist = filelist + line + "\n"; //make sure the most outter directory is included in the list
-                            filelist = filelist + process.StandardOutput.ReadToEnd();
-                            process.WaitForExit();
+                            Console.WriteLine($"{line} does not exist - skipping");
+                            continue;
+                        }
+
+                        //1. check the line entry is a file or a directory
+                        attr = File.GetAttributes(line);
+                        if (attr.HasFlag(FileAttributes.Directory))
+                        {
+                            //2. if it is a directory
+                            //try to use cmd to get a full files (including hidden files) and all level of sub-directories list from a directory
+                            using (Process process = new Process())
+                            {
+                                process.StartInfo.FileName = @"cmd.exe";
+                                process.StartInfo.Arguments = @"/c dir /a: /b /s " + "\"" + line + "\"";
+                                process.StartInfo.CreateNoWindow = true;
+                                process.StartInfo.UseShellExecute = false;
+                                process.StartInfo.RedirectStandardOutput = true;
+                                process.Start();
+                                filelist = filelist + line + "\n"; //make sure the most outter directory is included in the list
+                                filelist = filelist + process.StandardOutput.ReadToEnd();
+                                process.WaitForExit();
+                            }
+                        }
+                        else
+                        {
+                            //3. if it is a file
+                            filelist = filelist + line + "\n";
                         }
                     }
-                    else
-                    {
-                        //3. if it is a file
-                        filelist = filelist + line + "\n";
-                    }
-                }
 
                 //change all string in filelist to lowercase for easy comparsion to exclusion list
                 filelist = filelist.ToLower();
@@ -875,13 +883,13 @@ namespace WinFIM.NET_Service
                     eventLog1.WriteEntry("Exception : " + e.Message + "\nPlease make sure all input entries are correct under \"exclude_path.txt\".\nPlease restart the service after correction.", EventLogEntryType.Error, 7773); //setting the Event ID as 7773
                     return false;
                 }
-                
+
 
                 //get the full exclude file list for further processing
                 foreach (string line in lines) if (!string.IsNullOrWhiteSpace(line))
-                {
-                    try
                     {
+                        try
+                        {
                             //1. check the line entry is a file or a directory
                             attr = File.GetAttributes(line);
                             if (attr.HasFlag(FileAttributes.Directory))
@@ -907,13 +915,14 @@ namespace WinFIM.NET_Service
                                 exfilelist = exfilelist + line + "\n";
                             }
 
-                    }catch (Exception e)
-                    {
-                        //The file path on the exclusion could be not exist
+                        }
+                        catch (Exception e)
+                        {
+                            //The file path on the exclusion could be not exist
+                        }
+
+
                     }
-                    
- 
-                }
                 //change all string in exfilelist to lowercase for easy comparsion to exclusion list
                 exfilelist = exfilelist.ToLower();
                 exfilelist = exfilelist.TrimEnd('\r', '\n');
@@ -1281,7 +1290,7 @@ namespace WinFIM.NET_Service
                     while (dataReader2.Read())
                     {
                         output2 = dataReader2.GetValue(0).ToString();
-                        WriteToLogFile("The file / directory '"+ output2 + "' is deleted.");
+                        WriteToLogFile("The file / directory '" + output2 + "' is deleted.");
                         eventLog1.WriteEntry("The file / directory '" + output2 + "' is deleted.", EventLogEntryType.Warning, 7778); //setting the Event ID as 7778
                     }
                     dataReader2.Close();
