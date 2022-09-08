@@ -1,1 +1,2 @@
-c:\test2\test.txt
+c:\test2
+c:\test\test with space

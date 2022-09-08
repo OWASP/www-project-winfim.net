@@ -358,7 +358,8 @@ namespace WinFIM.NET_Service
             string dbfile = workdir + "\\fimdb.db";
             string cs = @"URI=file:" + dbfile + ";PRAGMA journal_mode=WAL;";
 
-            _ = new SQLiteHelper(dbfile, cs);
+            SQLiteHelper.EnsureDatabaseExists(dbfile);
+            SQLiteHelper.EnsureTablesExist(cs);
 
             string ex_ext_hash = "";
             string ex_path_hash = "";
@@ -833,10 +834,36 @@ namespace WinFIM.NET_Service
                 //get the full file mon list for further processing
                 foreach (string line in lines) if (!string.IsNullOrWhiteSpace(line))
                     {
-                        // Check if base path from monlist.txt exists. If not, 
-                        if (!(Directory.Exists(line) || File.Exists(line)))
+                        // Check if base path from monlist.txt exists.
+                        if (Directory.Exists(line) || File.Exists(line))
                         {
-                            Console.WriteLine($"{line} does not exist - skipping");
+                            string ret = SQLiteHelper.QueryMonListTable(cs, line);
+                            if (String.IsNullOrEmpty(ret))
+                            {
+                                SQLiteHelper.InsertIntoMonListTable(cs, line, true);
+                                Log.Info($"{line} exists - adding to monlist table");
+                            }
+
+                            else if (ret == "1")
+                            {
+                                Log.Debug($"{line} exists");
+                            }
+                            SQLiteHelper.InsertIntoMonListTable(cs, line, false);
+                        }
+                        else
+                        {
+                            string ret = SQLiteHelper.QueryMonListTable(cs, line);
+                            if (String.IsNullOrEmpty(ret))
+                            {
+                                SQLiteHelper.InsertIntoMonListTable(cs,line,false);
+                                Log.Warn($"{line} does not exist - skipping");
+                            }
+
+                            else if(ret == "1")
+                            {
+                                SQLiteHelper.InsertIntoMonListTable(cs, line, false);
+                                Log.Warn($"{line} has been deleted");
+                            }
                             continue;
                         }
 
@@ -968,7 +995,7 @@ namespace WinFIM.NET_Service
                 SQLiteCommand command2;
                 //SqlDataReader dataReader2;
                 SQLiteDataReader dataReader2;
-                String sql2, output2 = "";
+                string sql2, output2 = "";
                 con2.Open();
 
                 foreach (string s in final_filelist)

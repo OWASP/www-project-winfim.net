@@ -5,42 +5,37 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Data.SQLite;
 using System.IO;
+using System.Data;
 
 namespace WinFIM.NET_Service
 {
     internal class SQLiteHelper
     {
-        public SQLiteHelper(string dbFile, string connectionString)
-        {
-            EnsureSQLiteDatabaseExists(dbFile, connectionString);
-            EnsureSQLiteTablesExist(connectionString);
-        }
-
-        void EnsureSQLiteDatabaseExists(string dbFile, string connectionString)
+        internal static void EnsureDatabaseExists(string dbFile)
         // Create the database if it doesn't exist
         {
             if (File.Exists(dbFile))
             {
-                Console.WriteLine($"SqlLite database file {dbFile} already exists");
+                Console.WriteLine($"SQLite database file {dbFile} already exists");
             }
             else
             {
-                Console.WriteLine($"SqlLite databae file {dbFile} Does not exist. Creating");
+                Console.WriteLine($"SQLite database file {dbFile} Does not exist. Creating");
                 SQLiteConnection.CreateFile(dbFile);
             }
         }
 
-        static void EnsureSQLiteTablesExist(string ConnectionString)
+        internal static void EnsureTablesExist(string connectionString)
         // Ensure that all required tables exist
         {
-            using (SQLiteConnection connection = new SQLiteConnection(ConnectionString))
+            using (SQLiteConnection connection = new SQLiteConnection(connectionString))
             {
                 try
                 {
                     connection.Open();
                     using (SQLiteCommand command = new SQLiteCommand(connection))
                     {
-                        Console.WriteLine("Creating Sqlite table baseline_table if it doesn't exist...");
+                        Console.WriteLine("Creating SQlite table baseline_table if it doesn't exist...");
                         command.CommandText = @"
                             create table if not exists baseline_table (
                                 filename  TEXT NOT NULL,
@@ -53,7 +48,7 @@ namespace WinFIM.NET_Service
                         ";
                         command.ExecuteNonQuery();
 
-                        Console.WriteLine("Creating Sqlite table conf_file_checksum if it doesn't exist...");
+                        Console.WriteLine("Creating SQlite table conf_file_checksum if it doesn't exist...");
                         command.CommandText = @"
                             create table if not exists conf_file_checksum (
                                 filename TEXT NOT NULL,
@@ -62,7 +57,7 @@ namespace WinFIM.NET_Service
                         ";
                         command.ExecuteNonQuery();
 
-                        Console.WriteLine("Creating Sqlite table current_table if it doesn't exist...");
+                        Console.WriteLine("Creating SQlite table current_table if it doesn't exist...");
                         command.CommandText = @"
                             create table if not exists current_table (
                                 filename  TEXT NOT NULL,
@@ -75,7 +70,7 @@ namespace WinFIM.NET_Service
                         ";
                         command.ExecuteNonQuery();
 
-                        Console.WriteLine("Creating Sqlite table monlist if it doesn't exist...");
+                        Console.WriteLine("Creating SQlite table monlist if it doesn't exist...");
                         command.CommandText = @"
                             create table if not exists monlist (
                                 pathname TEXT PRIMARY KEY,
@@ -95,22 +90,21 @@ namespace WinFIM.NET_Service
         }
 
 
-        static void PopulateSQLiteTable(string ConnectionString)
+        internal static void InsertIntoMonListTable(string connectionString, string pathName, bool pathExists)
         // To test SQL table population
         {
-            using (SQLiteConnection connection = new SQLiteConnection(ConnectionString))
+            using (SQLiteConnection connection = new SQLiteConnection(connectionString))
             {
                 try
                 {
                     connection.Open();
                     using (SQLiteCommand command = new SQLiteCommand(connection))
                     {
-                        Console.WriteLine("Populating Sqlite table monlist...");
-                        command.CommandText = @"
-                        insert into monlist (pathname, pathexists) values ('c:\\test', 1);
-                        insert into monlist (pathname, pathexists) values ('c:\\test2', 0)
-                ";
-
+                        Log.Info($"Inserting path {pathName}, exists:{pathExists} into SQLite table monlist...");
+                        command.Parameters.Add("@pathname", System.Data.DbType.String).Value = pathName;
+                        command.Parameters.Add("@pathexists", System.Data.DbType.Boolean).Value = pathExists;
+                        command.Parameters.Add("@checktime", System.Data.DbType.String).Value = DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt");
+                        command.CommandText = @"insert into monlist (pathname, pathexists,checktime) values (@pathname, @pathexists, @checktime);";
                         command.ExecuteNonQuery();
                     }
                 }
@@ -124,24 +118,27 @@ namespace WinFIM.NET_Service
                 }
             }
         }
-
-        void QuerySQLiteTable(string ConnectionString)
-        // To test SQL query
+        internal static string QueryMonListTable(string connectionString, string pathName)
+        // Run an SQL query on a table
         {
-            using (SQLiteConnection connection = new SQLiteConnection(ConnectionString))
+            string output = string.Empty;
+            using (SQLiteConnection connection = new SQLiteConnection(connectionString))
             {
                 try
                 {
                     connection.Open();
                     using (SQLiteCommand command = new SQLiteCommand(connection))
                     {
-                        Console.WriteLine("Querying Sqlite table monlist... ");
-                        command.CommandText = "select * from monlist order by pathname";
+                        Log.Debug($"Querying table monlist for pathName {pathName}... ");
+                        command.Parameters.Add("@pathname", System.Data.DbType.String).Value = pathName;
+                        command.CommandText = "select pathexists from monlist where pathname = @pathName";
                         using (SQLiteDataReader reader = command.ExecuteReader())
+                        {
                             while (reader.Read())
                             {
-                                Console.WriteLine($"pathname: {reader["pathname"]} pathexists: {reader["pathexists"]}");
+                                output = reader.GetValue(0).ToString();
                             }
+                        }
                     }
                 }
                 finally
@@ -149,6 +146,7 @@ namespace WinFIM.NET_Service
                     connection.Close();
                 }
             }
+            return output;
         }
     }
 }
