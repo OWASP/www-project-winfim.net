@@ -739,6 +739,46 @@ namespace WinFIM.NET_Service
 
         }
 
+        private Boolean CheckIfMonListBasePathExists(string cs, string line)
+        {
+            if (Directory.Exists(line) || File.Exists(line))
+            {
+                string ret = SQLiteHelper.QueryMonListTable(cs, line);
+                //if base path doesn't exist in SQLite table monlist
+                if (string.IsNullOrEmpty(ret))
+                {
+                    SQLiteHelper.InsertOrReplaceInMonListTable(cs, line, true);
+                    Log.Info($"{line} exists - adding to monlist table");
+                }
+
+                else if (ret == "True")
+                {
+                    Log.Debug($"{line} exists");
+                }
+                return true;
+            }
+            else
+            {
+                string ret = SQLiteHelper.QueryMonListTable(cs, line);
+                if (string.IsNullOrEmpty(ret))
+                {
+                    SQLiteHelper.InsertOrReplaceInMonListTable(cs, line, false);
+                    Log.Warn($"{line} does not exist - skipping");
+                }
+
+                else if (ret == "True")
+                {
+                    SQLiteHelper.InsertOrReplaceInMonListTable(cs, line, false);
+                    Log.Warn($"{line} has been deleted");
+                }
+                else
+                {
+                    Log.Debug($"{line} still does not exist");
+                }
+                return false;
+            }
+        }
+
         //function for file integrity checking
         public Boolean file_integrity_check()
         {
@@ -831,42 +871,15 @@ namespace WinFIM.NET_Service
 
             try
             {
+                Log.Debug("Starting checks");
                 //get the full file mon list for further processing
                 foreach (string line in lines) if (!string.IsNullOrWhiteSpace(line))
                     {
-                        // Check if base path from monlist.txt exists.
-                        if (Directory.Exists(line) || File.Exists(line))
+                        if (!(CheckIfMonListBasePathExists(cs, line)))
                         {
-                            string ret = SQLiteHelper.QueryMonListTable(cs, line);
-                            if (String.IsNullOrEmpty(ret))
-                            {
-                                SQLiteHelper.InsertIntoMonListTable(cs, line, true);
-                                Log.Info($"{line} exists - adding to monlist table");
-                            }
-
-                            else if (ret == "1")
-                            {
-                                Log.Debug($"{line} exists");
-                            }
-                            SQLiteHelper.InsertIntoMonListTable(cs, line, false);
-                        }
-                        else
-                        {
-                            string ret = SQLiteHelper.QueryMonListTable(cs, line);
-                            if (String.IsNullOrEmpty(ret))
-                            {
-                                SQLiteHelper.InsertIntoMonListTable(cs,line,false);
-                                Log.Warn($"{line} does not exist - skipping");
-                            }
-
-                            else if(ret == "1")
-                            {
-                                SQLiteHelper.InsertIntoMonListTable(cs, line, false);
-                                Log.Warn($"{line} has been deleted");
-                            }
                             continue;
                         }
-
+                        
                         //1. check the line entry is a file or a directory
                         attr = File.GetAttributes(line);
                         if (attr.HasFlag(FileAttributes.Directory))

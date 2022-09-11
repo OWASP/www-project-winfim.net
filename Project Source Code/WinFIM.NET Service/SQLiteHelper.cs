@@ -90,7 +90,7 @@ namespace WinFIM.NET_Service
         }
 
 
-        internal static void InsertIntoMonListTable(string connectionString, string pathName, bool pathExists)
+        internal static void InsertOrReplaceInMonListTable(string connectionString, string pathName, bool pathExists)
         // To test SQL table population
         {
             using (SQLiteConnection connection = new SQLiteConnection(connectionString))
@@ -101,10 +101,10 @@ namespace WinFIM.NET_Service
                     using (SQLiteCommand command = new SQLiteCommand(connection))
                     {
                         Log.Info($"Inserting path {pathName}, exists:{pathExists} into SQLite table monlist...");
-                        command.Parameters.Add("@pathname", System.Data.DbType.String).Value = pathName;
-                        command.Parameters.Add("@pathexists", System.Data.DbType.Boolean).Value = pathExists;
-                        command.Parameters.Add("@checktime", System.Data.DbType.String).Value = DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt");
-                        command.CommandText = @"insert into monlist (pathname, pathexists,checktime) values (@pathname, @pathexists, @checktime);";
+                        command.Parameters.Add("@pathName", System.Data.DbType.String).Value = pathName;
+                        command.Parameters.Add("@pathExists", System.Data.DbType.Boolean).Value = pathExists;
+                        command.Parameters.Add("@checkTime", System.Data.DbType.String).Value = DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt");
+                        command.CommandText = @"insert or replace into monlist (pathname, pathexists, checktime) values (@pathName, @pathExists, @checkTime);";
                         command.ExecuteNonQuery();
                     }
                 }
