@@ -46,7 +46,6 @@ namespace WinFIM.NET_Service
         // runs as a console application if a user interactively runs the "WinFIM.NET Service.exe" executable
         internal void TestStartupAndStop(string[] args)
         {
-            // this.OnStart(args);
             ServiceStart();
             this.OnStop();
         }
@@ -144,7 +143,7 @@ namespace WinFIM.NET_Service
                 timer.Elapsed += new ElapsedEventHandler(this.OnTimer);
                 timer.Start();
                 service_start_message = Properties.Settings.Default.service_start_message + ": (UTC) " + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "\n\n";
-                service_start_message = service_start_message + get_remote_connections() + "\nThis service will run every " + scheduler_min.ToString() + "minute(s).";
+                service_start_message = service_start_message + get_remote_connections() + "\nThis service will run every " + scheduler_min.ToString() + " minute(s).";
                 Log.Information(service_start_message);
                 eventLog1.WriteEntry(service_start_message, EventLogEntryType.Information, 7771); //setting the Event ID as 7771
                 //debug testing for write file
@@ -206,7 +205,8 @@ namespace WinFIM.NET_Service
             }
             catch (IOException e)
             {
-                Console.WriteLine("IOException source: ", e.Source);
+                string errorMessage = "IOException source: " + e.Source;
+                Log.Error(errorMessage);
                 return false;
             }
 
@@ -244,7 +244,8 @@ namespace WinFIM.NET_Service
             }
             catch (Exception e)
             {
-                Console.WriteLine("Exception : ", e.Message);
+                string errorMessage = $"Error in get_remote_connections : {e.Message}";
+                Log.Error(errorMessage );
                 return output + "\n" + e.Message;
             }
 
@@ -260,7 +261,8 @@ namespace WinFIM.NET_Service
             }
             catch (Exception e)
             {
-                Console.WriteLine("Exception : ", e.Message);
+                string errorMessage = $"Error in get_file_owner - {e.Message} for path: {path}"; 
+                Log.Error(errorMessage);
                 return "UNKNOWN";
             }
         }
@@ -275,7 +277,8 @@ namespace WinFIM.NET_Service
             }
             catch (Exception e)
             {
-                Console.WriteLine("Exception : ", e.Message);
+                string errorMessage = "get_file_size error";
+                Log.Error(e, errorMessage);
                 return "UNKNOWN";
             }
         }
@@ -307,9 +310,9 @@ namespace WinFIM.NET_Service
                         }
                         else
                         {
-                            string error_message = "Extension \"" + temp + "\" is invalid, file extension should be alphanumeric and '_' + '-' only.";
-                            Log.Error(error_message);
-                            eventLog1.WriteEntry(error_message, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                            string errorMessage = "Extension \"" + temp + "\" is invalid, file extension should be alphanumeric and '_' + '-' only.";
+                            Log.Error(errorMessage);
+                            eventLog1.WriteEntry(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
                         }
                     }
 
@@ -327,7 +330,7 @@ namespace WinFIM.NET_Service
             }
             catch (Exception e)
             {
-                Console.WriteLine("Exception : ", e.Message);
+                Log.Error(e, "exclude_extension_regex");
                 return "ERROR";
             }
         }
@@ -448,7 +451,9 @@ namespace WinFIM.NET_Service
                     }
                     catch (Exception e)
                     {
-                        WriteToLogFile("SQLite Exception: " + e.Message);
+                        string errorMessage = "SQLite Exception: " + e.Message;
+                        Log.Error(errorMessage);
+                        WriteToLogFile(errorMessage);
                     }
 
                     //sql = "DELETE FROM dbo.baseline_table";
@@ -465,7 +470,9 @@ namespace WinFIM.NET_Service
                     }
                     catch (Exception e)
                     {
-                        WriteToLogFile("SQLite Exception: " + e.Message);
+                        string errorMessage = "SQLite Exception: " + e.Message;
+                        Log.Error(errorMessage);
+                        WriteToLogFile(errorMessage);
                     }
 
                     //sql = "DELETE FROM dbo.current_table";
@@ -482,7 +489,9 @@ namespace WinFIM.NET_Service
                     }
                     catch (Exception e)
                     {
-                        WriteToLogFile("SQLite Exception: " + e.Message);
+                        string errorMessage = "SQLite Exception: " + e.Message;
+                        Log.Error(errorMessage);
+                        WriteToLogFile(errorMessage);
                     }
 
                     //insert the current hash to DB
@@ -501,7 +510,9 @@ namespace WinFIM.NET_Service
                     }
                     catch (Exception e)
                     {
-                        WriteToLogFile("SQLite Exception: " + e.Message);
+                        string errorMessage = "SQLite Exception: " + e.Message;
+                        Log.Error(errorMessage);
+                        WriteToLogFile(errorMessage);
                     }
 
                     //sql = "Insert into dbo.conf_file_checksum (filename, filehash) values('" + workdir + "\\exclude_path.txt','" + ex_path_hash + "')";
@@ -519,7 +530,9 @@ namespace WinFIM.NET_Service
                     }
                     catch (Exception e)
                     {
-                        WriteToLogFile("SQLite Exception: " + e.Message);
+                        string errorMessage = "SQLite Exception: " + e.Message;
+                        Log.Error(errorMessage);
+                        WriteToLogFile(errorMessage);
                     }
 
                     //sql = "Insert into dbo.conf_file_checksum (filename, filehash) values('" + workdir + "\\monlist.txt','" + mon_hash + "')";
@@ -537,7 +550,9 @@ namespace WinFIM.NET_Service
                     }
                     catch (Exception e)
                     {
-                        WriteToLogFile("SQLite Exception: " + e.Message);
+                        string errorMessage = "SQLite Exception: " + e.Message;
+                        Log.Error(errorMessage);
+                        WriteToLogFile(errorMessage);
                     }
 
                     //dataReader.Close();
@@ -619,7 +634,9 @@ namespace WinFIM.NET_Service
                         }
                         catch (Exception e)
                         {
-                            WriteToLogFile("SQLite Exception: " + e.Message);
+                            string errorMessage = "SQLite Exception: " + e.Message;
+                            Log.Error(errorMessage);
+                            WriteToLogFile(errorMessage);
                         }
 
                         //sql = "DELETE FROM dbo.baseline_table";
@@ -637,7 +654,9 @@ namespace WinFIM.NET_Service
                         }
                         catch (Exception e)
                         {
-                            WriteToLogFile("SQLite Exception: " + e.Message);
+                            string errorMessage = "SQLite Exception: " + e.Message;
+                            Log.Error(errorMessage);
+                            WriteToLogFile(errorMessage);
                         }
 
                         //sql = "DELETE FROM dbo.current_table";
@@ -655,7 +674,9 @@ namespace WinFIM.NET_Service
                         }
                         catch (Exception e)
                         {
-                            WriteToLogFile("SQLite Exception: " + e.Message);
+                            string errorMessage = "SQLite Exception: " + e.Message;
+                            Log.Error(errorMessage);
+                            WriteToLogFile(errorMessage);
                         }
 
                         //insert the current hash to DB
@@ -674,7 +695,9 @@ namespace WinFIM.NET_Service
                         }
                         catch (Exception e)
                         {
-                            WriteToLogFile("SQLite Exception: " + e.Message);
+                            string errorMessage = "SQLite Exception: " + e.Message;
+                            Log.Error(errorMessage);
+                            WriteToLogFile(errorMessage);
                         }
 
                         //sql = "Insert into dbo.conf_file_checksum (filename, filehash) values('" + workdir + "\\exclude_path.txt','" + ex_path_hash + "')";
@@ -692,7 +715,9 @@ namespace WinFIM.NET_Service
                         }
                         catch (Exception e)
                         {
-                            WriteToLogFile("SQLite Exception: " + e.Message);
+                            string errorMessage = "SQLite Exception: " + e.Message;
+                            Log.Error(errorMessage);
+                            WriteToLogFile(errorMessage);
                         }
 
                         //sql = "Insert into dbo.conf_file_checksum (filename, filehash) values('" + workdir + "\\monlist.txt','" + mon_hash + "')";
@@ -710,7 +735,9 @@ namespace WinFIM.NET_Service
                         }
                         catch (Exception e)
                         {
-                            WriteToLogFile("SQLite Exception: " + e.Message);
+                            string errorMessage = "SQLite Exception: " + e.Message;
+                            Log.Error(errorMessage);
+                            WriteToLogFile(errorMessage);
                         }
                     }
                     //dataReader.Close();
@@ -725,6 +752,7 @@ namespace WinFIM.NET_Service
             {
                 //con = new System.Data.SqlClient.SqlConnection();
                 //con.ConnectionString = "Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=\"" + dbfile + "\";Integrated Security=True";
+                Log.Error(e, e.Message);
                 WriteToLogFile(e.Message);
                 con = new SQLiteConnection(cs);
                 con.Open();
@@ -742,7 +770,9 @@ namespace WinFIM.NET_Service
                 }
                 catch (Exception e1)
                 {
-                    WriteToLogFile("SQLite Exception: " + e1.Message);
+                    string errorMessage = "SQLite Exception: " + e.Message;
+                    Log.Error(errorMessage);
+                    WriteToLogFile(errorMessage);
                 }
                 command.Dispose();
                 con.Close();
@@ -856,10 +886,10 @@ namespace WinFIM.NET_Service
             }
             catch (Exception e)
             {
-                string error_msg = "Exception : " + e.Message + "\nPlease make sure local database file \"fimdb.db\" exists.";
-                Log.Error(error_msg);
-                WriteToLogFile(error_msg);
-                eventLog1.WriteEntry(error_msg, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                string errorMessage = "Exception : " + e.Message + "\nPlease make sure local database file \"fimdb.db\" exists.";
+                Log.Error(errorMessage);
+                WriteToLogFile(errorMessage);
+                eventLog1.WriteEntry(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
                 return false;
             }
 
@@ -887,16 +917,16 @@ namespace WinFIM.NET_Service
             }
             catch (Exception e)
             {
-                string error_message = "Exception : " + e.Message + "\nPlease make sure all input entries are correct under \"monlist.txt\".\nPlease restart the service after correction.";
-                Log.Error(error_message);
-                eventLog1.WriteEntry(error_message, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                string errorMessage = "Exception : " + e.Message + "\nPlease make sure all input entries are correct under \"monlist.txt\".\nPlease restart the service after correction.";
+                Log.Error(errorMessage);
+                eventLog1.WriteEntry(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
                 return false;
             }
 
 
             try
             {
-                Log.Debug("Starting checks");
+                Log.Information("Starting checks");
                 //get the full file mon list for further processing
                 foreach (string line in lines) if (!string.IsNullOrWhiteSpace(line))
                     {
@@ -945,9 +975,9 @@ namespace WinFIM.NET_Service
                 }
                 catch (Exception e)
                 {
-                    string error_message = "Exception : " + e.Message + "\nPlease make sure all input entries are correct under \"exclude_path.txt\".\nPlease restart the service after correction.";
-                    Log.Error(error_message);
-                    eventLog1.WriteEntry(error_message, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                    string errorMessage = "Exception : " + e.Message + "\nPlease make sure all input entries are correct under \"exclude_path.txt\".\nPlease restart the service after correction.";
+                    Log.Error(errorMessage);
+                    eventLog1.WriteEntry(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
                     return false;
                 }
 
@@ -985,6 +1015,8 @@ namespace WinFIM.NET_Service
                         }
                         catch (Exception e)
                         {
+                            string errorMessage = "Exclusion error:" + e.Message;
+                            Log.Error(errorMessage);
                             //The file path on the exclusion could be not exist
                         }
 
@@ -1067,7 +1099,9 @@ namespace WinFIM.NET_Service
                                 }
                                 catch (Exception e)
                                 {
-                                    WriteToLogFile("SQLite Exception: " + e.Message);
+                                    string errorMessage = "SQLite Exception: " + e.Message;
+                                    Log.Error(errorMessage);
+                                    WriteToLogFile(errorMessage);
                                 }
 
 
@@ -1113,7 +1147,9 @@ namespace WinFIM.NET_Service
                                 }
                                 catch (Exception e)
                                 {
-                                    WriteToLogFile("SQLite Exception: " + e.Message);
+                                    string errorMessage = "SQLite Exception: " + e.Message;
+                                    Log.Error(errorMessage);
+                                    WriteToLogFile(errorMessage);
                                 }
                             }
                             //WriteToLogFile(line_output);
@@ -1153,7 +1189,9 @@ namespace WinFIM.NET_Service
                                     }
                                     catch (Exception e)
                                     {
-                                        WriteToLogFile("SQLite Exception: " + e.Message);
+                                        string errorMessage = "SQLite Exception: " + e.Message;
+                                        Log.Error(errorMessage);
+                                        WriteToLogFile(errorMessage);
                                     }
 
                                     //compare with baseline_table
@@ -1229,7 +1267,9 @@ namespace WinFIM.NET_Service
                                     }
                                     catch (Exception e)
                                     {
-                                        WriteToLogFile("SQLite Exception: " + e.Message);
+                                        string errorMessage = "SQLite Exception: " + e.Message;
+                                        Log.Error(errorMessage);
+                                        WriteToLogFile(errorMessage);
                                     }
                                 }
                                 //WriteToLogFile(line_output);
@@ -1347,7 +1387,9 @@ namespace WinFIM.NET_Service
                                         }
                                         catch (Exception e)
                                         {
-                                            WriteToLogFile("SQLite Exception: " + e.Message);
+                                            string errorMessage = "SQLite Exception: " + e.Message;
+                                            Log.Error(errorMessage);
+                                            WriteToLogFile(errorMessage);
                                         }
                                     }
                                     //WriteToLogFile(line_output);
@@ -1397,9 +1439,9 @@ namespace WinFIM.NET_Service
                     }
                     catch (Exception e)
                     {
-                        string error_message = "SQLite Exception: " + e.Message;
-                        Log.Error(error_message);
-                        WriteToLogFile(error_message);
+                        string errorMessage = "SQLite Exception: " + e.Message;
+                        Log.Error(errorMessage);
+                        WriteToLogFile(errorMessage);
                     }
 
                     //sql2 = "INSERT INTO dbo.baseline_table SELECT * FROM dbo.current_table";
@@ -1416,9 +1458,9 @@ namespace WinFIM.NET_Service
                     }
                     catch (Exception e)
                     {
-                        string error_message = "SQLite Exception: " + e.Message;
-                        Log.Error(error_message);
-                        WriteToLogFile(error_message);
+                        string errorMessage = "SQLite Exception: " + e.Message;
+                        Log.Error(errorMessage);
+                        WriteToLogFile(errorMessage);
                     }
 
                     //sql2 = "DELETE FROM dbo.current_table WHERE filename IS NOT NULL";
@@ -1435,9 +1477,9 @@ namespace WinFIM.NET_Service
                     }
                     catch (Exception e)
                     {
-                        string error_message = "SQLite Exception: " + e.Message;
-                        Log.Error(error_message);
-                        WriteToLogFile(error_message);
+                        string errorMessage = "SQLite Exception: " + e.Message;
+                        Log.Error(errorMessage);
+                        WriteToLogFile(errorMessage);
                     }
 
                 }
@@ -1457,10 +1499,10 @@ namespace WinFIM.NET_Service
             }
             catch (Exception e)
             {
-                string error_msg = "Exception : " + e.Message + "\nPlease make sure all input entries are correct under \"monlist.txt\", \"exclude_path.txt\" and \"exclude_extension.txt\".\nPlease restart the service after correction.";
-                Console.WriteLine(error_msg);
-                WriteToLogFile(error_msg);
-                eventLog1.WriteEntry(error_msg, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                string errorMessage = "Exception : " + e.Message + "\nPlease make sure all input entries are correct under \"monlist.txt\", \"exclude_path.txt\" and \"exclude_extension.txt\".\nPlease restart the service after correction.";
+                Log.Error(errorMessage);
+                WriteToLogFile(errorMessage);
+                eventLog1.WriteEntry(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
                 return false;
             }
 

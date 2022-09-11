@@ -17,11 +17,11 @@ namespace WinFIM.NET_Service
         {
             if (File.Exists(dbFile))
             {
-                Console.WriteLine($"SQLite database file {dbFile} already exists");
+                Log.Debug($"SQLite database file {dbFile} already exists");
             }
             else
             {
-                Console.WriteLine($"SQLite database file {dbFile} Does not exist. Creating");
+                Log.Warning($"SQLite database file {dbFile} Does not exist. Creating");
                 SQLiteConnection.CreateFile(dbFile);
             }
         }
@@ -36,7 +36,7 @@ namespace WinFIM.NET_Service
                     connection.Open();
                     using (SQLiteCommand command = new SQLiteCommand(connection))
                     {
-                        Console.WriteLine("Creating SQlite table baseline_table if it doesn't exist...");
+                        Log.Debug("Creating SQlite table baseline_table if it doesn't exist...");
                         command.CommandText = @"
                             create table if not exists baseline_table (
                                 filename  TEXT NOT NULL,
@@ -49,7 +49,7 @@ namespace WinFIM.NET_Service
                         ";
                         command.ExecuteNonQuery();
 
-                        Console.WriteLine("Creating SQlite table conf_file_checksum if it doesn't exist...");
+                        Log.Debug("Creating SQlite table conf_file_checksum if it doesn't exist...");
                         command.CommandText = @"
                             create table if not exists conf_file_checksum (
                                 filename TEXT NOT NULL,
@@ -58,7 +58,7 @@ namespace WinFIM.NET_Service
                         ";
                         command.ExecuteNonQuery();
 
-                        Console.WriteLine("Creating SQlite table current_table if it doesn't exist...");
+                        Log.Debug("Creating SQlite table current_table if it doesn't exist...");
                         command.CommandText = @"
                             create table if not exists current_table (
                                 filename  TEXT NOT NULL,
@@ -71,7 +71,7 @@ namespace WinFIM.NET_Service
                         ";
                         command.ExecuteNonQuery();
 
-                        Console.WriteLine("Creating SQlite table monlist if it doesn't exist...");
+                        Log.Debug("Creating SQlite table monlist if it doesn't exist...");
                         command.CommandText = @"
                             create table if not exists monlist (
                                 pathname TEXT PRIMARY KEY,
@@ -109,9 +109,10 @@ namespace WinFIM.NET_Service
                         command.ExecuteNonQuery();
                     }
                 }
-                catch (Exception ex)
+                catch (Exception e)
                 {
-                    Console.WriteLine($"couldn't write stuff - {ex.Message}");
+                    string errorMessage = $"Error inserting/replacing row in monlist table";
+                    Log.Error(e, errorMessage);
                 }
                 finally
                 {
@@ -141,6 +142,11 @@ namespace WinFIM.NET_Service
                             }
                         }
                     }
+                }
+                catch (Exception e)
+                {
+                    string errorMessage = $"Error Querying monlist table";
+                    Log.Error(e, errorMessage);
                 }
                 finally
                 {

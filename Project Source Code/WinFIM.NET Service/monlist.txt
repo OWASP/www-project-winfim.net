@@ -1,2 +1,3 @@
-c:\test2
-c:\test\test with space
+C:\Windows\System32
+C:\Program Files
+C:\Program Files (x86)

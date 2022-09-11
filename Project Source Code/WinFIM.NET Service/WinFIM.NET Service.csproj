@@ -213,9 +213,6 @@
       <DependentUpon>fimdb.mdf</DependentUpon>
     </Content>
     <Content Include="icon.ico" />
-    <Content Include="monlist-backup.txt">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Content Include="monlist.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
