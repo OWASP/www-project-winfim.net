@@ -19,6 +19,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 //change to use SQLite instead of MDF database
 using System.Data.SQLite;
+using Serilog;
 
 namespace WinFIM.NET_Service
 {
@@ -115,6 +116,7 @@ namespace WinFIM.NET_Service
         {
             //Read if there is any valid schedule timer (in minute)
             initialise();
+            string service_start_message;
             string workdir = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
             string scheduler_conf = workdir + "\\scheduler.txt";
             int scheduler_min = 0;
@@ -126,7 +128,9 @@ namespace WinFIM.NET_Service
             }
             catch (IOException e)
             {
-                eventLog1.WriteEntry("Exception: " + e.Message + "\nPlease check if the file 'scheduler.txt' exists or a numeric value is input into the file 'scheduler.txt'.\nIt will run in continuous mode.", EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                service_start_message = "Please check if the file 'scheduler.txt' exists or a numeric value is input into the file 'scheduler.txt'.\nIt will run in continuous mode.";
+                Log.Error($"Exception: {e.Message} - {service_start_message}");
+                eventLog1.WriteEntry($"Exception: {e.Message}\n{service_start_message}", EventLogEntryType.Error, 7773); //setting the Event ID as 7773
                 scheduler_min = 0;
             }
 
@@ -139,8 +143,9 @@ namespace WinFIM.NET_Service
                 timer.Interval = scheduler_min * 60000; // control the service to run every pre-defined minutes
                 timer.Elapsed += new ElapsedEventHandler(this.OnTimer);
                 timer.Start();
-                string service_start_message = Properties.Settings.Default.service_start_message + ": (UTC) " + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "\n\n";
+                service_start_message = Properties.Settings.Default.service_start_message + ": (UTC) " + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "\n\n";
                 service_start_message = service_start_message + get_remote_connections() + "\nThis service will run every " + scheduler_min.ToString() + "minute(s).";
+                Log.Information(service_start_message);
                 eventLog1.WriteEntry(service_start_message, EventLogEntryType.Information, 7771); //setting the Event ID as 7771
                 //debug testing for write file
                 WriteToLogFile(service_start_message);
@@ -149,8 +154,9 @@ namespace WinFIM.NET_Service
             else
             //run in continuous mode
             {
-                string service_start_message = Properties.Settings.Default.service_start_message + ": (UTC) " + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "\n\n";
+                service_start_message = Properties.Settings.Default.service_start_message + ": (UTC) " + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "\n\n";
                 service_start_message = service_start_message + get_remote_connections() + "\nThis service will run continuously.";
+                Log.Information(service_start_message);
                 eventLog1.WriteEntry(service_start_message, EventLogEntryType.Information, 7771); //setting the Event ID as 7771
                 WriteToLogFile(service_start_message);
                 Boolean tracker_boolean = true;
@@ -167,6 +173,7 @@ namespace WinFIM.NET_Service
             // TODO: Insert monitoring activities here.
             string service_heartbeat_message = Properties.Settings.Default.heart_beat_message + ": (UTC) " + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "\n\n";
             service_heartbeat_message = service_heartbeat_message + get_remote_connections() + "\n";
+            Log.Information(service_heartbeat_message);
             eventLog1.WriteEntry(service_heartbeat_message, EventLogEntryType.Information, 7772); //setting the Event ID as 7772
             WriteToLogFile(service_heartbeat_message);
             file_integrity_check();
@@ -177,6 +184,7 @@ namespace WinFIM.NET_Service
             // TODO: Add code here to perform any tear-down necessary to stop your service.
             string service_stop_message = Properties.Settings.Default.service_stop_message + ": (UTC) " + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "\n\n";
             service_stop_message = service_stop_message + get_remote_connections() + "\n";
+            Log.Information(service_stop_message);
             eventLog1.WriteEntry(service_stop_message, EventLogEntryType.Information, 7770); //setting the Event ID as 7770
             WriteToLogFile(service_stop_message);
         }
@@ -299,7 +307,9 @@ namespace WinFIM.NET_Service
                         }
                         else
                         {
-                            eventLog1.WriteEntry("Extension \"" + temp + "\" is invalid, file extension should be alphanumeric and '_' + '-' only.", EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                            string error_message = "Extension \"" + temp + "\" is invalid, file extension should be alphanumeric and '_' + '-' only.";
+                            Log.Error(error_message);
+                            eventLog1.WriteEntry(error_message, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
                         }
                     }
 
@@ -374,7 +384,9 @@ namespace WinFIM.NET_Service
             }
             catch (Exception e)
             {
-                eventLog1.WriteEntry("Exception: " + e.Message + "\nConfig files: exclude_extension.txt | exclude_path.txt | monlist.txt is / are missing or having issue to access.", EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                string message = "Exception: " + e.Message + "\nConfig files: exclude_extension.txt | exclude_path.txt | monlist.txt is / are missing or having issue to access.";
+                Log.Error(message);
+                eventLog1.WriteEntry(message, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
             }
 
 
@@ -741,6 +753,7 @@ namespace WinFIM.NET_Service
 
         private Boolean CheckIfMonListBasePathExists(string cs, string line)
         {
+            string message;
             if (Directory.Exists(line) || File.Exists(line))
             {
                 string ret = SQLiteHelper.QueryMonListTable(cs, line);
@@ -748,12 +761,15 @@ namespace WinFIM.NET_Service
                 if (string.IsNullOrEmpty(ret))
                 {
                     SQLiteHelper.InsertOrReplaceInMonListTable(cs, line, true);
-                    Log.Info($"{line} exists - adding to monlist table");
+                    message = $"{line} exists - adding to monlist table";
+                    Log.Warning(message);
+                    WriteToLogFile(message);
+                    eventLog1.WriteEntry(message, EventLogEntryType.Warning, 7776);
                 }
 
                 else if (ret == "True")
                 {
-                    Log.Debug($"{line} exists");
+                    Log.Debug($"{line} still exists");
                 }
                 return true;
             }
@@ -763,13 +779,19 @@ namespace WinFIM.NET_Service
                 if (string.IsNullOrEmpty(ret))
                 {
                     SQLiteHelper.InsertOrReplaceInMonListTable(cs, line, false);
-                    Log.Warn($"{line} does not exist - skipping");
+                    message = $"{line} does not exist";
+                    Log.Warning(message);
+                    WriteToLogFile(message);
+                    eventLog1.WriteEntry(message, EventLogEntryType.Warning, 7778);
                 }
 
                 else if (ret == "True")
                 {
                     SQLiteHelper.InsertOrReplaceInMonListTable(cs, line, false);
-                    Log.Warn($"{line} has been deleted");
+                    message = $"{line} has been deleted";
+                    Log.Warning(message);
+                    WriteToLogFile(message);
+                    eventLog1.WriteEntry(message, EventLogEntryType.Warning, 7778);
                 }
                 else
                 {
@@ -835,6 +857,7 @@ namespace WinFIM.NET_Service
             catch (Exception e)
             {
                 string error_msg = "Exception : " + e.Message + "\nPlease make sure local database file \"fimdb.db\" exists.";
+                Log.Error(error_msg);
                 WriteToLogFile(error_msg);
                 eventLog1.WriteEntry(error_msg, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
                 return false;
@@ -864,7 +887,9 @@ namespace WinFIM.NET_Service
             }
             catch (Exception e)
             {
-                eventLog1.WriteEntry("Exception : " + e.Message + "\nPlease make sure all input entries are correct under \"monlist.txt\".\nPlease restart the service after correction.", EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                string error_message = "Exception : " + e.Message + "\nPlease make sure all input entries are correct under \"monlist.txt\".\nPlease restart the service after correction.";
+                Log.Error(error_message);
+                eventLog1.WriteEntry(error_message, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
                 return false;
             }
 
@@ -920,7 +945,9 @@ namespace WinFIM.NET_Service
                 }
                 catch (Exception e)
                 {
-                    eventLog1.WriteEntry("Exception : " + e.Message + "\nPlease make sure all input entries are correct under \"exclude_path.txt\".\nPlease restart the service after correction.", EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                    string error_message = "Exception : " + e.Message + "\nPlease make sure all input entries are correct under \"exclude_path.txt\".\nPlease restart the service after correction.";
+                    Log.Error(error_message);
+                    eventLog1.WriteEntry(error_message, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
                     return false;
                 }
 
@@ -1013,6 +1040,7 @@ namespace WinFIM.NET_Service
 
                 foreach (string s in final_filelist)
                 {
+                    string message = string.Empty;
                     //WriteToLogFile(s);
                     try
                     {
@@ -1061,8 +1089,10 @@ namespace WinFIM.NET_Service
                                 }
                                 else
                                 {
-                                    WriteToLogFile("Directory :'" + s + "' is newly created.\nOwner: " + get_file_owner(s));
-                                    eventLog1.WriteEntry("Directory :'" + s + "' is newly created.\nOwner: " + get_file_owner(s), EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
+                                    message = "Directory :'" + s + "' is newly created.\nOwner: " + get_file_owner(s);
+                                    Log.Warning(message);
+                                    WriteToLogFile(message);
+                                    eventLog1.WriteEntry(message, EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
                                 }
                                 dataReader2.Close();
                             }
@@ -1101,7 +1131,9 @@ namespace WinFIM.NET_Service
                                 catch (Exception e)
                                 {
                                     temp_hash = "UNKNOWN";
-                                    eventLog1.WriteEntry("File '" + s + "' is locked and not accessible for Hash calculation.", EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                                    message = "File '" + s + "' is locked and not accessible for Hash calculation.";
+                                    Log.Error(message);
+                                    eventLog1.WriteEntry(message, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
                                 }
                                 line_output = s + " | File | " + " file size = " + get_file_size(s) + " | files owner = " + get_file_owner(s) + " | file hash = " + temp_hash;
                                 //if there is content in baseline_table before, write to current_table
@@ -1162,15 +1194,19 @@ namespace WinFIM.NET_Service
                                             dataReader2 = command2.ExecuteReader();
                                             if (dataReader2.Read())
                                             {
-                                                WriteToLogFile("File :'" + s + "' is modified. \nPrevious check at:" + dataReader2.GetValue(4).ToString() + "\nFile hash: (Previous)" + dataReader2.GetValue(3).ToString() + " (Current)" + temp_hash + "\nFile Size: (Previous)" + dataReader2.GetValue(1).ToString() + "MB (Current)" + get_file_size(s) + "MB\nFile Owner: (Previous)" + dataReader2.GetValue(2).ToString() + " (Current)" + get_file_owner(s));
-                                                eventLog1.WriteEntry("File :'" + s + "' is modified. \nPrevious check at:" + dataReader2.GetValue(4).ToString() + "\nFile hash: (Previous)" + dataReader2.GetValue(3).ToString() + " (Current)" + temp_hash + "\nFile Size: (Previous)" + dataReader2.GetValue(1).ToString() + "MB (Current)" + get_file_size(s) + "MB\nFile Owner: (Previous)" + dataReader2.GetValue(2).ToString() + " (Current)" + get_file_owner(s), EventLogEntryType.Warning, 7777); //setting the Event ID as 7777
+                                                message = "File :'" + s + "' is modified. \nPrevious check at:" + dataReader2.GetValue(4).ToString() + "\nFile hash: (Previous)" + dataReader2.GetValue(3).ToString() + " (Current)" + temp_hash + "\nFile Size: (Previous)" + dataReader2.GetValue(1).ToString() + "MB (Current)" + get_file_size(s) + "MB\nFile Owner: (Previous)" + dataReader2.GetValue(2).ToString() + " (Current)" + get_file_owner(s);
+                                                Log.Warning(message);
+                                                WriteToLogFile(message);
+                                                eventLog1.WriteEntry(message, EventLogEntryType.Warning, 7777); //setting the Event ID as 7777
                                             }
                                             dataReader2.Close();
                                         }
                                     }
                                     else
                                     {
-                                        WriteToLogFile("File :'" + s + "' is newly created.\nOwner: " + get_file_owner(s) + " Hash:" + temp_hash);
+                                        message = "File :'" + s + "' is newly created.\nOwner: " + get_file_owner(s) + " Hash:" + temp_hash;
+                                        Log.Warning(message);
+                                        WriteToLogFile(message);
                                         eventLog1.WriteEntry("File :'" + s + "' is newly created.\nOwner: " + get_file_owner(s) + " Hash:" + temp_hash, EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
                                     }
                                     dataReader2.Close();
@@ -1212,7 +1248,9 @@ namespace WinFIM.NET_Service
                                     catch (Exception e)
                                     {
                                         temp_hash = "UNKNOWN";
-                                        eventLog1.WriteEntry("File '" + s + "' is locked and not accessible for Hash calculation.", EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                                        message = "File '" + s + "' is locked and not accessible for Hash calculation.";
+                                        Log.Error(message);
+                                        eventLog1.WriteEntry(message, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
                                     }
                                     line_output = s + " | File | " + " file size = " + get_file_size(s) + " | files owner = " + get_file_owner(s) + " | file hash = " + temp_hash;
                                     if (have_baseline)
@@ -1231,7 +1269,9 @@ namespace WinFIM.NET_Service
                                         }
                                         catch (Exception e)
                                         {
-                                            WriteToLogFile("SQLite Exception: " + e.Message);
+                                            message = "SQLite Exception: " + e.Message;
+                                            Log.Error(message);
+                                            WriteToLogFile(message);
                                         }
 
                                         //compare with baseline_table
@@ -1272,16 +1312,20 @@ namespace WinFIM.NET_Service
                                                 dataReader2 = command2.ExecuteReader();
                                                 if (dataReader2.Read())
                                                 {
-                                                    WriteToLogFile("File :'" + s + "' is modified. Previous check at:" + dataReader2.GetValue(4).ToString() + "\nFile hash: (Previous)" + dataReader2.GetValue(3).ToString() + " (Current)" + temp_hash + "\nFile Size: (Previous)" + dataReader2.GetValue(1).ToString() + "MB (Current)" + get_file_size(s) + "MB\nFile Owner: (Previous)" + dataReader2.GetValue(2).ToString() + " (Current)" + get_file_owner(s));
-                                                    eventLog1.WriteEntry("File :'" + s + "' is modified. Previous check at:" + dataReader2.GetValue(4).ToString() + "\nFile hash: (Previous)" + dataReader2.GetValue(3).ToString() + " (Current)" + temp_hash + "\nFile Size: (Previous)" + dataReader2.GetValue(1).ToString() + "MB (Current)" + get_file_size(s) + "MB\nFile Owner: (Previous)" + dataReader2.GetValue(2).ToString() + " (Current)" + get_file_owner(s), EventLogEntryType.Warning, 7777); //setting the Event ID as 7777
+                                                    message = "File :'" + s + "' is modified. Previous check at:" + dataReader2.GetValue(4).ToString() + "\nFile hash: (Previous)" + dataReader2.GetValue(3).ToString() + " (Current)" + temp_hash + "\nFile Size: (Previous)" + dataReader2.GetValue(1).ToString() + "MB (Current)" + get_file_size(s) + "MB\nFile Owner: (Previous)" + dataReader2.GetValue(2).ToString() + " (Current)" + get_file_owner(s);
+                                                    Log.Warning(message);
+                                                    WriteToLogFile(message);
+                                                    eventLog1.WriteEntry(message, EventLogEntryType.Warning, 7777); //setting the Event ID as 7777
                                                 }
                                                 dataReader2.Close();
                                             }
                                         }
                                         else
                                         {
-                                            WriteToLogFile("File :'" + s + "' is newly created.\nOwner: " + get_file_owner(s) + " Hash:" + temp_hash);
-                                            eventLog1.WriteEntry("File :'" + s + "' is newly created.\nOwner: " + get_file_owner(s) + " Hash:" + temp_hash, EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
+                                            message = "File :'" + s + "' is newly created.\nOwner: " + get_file_owner(s) + " Hash:" + temp_hash;
+                                            Log.Warning(message);
+                                            WriteToLogFile(message);
+                                            eventLog1.WriteEntry(message, EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
                                         }
                                         dataReader2.Close();
                                         command2.Dispose();
@@ -1313,11 +1357,13 @@ namespace WinFIM.NET_Service
                     }
                     catch (Exception e)
                     {
-                        eventLog1.WriteEntry("File '" + s + "' could be renamed / deleted during the hash calculation. This file is ignored in this checking cycle.", EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                        message = "File '" + s + "' could be renamed / deleted during the hash calculation. This file is ignored in this checking cycle.";
+                        Log.Error(message);
+                        eventLog1.WriteEntry(message, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
                     }
 
                 }
-
+                
                 //final check if any files / directory is deleted
                 if (have_baseline)
                 {
@@ -1330,8 +1376,9 @@ namespace WinFIM.NET_Service
                     while (dataReader2.Read())
                     {
                         output2 = dataReader2.GetValue(0).ToString();
-                        WriteToLogFile("The file / directory '" + output2 + "' is deleted.");
-                        eventLog1.WriteEntry("The file / directory '" + output2 + "' is deleted.", EventLogEntryType.Warning, 7778); //setting the Event ID as 7778
+                        string deleted_message = "The file / directory '" + output2 + "' is deleted.";
+                        WriteToLogFile(deleted_message);
+                        eventLog1.WriteEntry(deleted_message, EventLogEntryType.Warning, 7778); //setting the Event ID as 7778
                     }
                     dataReader2.Close();
                     //delete all rows in baseline_table, copy all rows from current_table to baseline_table, then clear current_table
@@ -1350,7 +1397,9 @@ namespace WinFIM.NET_Service
                     }
                     catch (Exception e)
                     {
-                        WriteToLogFile("SQLite Exception: " + e.Message);
+                        string error_message = "SQLite Exception: " + e.Message;
+                        Log.Error(error_message);
+                        WriteToLogFile(error_message);
                     }
 
                     //sql2 = "INSERT INTO dbo.baseline_table SELECT * FROM dbo.current_table";
@@ -1367,7 +1416,9 @@ namespace WinFIM.NET_Service
                     }
                     catch (Exception e)
                     {
-                        WriteToLogFile("SQLite Exception: " + e.Message);
+                        string error_message = "SQLite Exception: " + e.Message;
+                        Log.Error(error_message);
+                        WriteToLogFile(error_message);
                     }
 
                     //sql2 = "DELETE FROM dbo.current_table WHERE filename IS NOT NULL";
@@ -1384,7 +1435,9 @@ namespace WinFIM.NET_Service
                     }
                     catch (Exception e)
                     {
-                        WriteToLogFile("SQLite Exception: " + e.Message);
+                        string error_message = "SQLite Exception: " + e.Message;
+                        Log.Error(error_message);
+                        WriteToLogFile(error_message);
                     }
 
                 }
@@ -1395,7 +1448,9 @@ namespace WinFIM.NET_Service
                 con.Close();
 
                 watch.Stop();
-                eventLog1.WriteEntry("Total time consumed in this round file integrity checking  = " + watch.ElapsedMilliseconds + "ms (" + Math.Round(Convert.ToDouble(watch.ElapsedMilliseconds) / 1000, 3).ToString() + "s).\n" + get_remote_connections(), EventLogEntryType.Information, 7771); //setting the Event ID as 7771
+                string stop_message = "Total time consumed in this round file integrity checking  = " + watch.ElapsedMilliseconds + "ms (" + Math.Round(Convert.ToDouble(watch.ElapsedMilliseconds) / 1000, 3).ToString() + "s).\n" + get_remote_connections();
+                Log.Debug(stop_message);
+                eventLog1.WriteEntry(stop_message, EventLogEntryType.Information, 7771); //setting the Event ID as 7771
                 //WriteToLogFile("Total time consumed in this round file integrity checking  = " + watch.ElapsedMilliseconds + "ms (" + Math.Round(Convert.ToDouble(watch.ElapsedMilliseconds)/1000,3).ToString() + "s).");
                 return true;
 

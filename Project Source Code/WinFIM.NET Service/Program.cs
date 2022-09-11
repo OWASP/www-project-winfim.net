@@ -4,6 +4,7 @@ using System.Linq;
 using System.ServiceProcess;
 using System.Text;
 using System.Threading.Tasks;
+using Serilog;
 
 namespace WinFIM.NET_Service
 {
@@ -14,14 +15,18 @@ namespace WinFIM.NET_Service
         /// </summary>
         static void Main()
         {
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.AppSettings()
+                .CreateLogger();
+
             if (Environment.UserInteractive)
             {
                 // Startup as application
                 using (Service1 service1 = new Service1())
                 {
-                    Console.WriteLine("Running in console app mode");
+                    Log.Debug(("Running in console app mode"));
                     service1.TestStartupAndStop(null);
-                    Console.WriteLine("Exiting");
+                    Log.Debug(("Exiting"));
                 }
             }
             else

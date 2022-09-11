@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using System.Data.SQLite;
 using System.IO;
 using System.Data;
+using Serilog;
 
 namespace WinFIM.NET_Service
 {
@@ -100,7 +101,7 @@ namespace WinFIM.NET_Service
                     connection.Open();
                     using (SQLiteCommand command = new SQLiteCommand(connection))
                     {
-                        Log.Info($"Inserting path {pathName}, exists:{pathExists} into SQLite table monlist...");
+                        Log.Information($"Inserting path {pathName}, exists:{pathExists} into SQLite table monlist...");
                         command.Parameters.Add("@pathName", System.Data.DbType.String).Value = pathName;
                         command.Parameters.Add("@pathExists", System.Data.DbType.Boolean).Value = pathExists;
                         command.Parameters.Add("@checkTime", System.Data.DbType.String).Value = DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt");

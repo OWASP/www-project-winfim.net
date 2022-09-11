@@ -38,18 +38,33 @@ The characteristics of this small application are:
 # Uninstallation
   Bring up an Administrator command prompt and navigate to the deployed folder, then execute `uninstall_service.bat`
   
-# Windows Event ID for file / directory changes
-- Event ID 7776 – File / Directory creation
-- Event ID 7777 – File modification
-- Event ID 7778 – File / Directory deletion
-  
+# Windows Event IDs
+There are 4 types of Windows event IDs:
+- 7771 - remote connection status. Potentially useful for threat hunting if suspicious file changes are identified
+- 7772 - service heartbeat message
+- 7773 - errors
+- 7776 - File / directory creation
+- 7777 - File modification
+- 7778 - File / directory deletion  
 Enjoy!
  
 # Development notes
 - Source code available in Github project [OWASP/www-project-winfim.net](https://github.com/OWASP/www-project-winfim.net)
 - Targets the .NET 4.8 framework
-- The .mdb is Database is a SQL Server Local DB
-- Is currently built with Visual Studio
+- The .mdb is Database is a SQL Server 2019 Local DB - it's not currently deployed
+- The current database is a SQLite 3 database, and is built / tables created if not exist on program startup
+- Is currently built with Visual Studio 2022
+
+## Database structure
+- Filename: fimdb.db
+  - database type: SQLite version 3
+-Tables:
+  - baseline_table
+  - conf_file_checksum
+    - stores checksums for the config files, e.g. monlist.txt, exclude_extension.txt, exclude_path.txt, monlist.txt
+  - current_table
+  - monlist
+    - stores information about paths in the monlist table - useful to check if a path in monlist.txt was deleted since the last run, created since the last run
 
  Cheers
  
