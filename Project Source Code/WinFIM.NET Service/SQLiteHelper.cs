@@ -75,7 +75,7 @@ namespace WinFIM.NET_Service
                         command.CommandText = @"
                             create table if not exists monlist (
                                 pathname TEXT PRIMARY KEY,
-                                pathexists BOOLEAN  CHECK (pathexists IN (0, 1)),
+                                pathexists BOOLEAN  CHECK (pathexists IN (0, 1)) NOT NULL,
                                 checktime TEXT NOT NULL
                             );
                         ";

@@ -144,10 +144,8 @@ namespace WinFIM.NET_Service
                 timer.Start();
                 service_start_message = Properties.Settings.Default.service_start_message + ": (UTC) " + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "\n\n";
                 service_start_message = service_start_message + get_remote_connections() + "\nThis service will run every " + scheduler_min.ToString() + " minute(s).";
-                Log.Information(service_start_message);
+                Log.Debug(service_start_message);
                 eventLog1.WriteEntry(service_start_message, EventLogEntryType.Information, 7771); //setting the Event ID as 7771
-                //debug testing for write file
-                WriteToLogFile(service_start_message);
                 file_integrity_check();
             }
             else
@@ -155,9 +153,8 @@ namespace WinFIM.NET_Service
             {
                 service_start_message = Properties.Settings.Default.service_start_message + ": (UTC) " + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "\n\n";
                 service_start_message = service_start_message + get_remote_connections() + "\nThis service will run continuously.";
-                Log.Information(service_start_message);
+                Log.Debug(service_start_message);
                 eventLog1.WriteEntry(service_start_message, EventLogEntryType.Information, 7771); //setting the Event ID as 7771
-                WriteToLogFile(service_start_message);
                 Boolean tracker_boolean = true;
                 while (tracker_boolean)
                 {
@@ -169,12 +166,6 @@ namespace WinFIM.NET_Service
 
         public void OnTimer(object sender, ElapsedEventArgs args)
         {
-            // TODO: Insert monitoring activities here.
-            string service_heartbeat_message = Properties.Settings.Default.heart_beat_message + ": (UTC) " + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "\n\n";
-            service_heartbeat_message = service_heartbeat_message + get_remote_connections() + "\n";
-            Log.Information(service_heartbeat_message);
-            eventLog1.WriteEntry(service_heartbeat_message, EventLogEntryType.Information, 7772); //setting the Event ID as 7772
-            WriteToLogFile(service_heartbeat_message);
             file_integrity_check();
         }
 
@@ -185,32 +176,9 @@ namespace WinFIM.NET_Service
             service_stop_message = service_stop_message + get_remote_connections() + "\n";
             Log.Information(service_stop_message);
             eventLog1.WriteEntry(service_stop_message, EventLogEntryType.Information, 7770); //setting the Event ID as 7770
-            WriteToLogFile(service_stop_message);
         }
 
         //other functions
-
-        //function for writing log to log file for debug
-        public Boolean WriteToLogFile(string log_message)
-        {
-            string workdir = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
-            string logfile = workdir + "\\" + DateTime.Now.ToString("yyyy-MM-d") + ".log";
-            try
-            {
-                using (StreamWriter w = File.AppendText(logfile))
-                {
-                    w.WriteLine(log_message);
-                    return true;
-                }
-            }
-            catch (IOException e)
-            {
-                string errorMessage = "IOException source: " + e.Source;
-                Log.Error(errorMessage);
-                return false;
-            }
-
-        }
 
         //function for getting current remote connections mapping with users info on localhost
         public string get_remote_connections()
@@ -453,7 +421,6 @@ namespace WinFIM.NET_Service
                     {
                         string errorMessage = "SQLite Exception: " + e.Message;
                         Log.Error(errorMessage);
-                        WriteToLogFile(errorMessage);
                     }
 
                     //sql = "DELETE FROM dbo.baseline_table";
@@ -472,7 +439,6 @@ namespace WinFIM.NET_Service
                     {
                         string errorMessage = "SQLite Exception: " + e.Message;
                         Log.Error(errorMessage);
-                        WriteToLogFile(errorMessage);
                     }
 
                     //sql = "DELETE FROM dbo.current_table";
@@ -491,7 +457,6 @@ namespace WinFIM.NET_Service
                     {
                         string errorMessage = "SQLite Exception: " + e.Message;
                         Log.Error(errorMessage);
-                        WriteToLogFile(errorMessage);
                     }
 
                     //insert the current hash to DB
@@ -512,7 +477,6 @@ namespace WinFIM.NET_Service
                     {
                         string errorMessage = "SQLite Exception: " + e.Message;
                         Log.Error(errorMessage);
-                        WriteToLogFile(errorMessage);
                     }
 
                     //sql = "Insert into dbo.conf_file_checksum (filename, filehash) values('" + workdir + "\\exclude_path.txt','" + ex_path_hash + "')";
@@ -532,7 +496,6 @@ namespace WinFIM.NET_Service
                     {
                         string errorMessage = "SQLite Exception: " + e.Message;
                         Log.Error(errorMessage);
-                        WriteToLogFile(errorMessage);
                     }
 
                     //sql = "Insert into dbo.conf_file_checksum (filename, filehash) values('" + workdir + "\\monlist.txt','" + mon_hash + "')";
@@ -552,7 +515,6 @@ namespace WinFIM.NET_Service
                     {
                         string errorMessage = "SQLite Exception: " + e.Message;
                         Log.Error(errorMessage);
-                        WriteToLogFile(errorMessage);
                     }
 
                     //dataReader.Close();
@@ -636,7 +598,6 @@ namespace WinFIM.NET_Service
                         {
                             string errorMessage = "SQLite Exception: " + e.Message;
                             Log.Error(errorMessage);
-                            WriteToLogFile(errorMessage);
                         }
 
                         //sql = "DELETE FROM dbo.baseline_table";
@@ -656,7 +617,6 @@ namespace WinFIM.NET_Service
                         {
                             string errorMessage = "SQLite Exception: " + e.Message;
                             Log.Error(errorMessage);
-                            WriteToLogFile(errorMessage);
                         }
 
                         //sql = "DELETE FROM dbo.current_table";
@@ -676,7 +636,6 @@ namespace WinFIM.NET_Service
                         {
                             string errorMessage = "SQLite Exception: " + e.Message;
                             Log.Error(errorMessage);
-                            WriteToLogFile(errorMessage);
                         }
 
                         //insert the current hash to DB
@@ -697,7 +656,6 @@ namespace WinFIM.NET_Service
                         {
                             string errorMessage = "SQLite Exception: " + e.Message;
                             Log.Error(errorMessage);
-                            WriteToLogFile(errorMessage);
                         }
 
                         //sql = "Insert into dbo.conf_file_checksum (filename, filehash) values('" + workdir + "\\exclude_path.txt','" + ex_path_hash + "')";
@@ -717,7 +675,6 @@ namespace WinFIM.NET_Service
                         {
                             string errorMessage = "SQLite Exception: " + e.Message;
                             Log.Error(errorMessage);
-                            WriteToLogFile(errorMessage);
                         }
 
                         //sql = "Insert into dbo.conf_file_checksum (filename, filehash) values('" + workdir + "\\monlist.txt','" + mon_hash + "')";
@@ -737,7 +694,6 @@ namespace WinFIM.NET_Service
                         {
                             string errorMessage = "SQLite Exception: " + e.Message;
                             Log.Error(errorMessage);
-                            WriteToLogFile(errorMessage);
                         }
                     }
                     //dataReader.Close();
@@ -753,7 +709,6 @@ namespace WinFIM.NET_Service
                 //con = new System.Data.SqlClient.SqlConnection();
                 //con.ConnectionString = "Data Source=(LocalDB)\\MSSQLLocalDB;AttachDbFilename=\"" + dbfile + "\";Integrated Security=True";
                 Log.Error(e, e.Message);
-                WriteToLogFile(e.Message);
                 con = new SQLiteConnection(cs);
                 con.Open();
                 //sql = "DELETE FROM dbo.conf_file_checksum";
@@ -772,7 +727,6 @@ namespace WinFIM.NET_Service
                 {
                     string errorMessage = "SQLite Exception: " + e.Message;
                     Log.Error(errorMessage);
-                    WriteToLogFile(errorMessage);
                 }
                 command.Dispose();
                 con.Close();
@@ -793,7 +747,6 @@ namespace WinFIM.NET_Service
                     SQLiteHelper.InsertOrReplaceInMonListTable(cs, line, true);
                     message = $"{line} exists - adding to monlist table";
                     Log.Warning(message);
-                    WriteToLogFile(message);
                     eventLog1.WriteEntry(message, EventLogEntryType.Warning, 7776);
                 }
 
@@ -811,7 +764,6 @@ namespace WinFIM.NET_Service
                     SQLiteHelper.InsertOrReplaceInMonListTable(cs, line, false);
                     message = $"{line} does not exist";
                     Log.Warning(message);
-                    WriteToLogFile(message);
                     eventLog1.WriteEntry(message, EventLogEntryType.Warning, 7778);
                 }
 
@@ -820,7 +772,6 @@ namespace WinFIM.NET_Service
                     SQLiteHelper.InsertOrReplaceInMonListTable(cs, line, false);
                     message = $"{line} has been deleted";
                     Log.Warning(message);
-                    WriteToLogFile(message);
                     eventLog1.WriteEntry(message, EventLogEntryType.Warning, 7778);
                 }
                 else
@@ -888,7 +839,6 @@ namespace WinFIM.NET_Service
             {
                 string errorMessage = "Exception : " + e.Message + "\nPlease make sure local database file \"fimdb.db\" exists.";
                 Log.Error(errorMessage);
-                WriteToLogFile(errorMessage);
                 eventLog1.WriteEntry(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
                 return false;
             }
@@ -1101,7 +1051,6 @@ namespace WinFIM.NET_Service
                                 {
                                     string errorMessage = "SQLite Exception: " + e.Message;
                                     Log.Error(errorMessage);
-                                    WriteToLogFile(errorMessage);
                                 }
 
 
@@ -1125,7 +1074,6 @@ namespace WinFIM.NET_Service
                                 {
                                     message = "Directory :'" + s + "' is newly created.\nOwner: " + get_file_owner(s);
                                     Log.Warning(message);
-                                    WriteToLogFile(message);
                                     eventLog1.WriteEntry(message, EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
                                 }
                                 dataReader2.Close();
@@ -1149,7 +1097,6 @@ namespace WinFIM.NET_Service
                                 {
                                     string errorMessage = "SQLite Exception: " + e.Message;
                                     Log.Error(errorMessage);
-                                    WriteToLogFile(errorMessage);
                                 }
                             }
                             //WriteToLogFile(line_output);
@@ -1191,7 +1138,6 @@ namespace WinFIM.NET_Service
                                     {
                                         string errorMessage = "SQLite Exception: " + e.Message;
                                         Log.Error(errorMessage);
-                                        WriteToLogFile(errorMessage);
                                     }
 
                                     //compare with baseline_table
@@ -1234,7 +1180,6 @@ namespace WinFIM.NET_Service
                                             {
                                                 message = "File :'" + s + "' is modified. \nPrevious check at:" + dataReader2.GetValue(4).ToString() + "\nFile hash: (Previous)" + dataReader2.GetValue(3).ToString() + " (Current)" + temp_hash + "\nFile Size: (Previous)" + dataReader2.GetValue(1).ToString() + "MB (Current)" + get_file_size(s) + "MB\nFile Owner: (Previous)" + dataReader2.GetValue(2).ToString() + " (Current)" + get_file_owner(s);
                                                 Log.Warning(message);
-                                                WriteToLogFile(message);
                                                 eventLog1.WriteEntry(message, EventLogEntryType.Warning, 7777); //setting the Event ID as 7777
                                             }
                                             dataReader2.Close();
@@ -1244,7 +1189,6 @@ namespace WinFIM.NET_Service
                                     {
                                         message = "File :'" + s + "' is newly created.\nOwner: " + get_file_owner(s) + " Hash:" + temp_hash;
                                         Log.Warning(message);
-                                        WriteToLogFile(message);
                                         eventLog1.WriteEntry("File :'" + s + "' is newly created.\nOwner: " + get_file_owner(s) + " Hash:" + temp_hash, EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
                                     }
                                     dataReader2.Close();
@@ -1269,7 +1213,6 @@ namespace WinFIM.NET_Service
                                     {
                                         string errorMessage = "SQLite Exception: " + e.Message;
                                         Log.Error(errorMessage);
-                                        WriteToLogFile(errorMessage);
                                     }
                                 }
                                 //WriteToLogFile(line_output);
@@ -1311,7 +1254,6 @@ namespace WinFIM.NET_Service
                                         {
                                             message = "SQLite Exception: " + e.Message;
                                             Log.Error(message);
-                                            WriteToLogFile(message);
                                         }
 
                                         //compare with baseline_table
@@ -1354,7 +1296,6 @@ namespace WinFIM.NET_Service
                                                 {
                                                     message = "File :'" + s + "' is modified. Previous check at:" + dataReader2.GetValue(4).ToString() + "\nFile hash: (Previous)" + dataReader2.GetValue(3).ToString() + " (Current)" + temp_hash + "\nFile Size: (Previous)" + dataReader2.GetValue(1).ToString() + "MB (Current)" + get_file_size(s) + "MB\nFile Owner: (Previous)" + dataReader2.GetValue(2).ToString() + " (Current)" + get_file_owner(s);
                                                     Log.Warning(message);
-                                                    WriteToLogFile(message);
                                                     eventLog1.WriteEntry(message, EventLogEntryType.Warning, 7777); //setting the Event ID as 7777
                                                 }
                                                 dataReader2.Close();
@@ -1364,7 +1305,6 @@ namespace WinFIM.NET_Service
                                         {
                                             message = "File :'" + s + "' is newly created.\nOwner: " + get_file_owner(s) + " Hash:" + temp_hash;
                                             Log.Warning(message);
-                                            WriteToLogFile(message);
                                             eventLog1.WriteEntry(message, EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
                                         }
                                         dataReader2.Close();
@@ -1389,7 +1329,6 @@ namespace WinFIM.NET_Service
                                         {
                                             string errorMessage = "SQLite Exception: " + e.Message;
                                             Log.Error(errorMessage);
-                                            WriteToLogFile(errorMessage);
                                         }
                                     }
                                     //WriteToLogFile(line_output);
@@ -1419,7 +1358,6 @@ namespace WinFIM.NET_Service
                     {
                         output2 = dataReader2.GetValue(0).ToString();
                         string deleted_message = "The file / directory '" + output2 + "' is deleted.";
-                        WriteToLogFile(deleted_message);
                         eventLog1.WriteEntry(deleted_message, EventLogEntryType.Warning, 7778); //setting the Event ID as 7778
                     }
                     dataReader2.Close();
@@ -1441,7 +1379,6 @@ namespace WinFIM.NET_Service
                     {
                         string errorMessage = "SQLite Exception: " + e.Message;
                         Log.Error(errorMessage);
-                        WriteToLogFile(errorMessage);
                     }
 
                     //sql2 = "INSERT INTO dbo.baseline_table SELECT * FROM dbo.current_table";
@@ -1460,7 +1397,6 @@ namespace WinFIM.NET_Service
                     {
                         string errorMessage = "SQLite Exception: " + e.Message;
                         Log.Error(errorMessage);
-                        WriteToLogFile(errorMessage);
                     }
 
                     //sql2 = "DELETE FROM dbo.current_table WHERE filename IS NOT NULL";
@@ -1479,7 +1415,6 @@ namespace WinFIM.NET_Service
                     {
                         string errorMessage = "SQLite Exception: " + e.Message;
                         Log.Error(errorMessage);
-                        WriteToLogFile(errorMessage);
                     }
 
                 }
@@ -1501,7 +1436,6 @@ namespace WinFIM.NET_Service
             {
                 string errorMessage = "Exception : " + e.Message + "\nPlease make sure all input entries are correct under \"monlist.txt\", \"exclude_path.txt\" and \"exclude_extension.txt\".\nPlease restart the service after correction.";
                 Log.Error(errorMessage);
-                WriteToLogFile(errorMessage);
                 eventLog1.WriteEntry(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
                 return false;
             }

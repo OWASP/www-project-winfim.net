@@ -1,3 +1,10 @@
-C:\Windows\System32
-C:\Program Files
-C:\Program Files (x86)
+C:\autoexec.bat
+C:\boot.ini
+C:\config.sys
+C:\Program Files\Microsoft Security Client\msseces.exe
+C:\Windows\explorer.exe
+C:\Windows\regedit.exe
+C:\windows\system.ini
+C:\Windows\System32\userinit.exe
+C:\windows\win.ini
+C:\test
