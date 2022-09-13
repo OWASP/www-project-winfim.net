@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using Serilog;
+using System;
 using System.ServiceProcess;
-using System.Text;
-using System.Threading.Tasks;
-using Serilog;
 
 namespace WinFIM.NET_Service
 {
