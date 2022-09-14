@@ -819,7 +819,7 @@ namespace WinFIM.NET_Service
                 foreach (string s in finalFileList)
                 {
                     string message;
-                    Log.Verbose(s);
+                    Log.Verbose($"Checking file {s}");
                     try
                     {
                         string lineOutput;
@@ -1103,6 +1103,7 @@ namespace WinFIM.NET_Service
                     {
                         output2 = dataReader2.GetValue(0).ToString();
                         string deletedMessage = "The file / directory '" + output2 + "' is deleted.";
+                        Log.Warning(deletedMessage);
                         eventLog1.WriteEntry(deletedMessage, EventLogEntryType.Warning, 7778); //setting the Event ID as 7778
                     }
                     dataReader2.Close();

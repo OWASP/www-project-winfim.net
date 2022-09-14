@@ -60,11 +60,13 @@ Enjoy!
   - database type: SQLite version 3
 -Tables:
   - baseline_table
+    - Stores the details of paths that were checked in the previous run. At the end of the current run, the contents are deleted then copied from current_table
   - conf_file_checksum
-    - stores checksums for the config files, e.g. monlist.txt, exclude_extension.txt, exclude_path.txt, monlist.txt
+    - Stores checksums for the config files, e.g. monlist.txt, exclude_extension.txt, exclude_path.txt, monlist.txt
   - current_table
+    - Stores the details of the the paths as they are being being checked, so it can be checked against the file details in the baseline_table. The contents are deleted at the end of the current run
   - monlist
-    - stores information about paths in the monlist table - useful to check if a path in monlist.txt was deleted since the last run, created since the last run
+    - Stores information about paths in the monlist table - useful to check if a path in monlist.txt was deleted since the last run, created since the last run
 
  Cheers
  
