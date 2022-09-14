@@ -23,6 +23,8 @@ namespace WinFIM.NET_Service
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern int Wow64EnableWow64FsRedirection(ref IntPtr ptr);
 
+        private readonly string _workDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+
         public Service1()
         {
             InitializeComponent();
@@ -57,8 +59,7 @@ namespace WinFIM.NET_Service
             //Read if there is any valid schedule timer (in minute)
             Initialise();
             string serviceStartMessage;
-            string workDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-            string schedulerConf = workDir + "\\scheduler.txt";
+            string schedulerConf = _workDir + "\\scheduler.txt";
             int schedulerMin;
             try
             {
@@ -103,7 +104,6 @@ namespace WinFIM.NET_Service
                 }
             }
         }
-
 
         private void OnTimer(object sender, ElapsedEventArgs args)
         {
@@ -194,8 +194,7 @@ namespace WinFIM.NET_Service
         {
             try
             {
-                string workDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-                string extExcludeList = workDir + "\\exclude_extension.txt";
+                string extExcludeList = _workDir + "\\exclude_extension.txt";
                 string[] lines = File.ReadAllLines(extExcludeList);
                 lines = lines.Distinct().ToArray();
                 List<string> extName = new List<string>();
@@ -266,9 +265,8 @@ namespace WinFIM.NET_Service
 
         private void Initialise()
         {
-            string workDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             //using SQLite connection
-            string dbFile = workDir + "\\fimdb.db";
+            string dbFile = _workDir + "\\fimdb.db";
             string cs = @"URI=file:" + dbFile + ";PRAGMA journal_mode=WAL;";
 
             SQLiteHelper.EnsureDatabaseExists(dbFile);
@@ -281,9 +279,9 @@ namespace WinFIM.NET_Service
             try
             {
                 //create checksum for config files: exclude_extension.txt | exclude_path.txt | monlist.txt
-                exExtHash = BytesToString(GetHashSha256(workDir + "\\exclude_extension.txt"));
-                exPathHash = BytesToString(GetHashSha256(workDir + "\\exclude_path.txt"));
-                monHash = BytesToString(GetHashSha256(workDir + "\\monlist.txt"));
+                exExtHash = BytesToString(GetHashSha256(_workDir + "\\exclude_extension.txt"));
+                exPathHash = BytesToString(GetHashSha256(_workDir + "\\exclude_path.txt"));
+                monHash = BytesToString(GetHashSha256(_workDir + "\\monlist.txt"));
             }
             catch (Exception e)
             {
@@ -360,7 +358,7 @@ namespace WinFIM.NET_Service
                     }
 
                     //insert the current hash to DB
-                    sql = "Insert into conf_file_checksum (filename, filehash) values('" + workDir + "\\exclude_extension.txt','" + exExtHash + "')";
+                    sql = "INSERT INTO conf_file_checksum (filename, filehash) VALUES ('" + _workDir + "\\exclude_extension.txt','" + exExtHash + "')";
                     Log.Verbose(sql);
                     command = new SQLiteCommand(sql, con);
                     try
@@ -374,7 +372,7 @@ namespace WinFIM.NET_Service
                         Log.Error(errorMessage);
                     }
 
-                    sql = "Insert into conf_file_checksum (filename, filehash) values('" + workDir + "\\exclude_path.txt','" + exPathHash + "')";
+                    sql = "INSERT INTO conf_file_checksum (filename, filehash) VALUES ('" + _workDir + "\\exclude_path.txt','" + exPathHash + "')";
                     Log.Verbose(sql);
                     command = new SQLiteCommand(sql, con);
                     try
@@ -388,7 +386,7 @@ namespace WinFIM.NET_Service
                         Log.Error(errorMessage);
                     }
 
-                    sql = "Insert into conf_file_checksum (filename, filehash) values('" + workDir + "\\monlist.txt','" + monHash + "')";
+                    sql = "INSERT INTO conf_file_checksum (filename, filehash) VALUES ('" + _workDir + "\\monlist.txt','" + monHash + "')";
                     Log.Verbose(sql);
                     command = new SQLiteCommand(sql, con);
                     try
@@ -410,7 +408,7 @@ namespace WinFIM.NET_Service
                     //else compare the checksum, if difference, store the new checksum into DB, and empty both baseline_table and current_table
                     int count = 0;
 
-                    sql = "SELECT filehash FROM conf_file_checksum WHERE filename='" + workDir + "\\exclude_extension.txt" + "'";
+                    sql = "SELECT filehash FROM conf_file_checksum WHERE filename='" + _workDir + "\\exclude_extension.txt" + "'";
                     command = new SQLiteCommand(sql, con);
                     dataReader = command.ExecuteReader();
                     if (dataReader.Read())
@@ -423,7 +421,7 @@ namespace WinFIM.NET_Service
                         }
                     }
 
-                    sql = "SELECT filehash FROM conf_file_checksum WHERE filename='" + workDir + "\\exclude_path.txt" + "'";
+                    sql = "SELECT filehash FROM conf_file_checksum WHERE filename='" + _workDir + "\\exclude_path.txt" + "'";
                     command = new SQLiteCommand(sql, con);
                     dataReader = command.ExecuteReader();
                     if (dataReader.Read())
@@ -436,7 +434,7 @@ namespace WinFIM.NET_Service
                         }
                     }
 
-                    sql = "SELECT filehash FROM conf_file_checksum WHERE filename='" + workDir + "\\monlist.txt" + "'";
+                    sql = "SELECT filehash FROM conf_file_checksum WHERE filename='" + _workDir + "\\monlist.txt" + "'";
                     command = new SQLiteCommand(sql, con);
                     dataReader = command.ExecuteReader();
                     if (dataReader.Read())
@@ -501,7 +499,7 @@ namespace WinFIM.NET_Service
                         }
 
                         //insert the current hash to DB
-                        sql = "Insert into conf_file_checksum (filename, filehash) values('" + workDir + "\\exclude_extension.txt','" + exExtHash + "')";
+                        sql = "INSERT INTO conf_file_checksum (filename, filehash) VALUES ('" + _workDir + "\\exclude_extension.txt','" + exExtHash + "')";
                         Log.Verbose(sql);
                         command = new SQLiteCommand(sql, con);
                         try
@@ -515,7 +513,7 @@ namespace WinFIM.NET_Service
                             Log.Error(errorMessage);
                         }
 
-                        sql = "Insert into conf_file_checksum (filename, filehash) values('" + workDir + "\\exclude_path.txt','" + exPathHash + "')";
+                        sql = "INSERT INTO conf_file_checksum (filename, filehash) VALUES ('" + _workDir + "\\exclude_path.txt','" + exPathHash + "')";
                         Log.Verbose(sql);
                         command = new SQLiteCommand(sql, con);
                         try
@@ -529,7 +527,7 @@ namespace WinFIM.NET_Service
                             Log.Error(errorMessage);
                         }
 
-                        sql = "Insert into conf_file_checksum (filename, filehash) values('" + workDir + "\\monlist.txt','" + monHash + "')";
+                        sql = "INSERT INTO conf_file_checksum (filename, filehash) VALUES ('" + _workDir + "\\monlist.txt','" + monHash + "')";
                         Log.Verbose(sql);
                         command = new SQLiteCommand(sql, con);
                         try
@@ -573,42 +571,45 @@ namespace WinFIM.NET_Service
 
         }
 
-        private bool CheckIfMonListBasePathExists(string cs, string line)
+        private bool CheckIfBasePathExists(string cs, string line)
         {
-            string message;
+            string sql = $"SELECT pathexists FROM monlist WHERE pathname = '{line}'";
             if (Directory.Exists(line) || File.Exists(line))
             {
-                string ret = SQLiteHelper.QueryMonListTable(cs, line);
+                string output = SQLiteHelper.Query(cs, sql);
                 //if base path doesn't exist in SQLite table monlist
-                if (string.IsNullOrEmpty(ret))
+                if (string.IsNullOrEmpty(output))
                 {
-                    SQLiteHelper.InsertOrReplaceInMonListTable(cs, line, true);
-                    message = $"{line} exists - adding to monlist table";
+                    sql = $"INSERT OR REPLACE INTO monlist(pathname, pathexists, checktime) VALUES ('{line}', true, '{DateTime.UtcNow:M/d/yyyy hh:mm:ss tt}')";
+                    SQLiteHelper.NonQuery(cs, sql);
+                    string message = $"Base Path {line} exists - adding to monlist table";
                     Log.Warning(message);
                     eventLog1.WriteEntry(message, EventLogEntryType.Warning, 7776);
                 }
 
-                else if (ret == "True")
+                else if (output == "True")
                 {
-                    Log.Debug($"{line} still exists");
+                    Log.Debug($"Base path {line} still exists");
                 }
                 return true;
             }
             else
             {
-                string ret = SQLiteHelper.QueryMonListTable(cs, line);
-                if (string.IsNullOrEmpty(ret))
+                string output = SQLiteHelper.Query(cs, sql);
+                if (string.IsNullOrEmpty(output))
                 {
-                    SQLiteHelper.InsertOrReplaceInMonListTable(cs, line, false);
-                    message = $"{line} does not exist";
+                    sql = $"INSERT OR REPLACE INTO monlist(pathname, pathexists, checktime) VALUES ('{line}', false, '{DateTime.UtcNow:M/d/yyyy hh:mm:ss tt}')";
+                    SQLiteHelper.NonQuery(cs, sql);
+                    string message = $"{line} does not exist";
                     Log.Warning(message);
                     eventLog1.WriteEntry(message, EventLogEntryType.Warning, 7778);
                 }
 
-                else if (ret == "True")
+                else if (output == "True")
                 {
-                    SQLiteHelper.InsertOrReplaceInMonListTable(cs, line, false);
-                    message = $"{line} has been deleted";
+                    sql = $"INSERT OR REPLACE INTO monlist(pathname, pathexists, checktime) VALUES ('{line}', false, '{DateTime.UtcNow:M/d/yyyy hh:mm:ss tt}')";
+                    SQLiteHelper.NonQuery(cs, sql);
+                    string message = $"{line} has been deleted";
                     Log.Warning(message);
                     eventLog1.WriteEntry(message, EventLogEntryType.Warning, 7778);
                 }
@@ -623,31 +624,15 @@ namespace WinFIM.NET_Service
         //function for file integrity checking
         private bool FileIntegrityCheck()
         {
-            string workDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+            string dbFile = _workDir + "\\fimdb.db";
+            string connectionString = @"URI=file:" + dbFile + ";PRAGMA journal_mode=WAL;";
 
-            string dbFile = workDir + "\\fimdb.db";
-            string cs = @"URI=file:" + dbFile + ";PRAGMA journal_mode=WAL;";
-
-            SQLiteConnection con = new SQLiteConnection(cs);
-
-            SQLiteCommand command;
-
-            string sql, output = "";
             bool haveBaseline;
+            string output;
             try
             {
-                con.Open();
-                //check if the baseline table is empty (If count is 0 then the table is empty.)
-                sql = "SELECT COUNT(*) FROM baseline_table";
-                Log.Verbose(sql);
-                command = new SQLiteCommand(sql, con);
-                SQLiteDataReader dataReader = command.ExecuteReader();
-                if (dataReader.Read())
-                {
-                    output = dataReader.GetValue(0).ToString();
-                }
-                dataReader.Close();
-
+                string sql = "SELECT COUNT(*) FROM baseline_table";
+                output = SQLiteHelper.Query(connectionString, sql);
                 haveBaseline = !output.Equals("0");
             }
             catch (Exception e)
@@ -670,7 +655,7 @@ namespace WinFIM.NET_Service
             watch.Start();
 
             //read the monitoring list (line by line)
-            string monList = workDir + "\\monlist.txt";
+            string monList = _workDir + "\\monlist.txt";
             string[] lines;
             try
             {
@@ -697,7 +682,7 @@ namespace WinFIM.NET_Service
                     {
                         continue;
                     }
-                    if (!(CheckIfMonListBasePathExists(cs, line)))
+                    if (!(CheckIfBasePathExists(connectionString, line)))
                     {
                         continue;
                     }
@@ -734,7 +719,7 @@ namespace WinFIM.NET_Service
                 Log.Verbose(fileList);
 
                 //read the exclude list (line by line)
-                string excludeList = workDir + "\\exclude_path.txt";
+                string excludeList = _workDir + "\\exclude_path.txt";
                 try
                 {
                     lines = File.ReadAllLines(excludeList);
@@ -824,7 +809,7 @@ namespace WinFIM.NET_Service
                 //This is for debug purpose to test checksum output
 
                 //setup another DB connection to access the baseline_table
-                SQLiteConnection con2 = new SQLiteConnection(cs);
+                SQLiteConnection con2 = new SQLiteConnection(connectionString);
                 SQLiteCommand command2;
                 SQLiteDataReader dataReader2;
                 string sql2;
@@ -848,13 +833,11 @@ namespace WinFIM.NET_Service
                             //if there is content in baseline_table before, write to current_table
                             if (haveBaseline)
                             {
-                                sql = "Insert into current_table (filename, filesize, fileowner, checktime, filehash, filetype) values('" + s + "',0,'" + GetFileOwner(s) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','NA','Directory')";
+                                string sql = "INSERT INTO current_table (filename, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + s + "',0,'" + GetFileOwner(s) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','NA','Directory')";
                                 Log.Verbose(sql);
-                                command = new SQLiteCommand(sql, con);
                                 try
                                 {
-                                    command.ExecuteNonQuery();
-                                    command.Dispose();
+                                    SQLiteHelper.NonQuery(connectionString,sql);
                                 }
                                 catch (Exception e)
                                 {
@@ -888,13 +871,11 @@ namespace WinFIM.NET_Service
                             //if there is no content in baseline_table, write to baseline_table instead
                             else
                             {
-                                sql = "Insert into baseline_table (filename, filesize, fileowner, checktime, filehash, filetype) values('" + s + "',0,'" + GetFileOwner(s) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','NA','Directory')";
+                                string sql = "INSERT INTO baseline_table (filename, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + s + "',0,'" + GetFileOwner(s) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','NA','Directory')";
                                 Log.Verbose(sql);
-                                command = new SQLiteCommand(sql, con);
                                 try
                                 {
-                                    command.ExecuteNonQuery();
-                                    command.Dispose();
+                                    SQLiteHelper.Query(connectionString, sql);
                                 }
                                 catch (Exception e)
                                 {
@@ -926,13 +907,11 @@ namespace WinFIM.NET_Service
                                 //if there is content in baseline_table before, write to current_table
                                 if (haveBaseline)
                                 {
-                                    sql = "Insert into current_table (filename, filesize, fileowner, checktime, filehash, filetype) values('" + s + "','" + GetFileSize(s) + "','" + GetFileOwner(s) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
+                                    string sql = "INSERT INTO current_table (filename, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + s + "','" + GetFileSize(s) + "','" + GetFileOwner(s) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
                                     Log.Verbose(sql);
-                                    command = new SQLiteCommand(sql, con);
                                     try
                                     {
-                                        command.ExecuteNonQuery();
-                                        command.Dispose();
+                                        SQLiteHelper.NonQuery(connectionString, sql);
                                     }
                                     catch (Exception e)
                                     {
@@ -991,13 +970,11 @@ namespace WinFIM.NET_Service
                                 //if there is no content in baseline_table, write to baseline_table instead
                                 else
                                 {
-                                    sql = "Insert into baseline_table (filename, filesize, fileowner, checktime, filehash, filetype) values('" + s + "'," + GetFileSize(s) + ",'" + GetFileOwner(s) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
+                                    string sql = "INSERT INTO baseline_table (filename, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + s + "'," + GetFileSize(s) + ",'" + GetFileOwner(s) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
                                     Log.Verbose(sql);
-                                    command = new SQLiteCommand(sql, con);
                                     try
                                     {
-                                        command.ExecuteNonQuery();
-                                        command.Dispose();
+                                        SQLiteHelper.NonQuery(connectionString, sql);
                                     }
                                     catch (Exception e)
                                     {
@@ -1028,13 +1005,11 @@ namespace WinFIM.NET_Service
                                     lineOutput = s + " | File | " + " file size = " + GetFileSize(s) + " | files owner = " + GetFileOwner(s) + " | file hash = " + tempHash;
                                     if (haveBaseline)
                                     {
-                                        sql = "Insert into current_table (filename, filesize, fileowner, checktime, filehash, filetype) values('" + s + "'," + GetFileSize(s) + ",'" + GetFileOwner(s) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
+                                        string sql = "INSERT INTO current_table (filename, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + s + "'," + GetFileSize(s) + ",'" + GetFileOwner(s) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
                                         Log.Verbose(sql);
-                                        command = new SQLiteCommand(sql, con);
                                         try
                                         {
-                                            command.ExecuteNonQuery();
-                                            command.Dispose();
+                                            SQLiteHelper.NonQuery(connectionString, sql);
                                         }
                                         catch (Exception e)
                                         {
@@ -1093,12 +1068,10 @@ namespace WinFIM.NET_Service
                                     //if there is no content in baseline_table, write to baseline_table instead
                                     else
                                     {
-                                        sql = "Insert into baseline_table (filename, filesize, fileowner, checktime, filehash, filetype) values('" + s + "'," + GetFileSize(s) + ",'" + GetFileOwner(s) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
-                                        command = new SQLiteCommand(sql, con);
+                                        string sql = "INSERT INTO baseline_table (filename, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + s + "'," + GetFileSize(s) + ",'" + GetFileOwner(s) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
                                         try
                                         {
-                                            command.ExecuteNonQuery();
-                                            command.Dispose();
+                                            SQLiteHelper.NonQuery(connectionString, sql);
                                         }
                                         catch (Exception e)
                                         {
@@ -1176,9 +1149,7 @@ namespace WinFIM.NET_Service
                 }
 
                 //local database close connection
-                command.Dispose();
                 con2.Close();
-                con.Close();
 
                 watch.Stop();
                 string stopMessage = "Total time consumed in this round file integrity checking  = " + watch.ElapsedMilliseconds + "ms (" + Math.Round(Convert.ToDouble(watch.ElapsedMilliseconds) / 1000, 3).ToString(CultureInfo.InvariantCulture) + "s).\n" + GetRemoteConnections();
@@ -1197,6 +1168,5 @@ namespace WinFIM.NET_Service
             }
 
         }
-
     }
 }

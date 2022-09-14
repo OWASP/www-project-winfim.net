@@ -1,6 +1,7 @@
 ﻿using Serilog;
 using System;
 using System.Data.SQLite;
+using System.Diagnostics;
 using System.IO;
 
 namespace WinFIM.NET_Service
@@ -33,7 +34,7 @@ namespace WinFIM.NET_Service
                     {
                         Log.Debug("Creating SQlite table baseline_table if it doesn't exist...");
                         command.CommandText = @"
-                            create table if not exists baseline_table (
+                            CREATE TABLE IF NOT EXISTS baseline_table (
                                 filename  TEXT NOT NULL,
                                 filesize  INT,
                                 fileowner TEXT NOT NULL,
@@ -46,7 +47,7 @@ namespace WinFIM.NET_Service
 
                         Log.Debug("Creating SQlite table conf_file_checksum if it doesn't exist...");
                         command.CommandText = @"
-                            create table if not exists conf_file_checksum (
+                            CREATE TABLE IF NOT EXISTS conf_file_checksum (
                                 filename TEXT NOT NULL,
                                 filehash TEXT
                             );
@@ -55,7 +56,7 @@ namespace WinFIM.NET_Service
 
                         Log.Debug("Creating SQlite table current_table if it doesn't exist...");
                         command.CommandText = @"
-                            create table if not exists current_table (
+                            CREATE TABLE IF NOT EXISTS current_table (
                                 filename  TEXT NOT NULL,
                                 filesize  INT,
                                 fileowner TEXT NOT NULL,
@@ -68,7 +69,7 @@ namespace WinFIM.NET_Service
 
                         Log.Debug("Creating SQlite table monlist if it doesn't exist...");
                         command.CommandText = @"
-                            create table if not exists monlist (
+                            CREATE TABLE IF NOT EXISTS monlist (
                                 pathname TEXT PRIMARY KEY,
                                 pathexists BOOLEAN  CHECK (pathexists IN (0, 1)) NOT NULL,
                                 checktime TEXT NOT NULL
@@ -85,8 +86,7 @@ namespace WinFIM.NET_Service
             }
         }
 
-
-        internal static void InsertOrReplaceInMonListTable(string connectionString, string pathName, bool pathExists)
+        internal static void NonQuery(string connectionString, string sql)
         // To test SQL table population
         {
             using (SQLiteConnection connection = new SQLiteConnection(connectionString))
@@ -96,18 +96,16 @@ namespace WinFIM.NET_Service
                     connection.Open();
                     using (SQLiteCommand command = new SQLiteCommand(connection))
                     {
-                        Log.Information($"Inserting path {pathName}, exists:{pathExists} into SQLite table monlist...");
-                        command.Parameters.Add("@pathName", System.Data.DbType.String).Value = pathName;
-                        command.Parameters.Add("@pathExists", System.Data.DbType.Boolean).Value = pathExists;
-                        command.Parameters.Add("@checkTime", System.Data.DbType.String).Value = DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt");
-                        command.CommandText = @"insert or replace into monlist (pathname, pathexists, checktime) values (@pathName, @pathExists, @checkTime);";
+                        Log.Verbose($"Running NonQuery {sql}");
+                        command.CommandText = sql;
                         command.ExecuteNonQuery();
                     }
                 }
                 catch (Exception e)
                 {
-                    string errorMessage = $"Error inserting/replacing row in monlist table";
+                    string errorMessage = $"Error running NonQuery {sql}";
                     Log.Error(e, errorMessage);
+                    throw;
                 }
                 finally
                 {
@@ -115,8 +113,8 @@ namespace WinFIM.NET_Service
                 }
             }
         }
-        internal static string QueryMonListTable(string connectionString, string pathName)
-        // Run an SQL query on a table
+
+        internal static string Query(string connectionString, string sql)
         {
             string output = string.Empty;
             using (SQLiteConnection connection = new SQLiteConnection(connectionString))
@@ -126,9 +124,8 @@ namespace WinFIM.NET_Service
                     connection.Open();
                     using (SQLiteCommand command = new SQLiteCommand(connection))
                     {
-                        Log.Debug($"Querying table monlist for pathName {pathName}... ");
-                        command.Parameters.Add("@pathname", System.Data.DbType.String).Value = pathName;
-                        command.CommandText = "select pathexists from monlist where pathname = @pathName";
+                        Log.Debug($"Querying {sql}... ");
+                        command.CommandText = sql;
                         using (SQLiteDataReader reader = command.ExecuteReader())
                         {
                             while (reader.Read())
@@ -140,8 +137,9 @@ namespace WinFIM.NET_Service
                 }
                 catch (Exception e)
                 {
-                    string errorMessage = $"Error Querying monlist table";
+                    string errorMessage = $"Error running query {sql}";
                     Log.Error(e, errorMessage);
+                    throw;
                 }
                 finally
                 {
