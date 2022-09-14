@@ -4,12 +4,12 @@ using System.ServiceProcess;
 
 namespace WinFIM.NET_Service
 {
-    static class Program
+    internal static class Program
     {
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
-        static void Main()
+        private static void Main()
         {
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.AppSettings()
@@ -21,19 +21,18 @@ namespace WinFIM.NET_Service
                 using (Service1 service1 = new Service1())
                 {
                     Log.Debug(("Running in console app mode"));
-                    service1.TestStartupAndStop(null);
+                    service1.TestStartupAndStop();
                     Log.Debug(("Exiting"));
                 }
             }
             else
             {
                 // Startup as service
-                ServiceBase[] ServicesToRun;
-                ServicesToRun = new ServiceBase[]
+                ServiceBase[] servicesToRun = new ServiceBase[]
                 {
                     new Service1()
                 };
-                ServiceBase.Run(ServicesToRun);
+                ServiceBase.Run(servicesToRun);
 
             }
         }

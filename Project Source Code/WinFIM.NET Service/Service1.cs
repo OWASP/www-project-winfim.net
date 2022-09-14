@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Diagnostics;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -25,18 +26,17 @@ namespace WinFIM.NET_Service
         public Service1()
         {
             InitializeComponent();
-            eventLog1 = new System.Diagnostics.EventLog();
-            if (!System.Diagnostics.EventLog.SourceExists("WinFIM.NET"))
+            eventLog1 = new EventLog();
+            if (!EventLog.SourceExists("WinFIM.NET"))
             {
-                System.Diagnostics.EventLog.CreateEventSource(
-                    "WinFIM.NET", "WinFIM.NET");
+                EventLog.CreateEventSource("WinFIM.NET", "WinFIM.NET");
             }
             eventLog1.Source = "WinFIM.NET";
             eventLog1.Log = "WinFIM.NET";
         }
 
         // runs as a console application if a user interactively runs the "WinFIM.NET Service.exe" executable
-        internal void TestStartupAndStop(string[] args)
+        internal void TestStartupAndStop()
         {
             ServiceStart();
             this.OnStop();
@@ -44,9 +44,11 @@ namespace WinFIM.NET_Service
 
         protected override void OnStart(string[] args)
         {
-            Thread myThread = new Thread(new ThreadStart(ServiceStart));
-            myThread.Name = "Worker Thread";
-            myThread.IsBackground = true;
+            Thread myThread = new Thread(ServiceStart)
+            {
+                Name = "Worker Thread",
+                IsBackground = true
+            };
             myThread.Start();
         }
 
@@ -55,14 +57,14 @@ namespace WinFIM.NET_Service
             //Read if there is any valid schedule timer (in minute)
             Initialise();
             string serviceStartMessage;
-            string workDir = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            string workDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             string schedulerConf = workDir + "\\scheduler.txt";
-            int schedulerMin = 0;
+            int schedulerMin;
             try
             {
-                string timer_minute = File.ReadLines(schedulerConf).First();
-                timer_minute = timer_minute.Trim();
-                schedulerMin = Convert.ToInt32(timer_minute);
+                string timerMinute = File.ReadLines(schedulerConf).First();
+                timerMinute = timerMinute.Trim();
+                schedulerMin = Convert.ToInt32(timerMinute);
             }
             catch (IOException e)
             {
@@ -75,9 +77,11 @@ namespace WinFIM.NET_Service
             if (schedulerMin > 0)
             //using timer mode
             {
-                System.Timers.Timer timer = new System.Timers.Timer();
-                timer.Interval = schedulerMin * 60000; // control the service to run every pre-defined minutes
-                timer.Elapsed += new ElapsedEventHandler(this.OnTimer);
+                System.Timers.Timer timer = new System.Timers.Timer
+                {
+                    Interval = schedulerMin * 60000 // control the service to run every pre-defined minutes
+                };
+                timer.Elapsed += OnTimer;
                 timer.Start();
                 serviceStartMessage = Properties.Settings.Default.service_start_message + ": (UTC) " + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "\n\n";
                 serviceStartMessage = serviceStartMessage + GetRemoteConnections() + "\nThis service will run every " + schedulerMin.ToString() + " minute(s).";
@@ -92,10 +96,10 @@ namespace WinFIM.NET_Service
                 serviceStartMessage = serviceStartMessage + GetRemoteConnections() + "\nThis service will run continuously.";
                 Log.Debug(serviceStartMessage);
                 eventLog1.WriteEntry(serviceStartMessage, EventLogEntryType.Information, 7771); //setting the Event ID as 7771
-                bool tracker_boolean = true;
-                while (tracker_boolean)
+                bool trackerBoolean = true;
+                while (trackerBoolean)
                 {
-                    tracker_boolean = FileIntegrityCheck();
+                    trackerBoolean = FileIntegrityCheck();
                 }
             }
         }
@@ -108,10 +112,10 @@ namespace WinFIM.NET_Service
 
         protected override void OnStop()
         {
-            string service_stop_message = Properties.Settings.Default.service_stop_message + ": (UTC) " + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "\n\n";
-            service_stop_message = service_stop_message + GetRemoteConnections() + "\n";
-            Log.Information(service_stop_message);
-            eventLog1.WriteEntry(service_stop_message, EventLogEntryType.Information, 7770); //setting the Event ID as 7770
+            string serviceStopMessage = Properties.Settings.Default.service_stop_message + ": (UTC) " + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "\n\n";
+            serviceStopMessage = serviceStopMessage + GetRemoteConnections() + "\n";
+            Log.Information(serviceStopMessage);
+            eventLog1.WriteEntry(serviceStopMessage, EventLogEntryType.Information, 7770); //setting the Event ID as 7770
         }
 
         //other functions
@@ -125,7 +129,7 @@ namespace WinFIM.NET_Service
                 using (Process process = new Process())
                 {
                     IntPtr val = IntPtr.Zero;
-                    Wow64DisableWow64FsRedirection(ref val);
+                    _ = Wow64DisableWow64FsRedirection(ref val);
                     process.StartInfo.FileName = @"cmd.exe";
                     process.StartInfo.Arguments = "/c \"@echo off & @for /f \"tokens=1,2,3,4,5\" %A in ('netstat -ano ^| findstr ESTABLISHED ^| findstr /v 127.0.0.1') do (@for /f \"tokens=1,2,5\" %F in ('qprocess \"%E\"') do (@IF NOT %H==IMAGE @echo %A , %B , %C , %D , %E , %F , %G , %H))\"";
                     process.StartInfo.CreateNoWindow = true;
@@ -135,10 +139,10 @@ namespace WinFIM.NET_Service
                     // Synchronously read the standard output of the spawned process. 
                     output = "Established Remote Connection (snapshot)" + "\n";
                     output = output + "========================================" + "\n" + "Proto | Local Address | Foreign Address | State | PID | USERNAME | SESSION NAME | IMAGE\n";
-                    output = output + process.StandardOutput.ReadToEnd();
+                    output += process.StandardOutput.ReadToEnd();
                     Log.Verbose(output);
                     process.WaitForExit();
-                    Wow64EnableWow64FsRedirection(ref val);
+                    _ = Wow64EnableWow64FsRedirection(ref val);
                     return output;
                 }
 
@@ -157,8 +161,8 @@ namespace WinFIM.NET_Service
         {
             try
             {
-                string file_owner = System.IO.File.GetAccessControl(path).GetOwner(typeof(System.Security.Principal.NTAccount)).ToString();
-                return file_owner;
+                string fileOwner = File.GetAccessControl(path).GetOwner(typeof(System.Security.Principal.NTAccount)).ToString();
+                return fileOwner;
             }
             catch (Exception e)
             {
@@ -173,8 +177,8 @@ namespace WinFIM.NET_Service
         {
             try
             {
-                long length = new System.IO.FileInfo(path).Length;
-                return Math.Round(Convert.ToDouble(length) / 1024 / 1024, 3).ToString();
+                long length = new FileInfo(path).Length;
+                return Math.Round(Convert.ToDouble(length) / 1024 / 1024, 3).ToString(CultureInfo.InvariantCulture);
             }
             catch (Exception e)
             {
@@ -190,32 +194,35 @@ namespace WinFIM.NET_Service
         {
             try
             {
-                string workDir = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+                string workDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
                 string extExcludeList = workDir + "\\exclude_extension.txt";
                 string[] lines = File.ReadAllLines(extExcludeList);
                 lines = lines.Distinct().ToArray();
-                List<string> extName = new List<string>() { };
+                List<string> extName = new List<string>();
 
-                foreach (string line in lines) if (!string.IsNullOrWhiteSpace(line))
+                foreach (string line in lines)
+                {
+                    if (string.IsNullOrWhiteSpace(line))
                     {
-                        string temp = "";
-                        temp = line.TrimEnd('\r', '\n');
-
-                        var match = Regex.Match(temp, @"/^[a-zA-Z0-9-_]+$/", RegexOptions.IgnoreCase);
-                        //if the file extension does not match the exclusion
-                        if (!match.Success)
-                        {
-                            Log.Verbose("Regex success: " + temp);
-                            temp = "[.]" + temp;
-                            extName.Add(temp);
-                        }
-                        else
-                        {
-                            string errorMessage = "Extension \"" + temp + "\" is invalid, file extension should be alphanumeric and '_' + '-' only.";
-                            Log.Error(errorMessage);
-                            eventLog1.WriteEntry(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
-                        }
+                        continue;
                     }
+                    string temp = line.TrimEnd('\r', '\n');
+
+                    var match = Regex.Match(temp, @"/^[a-zA-Z0-9-_]+$/", RegexOptions.IgnoreCase);
+                    //if the file extension does not match the exclusion
+                    if (!match.Success)
+                    {
+                        Log.Verbose("Regex success: " + temp);
+                        temp = "[.]" + temp;
+                        extName.Add(temp);
+                    }
+                    else
+                    {
+                        string errorMessage = "Extension \"" + temp + "\" is invalid, file extension should be alphanumeric and '_' + '-' only.";
+                        Log.Error(errorMessage);
+                        eventLog1.WriteEntry(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                    }
+                }
 
                 bool isEmpty = !extName.Any();
                 if (isEmpty)
@@ -244,9 +251,9 @@ namespace WinFIM.NET_Service
 
             Stream stream = new FileStream(filename, FileMode.Open, FileAccess.Read,
                         FileShare.ReadWrite);
-            byte[] temp_result = _sha256.ComputeHash(stream);
+            byte[] tempResult = _sha256.ComputeHash(stream);
             stream.Close();
-            return temp_result;
+            return tempResult;
         }
 
         // Return a byte array as a sequence of hex values.
@@ -259,7 +266,7 @@ namespace WinFIM.NET_Service
 
         private void Initialise()
         {
-            string workDir = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            string workDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
             //using SQLite connection
             string dbFile = workDir + "\\fimdb.db";
             string cs = @"URI=file:" + dbFile + ";PRAGMA journal_mode=WAL;";
@@ -267,16 +274,16 @@ namespace WinFIM.NET_Service
             SQLiteHelper.EnsureDatabaseExists(dbFile);
             SQLiteHelper.EnsureTablesExist(cs);
 
-            string ex_ext_hash = "";
-            string ex_path_hash = "";
-            string mon_hash = "";
+            string exExtHash = "";
+            string exPathHash = "";
+            string monHash = "";
 
             try
             {
                 //create checksum for config files: exclude_extension.txt | exclude_path.txt | monlist.txt
-                ex_ext_hash = BytesToString(GetHashSha256(workDir + "\\exclude_extension.txt"));
-                ex_path_hash = BytesToString(GetHashSha256(workDir + "\\exclude_path.txt"));
-                mon_hash = BytesToString(GetHashSha256(workDir + "\\monlist.txt"));
+                exExtHash = BytesToString(GetHashSha256(workDir + "\\exclude_extension.txt"));
+                exPathHash = BytesToString(GetHashSha256(workDir + "\\exclude_path.txt"));
+                monHash = BytesToString(GetHashSha256(workDir + "\\monlist.txt"));
             }
             catch (Exception e)
             {
@@ -294,7 +301,6 @@ namespace WinFIM.NET_Service
             SQLiteCommand command;
             try
             {
-                SQLiteDataReader dataReader;
                 //SQLite connection
                 con = new SQLiteConnection(cs);
 
@@ -303,7 +309,7 @@ namespace WinFIM.NET_Service
                 sql = "SELECT COUNT(*) FROM conf_file_checksum";
                 Log.Verbose(sql);
                 command = new SQLiteCommand(sql, con);
-                dataReader = command.ExecuteReader();
+                SQLiteDataReader dataReader = command.ExecuteReader();
                 if (dataReader.Read())
                 {
                     output = dataReader.GetValue(0).ToString();
@@ -354,7 +360,7 @@ namespace WinFIM.NET_Service
                     }
 
                     //insert the current hash to DB
-                    sql = "Insert into conf_file_checksum (filename, filehash) values('" + workDir + "\\exclude_extension.txt','" + ex_ext_hash + "')";
+                    sql = "Insert into conf_file_checksum (filename, filehash) values('" + workDir + "\\exclude_extension.txt','" + exExtHash + "')";
                     Log.Verbose(sql);
                     command = new SQLiteCommand(sql, con);
                     try
@@ -368,7 +374,7 @@ namespace WinFIM.NET_Service
                         Log.Error(errorMessage);
                     }
 
-                    sql = "Insert into conf_file_checksum (filename, filehash) values('" + workDir + "\\exclude_path.txt','" + ex_path_hash + "')";
+                    sql = "Insert into conf_file_checksum (filename, filehash) values('" + workDir + "\\exclude_path.txt','" + exPathHash + "')";
                     Log.Verbose(sql);
                     command = new SQLiteCommand(sql, con);
                     try
@@ -382,7 +388,7 @@ namespace WinFIM.NET_Service
                         Log.Error(errorMessage);
                     }
 
-                    sql = "Insert into conf_file_checksum (filename, filehash) values('" + workDir + "\\monlist.txt','" + mon_hash + "')";
+                    sql = "Insert into conf_file_checksum (filename, filehash) values('" + workDir + "\\monlist.txt','" + monHash + "')";
                     Log.Verbose(sql);
                     command = new SQLiteCommand(sql, con);
                     try
@@ -402,7 +408,7 @@ namespace WinFIM.NET_Service
                 else
                 {
                     //else compare the checksum, if difference, store the new checksum into DB, and empty both baseline_table and current_table
-                    int temp_count = 0;
+                    int count = 0;
 
                     sql = "SELECT filehash FROM conf_file_checksum WHERE filename='" + workDir + "\\exclude_extension.txt" + "'";
                     command = new SQLiteCommand(sql, con);
@@ -411,9 +417,9 @@ namespace WinFIM.NET_Service
                     {
                         output = dataReader.GetValue(0).ToString();
                         dataReader.Close();
-                        if (output.Equals(ex_ext_hash))
+                        if (output.Equals(exExtHash))
                         {
-                            temp_count = temp_count + 1;
+                            count++;
                         }
                     }
 
@@ -424,9 +430,9 @@ namespace WinFIM.NET_Service
                     {
                         output = dataReader.GetValue(0).ToString();
                         dataReader.Close();
-                        if (output.Equals(ex_path_hash))
+                        if (output.Equals(exPathHash))
                         {
-                            temp_count = temp_count + 1;
+                            count++;
                         }
                     }
 
@@ -437,15 +443,15 @@ namespace WinFIM.NET_Service
                     {
                         output = dataReader.GetValue(0).ToString();
                         dataReader.Close();
-                        if (output.Equals(mon_hash))
+                        if (output.Equals(monHash))
                         {
-                            temp_count = temp_count + 1;
+                            count++;
                         }
                     }
-                    Log.Verbose("Temp Same Count: " + temp_count.ToString());
+                    Log.Verbose("Temp Same Count: " + count.ToString());
 
                     //if all hashes are the same
-                    if (temp_count == 3)
+                    if (count == 3)
                     {
                         //use the same config
                     }
@@ -495,7 +501,7 @@ namespace WinFIM.NET_Service
                         }
 
                         //insert the current hash to DB
-                        sql = "Insert into conf_file_checksum (filename, filehash) values('" + workDir + "\\exclude_extension.txt','" + ex_ext_hash + "')";
+                        sql = "Insert into conf_file_checksum (filename, filehash) values('" + workDir + "\\exclude_extension.txt','" + exExtHash + "')";
                         Log.Verbose(sql);
                         command = new SQLiteCommand(sql, con);
                         try
@@ -509,7 +515,7 @@ namespace WinFIM.NET_Service
                             Log.Error(errorMessage);
                         }
 
-                        sql = "Insert into conf_file_checksum (filename, filehash) values('" + workDir + "\\exclude_path.txt','" + ex_path_hash + "')";
+                        sql = "Insert into conf_file_checksum (filename, filehash) values('" + workDir + "\\exclude_path.txt','" + exPathHash + "')";
                         Log.Verbose(sql);
                         command = new SQLiteCommand(sql, con);
                         try
@@ -523,7 +529,7 @@ namespace WinFIM.NET_Service
                             Log.Error(errorMessage);
                         }
 
-                        sql = "Insert into conf_file_checksum (filename, filehash) values('" + workDir + "\\monlist.txt','" + mon_hash + "')";
+                        sql = "Insert into conf_file_checksum (filename, filehash) values('" + workDir + "\\monlist.txt','" + monHash + "')";
                         Log.Verbose(sql);
                         command = new SQLiteCommand(sql, con);
                         try
@@ -617,16 +623,14 @@ namespace WinFIM.NET_Service
         //function for file integrity checking
         private bool FileIntegrityCheck()
         {
-            string workDir = System.IO.Path.GetDirectoryName(Assembly.GetEntryAssembly().Location);
+            string workDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
             string dbFile = workDir + "\\fimdb.db";
             string cs = @"URI=file:" + dbFile + ";PRAGMA journal_mode=WAL;";
 
-            SQLiteConnection con;
-            con = new SQLiteConnection(cs);
+            SQLiteConnection con = new SQLiteConnection(cs);
 
             SQLiteCommand command;
-            SQLiteDataReader dataReader;
 
             string sql, output = "";
             bool haveBaseline;
@@ -637,21 +641,14 @@ namespace WinFIM.NET_Service
                 sql = "SELECT COUNT(*) FROM baseline_table";
                 Log.Verbose(sql);
                 command = new SQLiteCommand(sql, con);
-                dataReader = command.ExecuteReader();
+                SQLiteDataReader dataReader = command.ExecuteReader();
                 if (dataReader.Read())
                 {
                     output = dataReader.GetValue(0).ToString();
                 }
                 dataReader.Close();
 
-                if (!output.Equals("0"))
-                {
-                    haveBaseline = true;
-                }
-                else
-                {
-                    haveBaseline = false;
-                }
+                haveBaseline = !output.Equals("0");
             }
             catch (Exception e)
             {
@@ -667,9 +664,6 @@ namespace WinFIM.NET_Service
             //create variable to store the full file list
             string fileList = "";
             string exFileList = "";
-
-            //temp variable to store the file attributes for file or directory
-            FileAttributes attr;
 
             //create a stop watch the time consumed by the whole process
             Stopwatch watch = new Stopwatch();
@@ -693,40 +687,46 @@ namespace WinFIM.NET_Service
 
             try
             {
+                //temp variable to store the file attributes for file or directory
+                FileAttributes attr;
                 Log.Information("Starting checks");
                 //get the full file mon list for further processing
-                foreach (string line in lines) if (!string.IsNullOrWhiteSpace(line))
+                foreach (string line in lines)
+                {
+                    if (string.IsNullOrWhiteSpace(line))
                     {
-                        if (!(CheckIfMonListBasePathExists(cs, line)))
-                        {
-                            continue;
-                        }
+                        continue;
+                    }
+                    if (!(CheckIfMonListBasePathExists(cs, line)))
+                    {
+                        continue;
+                    }
 
-                        //1. check the line entry is a file or a directory
-                        attr = File.GetAttributes(line);
-                        if (attr.HasFlag(FileAttributes.Directory))
+                    //1. check the line entry is a file or a directory
+                    attr = File.GetAttributes(line);
+                    if (attr.HasFlag(FileAttributes.Directory))
+                    {
+                        //2. if it is a directory
+                        //try to use cmd to get a full files (including hidden files) and all level of sub-directories list from a directory
+                        using (Process process = new Process())
                         {
-                            //2. if it is a directory
-                            //try to use cmd to get a full files (including hidden files) and all level of sub-directories list from a directory
-                            using (Process process = new Process())
-                            {
-                                process.StartInfo.FileName = @"cmd.exe";
-                                process.StartInfo.Arguments = @"/c dir /a: /b /s " + "\"" + line + "\"";
-                                process.StartInfo.CreateNoWindow = true;
-                                process.StartInfo.UseShellExecute = false;
-                                process.StartInfo.RedirectStandardOutput = true;
-                                process.Start();
-                                fileList = fileList + line + "\n"; //make sure the most outer directory is included in the list
-                                fileList = fileList + process.StandardOutput.ReadToEnd();
-                                process.WaitForExit();
-                            }
-                        }
-                        else
-                        {
-                            //3. if it is a file
-                            fileList = fileList + line + "\n";
+                            process.StartInfo.FileName = @"cmd.exe";
+                            process.StartInfo.Arguments = @"/c dir /a: /b /s " + "\"" + line + "\"";
+                            process.StartInfo.CreateNoWindow = true;
+                            process.StartInfo.UseShellExecute = false;
+                            process.StartInfo.RedirectStandardOutput = true;
+                            process.Start();
+                            fileList = fileList + line + "\n"; //make sure the most outer directory is included in the list
+                            fileList += process.StandardOutput.ReadToEnd();
+                            process.WaitForExit();
                         }
                     }
+                    else
+                    {
+                        //3. if it is a file
+                        fileList = fileList + line + "\n";
+                    }
+                }
 
                 //change all string in filelist to lowercase for easy comparison to exclusion list
                 fileList = fileList.ToLower();
@@ -749,45 +749,49 @@ namespace WinFIM.NET_Service
 
 
                 //get the full exclude file list for further processing
-                foreach (string line in lines) if (!string.IsNullOrWhiteSpace(line))
+                foreach (string line in lines)
+                {
+                    if (string.IsNullOrWhiteSpace(line))
                     {
-                        try
+                        continue;
+                    }
+                    try
+                    {
+                        //1. check the line entry is a file or a directory
+                        attr = File.GetAttributes(line);
+                        if (attr.HasFlag(FileAttributes.Directory))
                         {
-                            //1. check the line entry is a file or a directory
-                            attr = File.GetAttributes(line);
-                            if (attr.HasFlag(FileAttributes.Directory))
+                            //2. if it is a directory
+                            //try to use cmd to get a full files (including hidden files) and all level of sub-directories list from a directory
+                            using (Process process = new Process())
                             {
-                                //2. if it is a directory
-                                //try to use cmd to get a full files (including hidden files) and all level of sub-directories list from a directory
-                                using (Process process = new Process())
-                                {
-                                    process.StartInfo.FileName = @"cmd.exe";
-                                    process.StartInfo.Arguments = @"/c dir /a: /b /s " + "\"" + line + "\"";
-                                    process.StartInfo.CreateNoWindow = true;
-                                    process.StartInfo.UseShellExecute = false;
-                                    process.StartInfo.RedirectStandardOutput = true;
-                                    process.Start();
-                                    exFileList = exFileList + line + "\n"; //make sure the most outer directory is included in the list
-                                    exFileList = exFileList + process.StandardOutput.ReadToEnd();
-                                    process.WaitForExit();
-                                }
+                                process.StartInfo.FileName = @"cmd.exe";
+                                process.StartInfo.Arguments = @"/c dir /a: /b /s " + "\"" + line + "\"";
+                                process.StartInfo.CreateNoWindow = true;
+                                process.StartInfo.UseShellExecute = false;
+                                process.StartInfo.RedirectStandardOutput = true;
+                                process.Start();
+                                exFileList = exFileList + line + "\n"; //make sure the most outer directory is included in the list
+                                exFileList += process.StandardOutput.ReadToEnd();
+                                process.WaitForExit();
                             }
-                            else
-                            {
-                                //3. if it is a file
-                                exFileList = exFileList + line + "\n";
-                            }
-
                         }
-                        catch (Exception e)
+                        else
                         {
-                            string errorMessage = "Exclusion error:" + e.Message;
-                            Log.Error(errorMessage);
-                            //The file path on the exclusion could be not exist
+                            //3. if it is a file
+                            exFileList = exFileList + line + "\n";
                         }
-
 
                     }
+                    catch (Exception e)
+                    {
+                        string errorMessage = "Exclusion error:" + e.Message;
+                        Log.Error(errorMessage);
+                        //The file path on the exclusion could be not exist
+                    }
+
+
+                }
                 //change all string in exFileList to lowercase for easy comparison to exclusion list
                 exFileList = exFileList.ToLower();
                 exFileList = exFileList.TrimEnd('\r', '\n');
@@ -798,7 +802,7 @@ namespace WinFIM.NET_Service
                     new[] { "\r\n", "\r", "\n" },
                     StringSplitOptions.None
                 );
-                //remove duplicate element in filelist_array
+                //remove duplicate element in fileListArray
                 fileListArray = fileListArray.Distinct().ToArray();
 
                 //convert exFileList string to string array
@@ -810,31 +814,31 @@ namespace WinFIM.NET_Service
                 exFileListArray = exFileListArray.Distinct().ToArray();
 
                 //filter exclusion file list
-                IEnumerable<string> finalFilelist = fileListArray.Except(exFileListArray);
+                IEnumerable<string> finalFileList = fileListArray.Except(exFileListArray);
 
                 //get the regex of file extension exclusion
                 string regex = ExcludeExtensionRegex();
                 Log.Verbose("File Extension Exclusion REGEX:" + regex);
 
-                //After the full filelist is collected, checksum need to be conducted for file (not directory) after further file extension filtering is done
+                //After the full fileList is collected, checksum need to be conducted for file (not directory) after further file extension filtering is done
                 //This is for debug purpose to test checksum output
-                string lineOutput = "";
-                string tempHash = "";
 
                 //setup another DB connection to access the baseline_table
-                SQLiteConnection con2;
-                con2 = new SQLiteConnection(cs);
+                SQLiteConnection con2 = new SQLiteConnection(cs);
                 SQLiteCommand command2;
                 SQLiteDataReader dataReader2;
-                string sql2, output2 = "";
+                string sql2;
+                string output2 = string.Empty;
                 con2.Open();
 
-                foreach (string s in finalFilelist)
+                foreach (string s in finalFileList)
                 {
-                    string message = string.Empty;
+                    string message;
                     Log.Verbose(s);
                     try
                     {
+                        string lineOutput;
+
                         //1. check the line entry is a file or a directory
                         attr = File.GetAttributes(s);
                         if (attr.HasFlag(FileAttributes.Directory))
@@ -904,6 +908,7 @@ namespace WinFIM.NET_Service
                         {
                             //3. if it is a file
                             //a. if there is file extension exclusion
+                            string tempHash;
                             if (regex.Equals("EMPTY"))
                             {
                                 try
@@ -967,7 +972,7 @@ namespace WinFIM.NET_Service
                                             dataReader2 = command2.ExecuteReader();
                                             if (dataReader2.Read())
                                             {
-                                                message = "File :'" + s + "' is modified. \nPrevious check at:" + dataReader2.GetValue(4).ToString() + "\nFile hash: (Previous)" + dataReader2.GetValue(3).ToString() + " (Current)" + tempHash + "\nFile Size: (Previous)" + dataReader2.GetValue(1).ToString() + "MB (Current)" + GetFileSize(s) + "MB\nFile Owner: (Previous)" + dataReader2.GetValue(2).ToString() + " (Current)" + GetFileOwner(s);
+                                                message = "File :'" + s + "' is modified. \nPrevious check at:" + dataReader2.GetValue(4) + "\nFile hash: (Previous)" + dataReader2.GetValue(3) + " (Current)" + tempHash + "\nFile Size: (Previous)" + dataReader2.GetValue(1) + "MB (Current)" + GetFileSize(s) + "MB\nFile Owner: (Previous)" + dataReader2.GetValue(2) + " (Current)" + GetFileOwner(s);
                                                 Log.Warning(message);
                                                 eventLog1.WriteEntry(message, EventLogEntryType.Warning, 7777); //setting the Event ID as 7777
                                             }
@@ -1069,7 +1074,7 @@ namespace WinFIM.NET_Service
                                                 dataReader2 = command2.ExecuteReader();
                                                 if (dataReader2.Read())
                                                 {
-                                                    message = "File :'" + s + "' is modified. Previous check at:" + dataReader2.GetValue(4).ToString() + "\nFile hash: (Previous)" + dataReader2.GetValue(3).ToString() + " (Current)" + tempHash + "\nFile Size: (Previous)" + dataReader2.GetValue(1).ToString() + "MB (Current)" + GetFileSize(s) + "MB\nFile Owner: (Previous)" + dataReader2.GetValue(2).ToString() + " (Current)" + GetFileOwner(s);
+                                                    message = "File :'" + s + "' is modified. Previous check at:" + dataReader2.GetValue(4) + "\nFile hash: (Previous)" + dataReader2.GetValue(3) + " (Current)" + tempHash + "\nFile Size: (Previous)" + dataReader2.GetValue(1) + "MB (Current)" + GetFileSize(s) + "MB\nFile Owner: (Previous)" + dataReader2.GetValue(2) + " (Current)" + GetFileOwner(s);
                                                     Log.Warning(message);
                                                     eventLog1.WriteEntry(message, EventLogEntryType.Warning, 7777); //setting the Event ID as 7777
                                                 }
@@ -1121,7 +1126,6 @@ namespace WinFIM.NET_Service
                     sql2 = "SELECT baseline_table.filename FROM baseline_table LEFT JOIN current_table ON baseline_table.filename = current_table.filename WHERE current_table.filename IS NULL";
                     command2 = new SQLiteCommand(sql2, con2);
                     dataReader2 = command2.ExecuteReader();
-                    output2 = "";
                     while (dataReader2.Read())
                     {
                         output2 = dataReader2.GetValue(0).ToString();
@@ -1177,10 +1181,10 @@ namespace WinFIM.NET_Service
                 con.Close();
 
                 watch.Stop();
-                string stopMessage = "Total time consumed in this round file integrity checking  = " + watch.ElapsedMilliseconds + "ms (" + Math.Round(Convert.ToDouble(watch.ElapsedMilliseconds) / 1000, 3).ToString() + "s).\n" + GetRemoteConnections();
+                string stopMessage = "Total time consumed in this round file integrity checking  = " + watch.ElapsedMilliseconds + "ms (" + Math.Round(Convert.ToDouble(watch.ElapsedMilliseconds) / 1000, 3).ToString(CultureInfo.InvariantCulture) + "s).\n" + GetRemoteConnections();
                 Log.Debug(stopMessage);
                 eventLog1.WriteEntry(stopMessage, EventLogEntryType.Information, 7771); //setting the Event ID as 7771
-                Log.Verbose("Total time consumed in this round file integrity checking  = " + watch.ElapsedMilliseconds + "ms (" + Math.Round(Convert.ToDouble(watch.ElapsedMilliseconds) / 1000, 3).ToString() + "s).");
+                Log.Verbose("Total time consumed in this round file integrity checking  = " + watch.ElapsedMilliseconds + "ms (" + Math.Round(Convert.ToDouble(watch.ElapsedMilliseconds) / 1000, 3).ToString(CultureInfo.InvariantCulture) + "s).");
                 return true;
 
             }
