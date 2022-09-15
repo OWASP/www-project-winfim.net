@@ -1,12 +1,11 @@
 ﻿using Serilog;
 using System;
 using System.Data.SQLite;
-using System.Diagnostics;
 using System.IO;
 
 namespace WinFIM.NET_Service
 {
-    internal class SQLiteHelper
+    internal static class SQLiteHelper
     {
         internal static void EnsureDatabaseExists(string dbFile)
         // Create the database if it doesn't exist
@@ -35,21 +34,21 @@ namespace WinFIM.NET_Service
                         Log.Debug("Creating SQlite table baseline_table if it doesn't exist...");
                         command.CommandText = @"
                             CREATE TABLE IF NOT EXISTS baseline_table (
-                                filename  TEXT NOT NULL,
-                                filesize  INT,
-                                fileowner TEXT NOT NULL,
-                                checktime TEXT NOT NULL,
-                                filehash  TEXT,
-                                filetype  TEXT NOT NULL
+                                pathname    TEXT PRIMARY KEY,
+                                filesize    INT,
+                                fileowner   TEXT NOT NULL,
+                                checktime   TEXT NOT NULL,
+                                filehash    TEXT,
+                                filetype    TEXT NOT NULL
                             );
                         ";
                         command.ExecuteNonQuery();
-
+                        
                         Log.Debug("Creating SQlite table conf_file_checksum if it doesn't exist...");
                         command.CommandText = @"
                             CREATE TABLE IF NOT EXISTS conf_file_checksum (
-                                filename TEXT NOT NULL,
-                                filehash TEXT
+                                pathname    TEXT PRIMARY KEY,
+                                filehash    TEXT
                             );
                         ";
                         command.ExecuteNonQuery();
@@ -57,12 +56,12 @@ namespace WinFIM.NET_Service
                         Log.Debug("Creating SQlite table current_table if it doesn't exist...");
                         command.CommandText = @"
                             CREATE TABLE IF NOT EXISTS current_table (
-                                filename  TEXT NOT NULL,
-                                filesize  INT,
-                                fileowner TEXT NOT NULL,
-                                checktime TEXT NOT NULL,
-                                filehash  TEXT,
-                                filetype  TEXT NOT NULL
+                                pathname    TEXT PRIMARY KEY,
+                                filesize    INT,
+                                fileowner   TEXT NOT NULL,
+                                checktime   TEXT NOT NULL,
+                                filehash    TEXT,
+                                filetype    TEXT NOT NULL
                             );
                         ";
                         command.ExecuteNonQuery();
@@ -77,6 +76,21 @@ namespace WinFIM.NET_Service
                         ";
                         command.ExecuteNonQuery();
 
+                        Log.Debug("Creating SQlite table version_control if it doesn't exist...");
+                        command.CommandText = @"
+                            CREATE TABLE IF NOT EXISTS version_control (
+                                version     INT PRIMARY KEY,
+                                notes       TEXT NOT NULL
+                            );
+                        ";
+                        command.ExecuteNonQuery();
+
+                        Log.Debug("Setting database version...");
+                        command.CommandText = @"
+                            INSERT OR REPLACE INTO version_control (version, notes) VALUES (1, 'Initial version');
+                            INSERT OR REPLACE INTO version_control (version, notes) VALUES (2, 'changed field filename to pathname and set as primary key;\n added field isbasepath to tables baseline_table, current_table; added tables version_control, monlist_baseline_table, monlist_current_table');
+                        ";
+                        command.ExecuteNonQuery();
                     }
                 }
                 finally

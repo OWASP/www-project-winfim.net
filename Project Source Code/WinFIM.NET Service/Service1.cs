@@ -23,6 +23,8 @@ namespace WinFIM.NET_Service
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern int Wow64EnableWow64FsRedirection(ref IntPtr ptr);
 
+        private string ConnectionString { get; set; }
+
         private readonly string _workDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
         public Service1()
@@ -358,7 +360,7 @@ namespace WinFIM.NET_Service
                     }
 
                     //insert the current hash to DB
-                    sql = "INSERT INTO conf_file_checksum (filename, filehash) VALUES ('" + _workDir + "\\exclude_extension.txt','" + exExtHash + "')";
+                    sql = "INSERT INTO conf_file_checksum (pathname, filehash) VALUES ('" + _workDir + "\\exclude_extension.txt','" + exExtHash + "')";
                     Log.Verbose(sql);
                     command = new SQLiteCommand(sql, con);
                     try
@@ -372,7 +374,7 @@ namespace WinFIM.NET_Service
                         Log.Error(errorMessage);
                     }
 
-                    sql = "INSERT INTO conf_file_checksum (filename, filehash) VALUES ('" + _workDir + "\\exclude_path.txt','" + exPathHash + "')";
+                    sql = "INSERT INTO conf_file_checksum (pathname, filehash) VALUES ('" + _workDir + "\\exclude_path.txt','" + exPathHash + "')";
                     Log.Verbose(sql);
                     command = new SQLiteCommand(sql, con);
                     try
@@ -386,7 +388,7 @@ namespace WinFIM.NET_Service
                         Log.Error(errorMessage);
                     }
 
-                    sql = "INSERT INTO conf_file_checksum (filename, filehash) VALUES ('" + _workDir + "\\monlist.txt','" + monHash + "')";
+                    sql = "INSERT INTO conf_file_checksum (pathname, filehash) VALUES ('" + _workDir + "\\monlist.txt','" + monHash + "')";
                     Log.Verbose(sql);
                     command = new SQLiteCommand(sql, con);
                     try
@@ -408,7 +410,7 @@ namespace WinFIM.NET_Service
                     //else compare the checksum, if difference, store the new checksum into DB, and empty both baseline_table and current_table
                     int count = 0;
 
-                    sql = "SELECT filehash FROM conf_file_checksum WHERE filename='" + _workDir + "\\exclude_extension.txt" + "'";
+                    sql = "SELECT filehash FROM conf_file_checksum WHERE pathname='" + _workDir + "\\exclude_extension.txt" + "'";
                     command = new SQLiteCommand(sql, con);
                     dataReader = command.ExecuteReader();
                     if (dataReader.Read())
@@ -421,7 +423,7 @@ namespace WinFIM.NET_Service
                         }
                     }
 
-                    sql = "SELECT filehash FROM conf_file_checksum WHERE filename='" + _workDir + "\\exclude_path.txt" + "'";
+                    sql = "SELECT filehash FROM conf_file_checksum WHERE pathname='" + _workDir + "\\exclude_path.txt" + "'";
                     command = new SQLiteCommand(sql, con);
                     dataReader = command.ExecuteReader();
                     if (dataReader.Read())
@@ -434,7 +436,7 @@ namespace WinFIM.NET_Service
                         }
                     }
 
-                    sql = "SELECT filehash FROM conf_file_checksum WHERE filename='" + _workDir + "\\monlist.txt" + "'";
+                    sql = "SELECT filehash FROM conf_file_checksum WHERE pathname='" + _workDir + "\\monlist.txt" + "'";
                     command = new SQLiteCommand(sql, con);
                     dataReader = command.ExecuteReader();
                     if (dataReader.Read())
@@ -499,7 +501,7 @@ namespace WinFIM.NET_Service
                         }
 
                         //insert the current hash to DB
-                        sql = "INSERT INTO conf_file_checksum (filename, filehash) VALUES ('" + _workDir + "\\exclude_extension.txt','" + exExtHash + "')";
+                        sql = "INSERT INTO conf_file_checksum (pathname, filehash) VALUES ('" + _workDir + "\\exclude_extension.txt','" + exExtHash + "')";
                         Log.Verbose(sql);
                         command = new SQLiteCommand(sql, con);
                         try
@@ -513,7 +515,7 @@ namespace WinFIM.NET_Service
                             Log.Error(errorMessage);
                         }
 
-                        sql = "INSERT INTO conf_file_checksum (filename, filehash) VALUES ('" + _workDir + "\\exclude_path.txt','" + exPathHash + "')";
+                        sql = "INSERT INTO conf_file_checksum (pathname, filehash) VALUES ('" + _workDir + "\\exclude_path.txt','" + exPathHash + "')";
                         Log.Verbose(sql);
                         command = new SQLiteCommand(sql, con);
                         try
@@ -527,7 +529,7 @@ namespace WinFIM.NET_Service
                             Log.Error(errorMessage);
                         }
 
-                        sql = "INSERT INTO conf_file_checksum (filename, filehash) VALUES ('" + _workDir + "\\monlist.txt','" + monHash + "')";
+                        sql = "INSERT INTO conf_file_checksum (pathname, filehash) VALUES ('" + _workDir + "\\monlist.txt','" + monHash + "')";
                         Log.Verbose(sql);
                         command = new SQLiteCommand(sql, con);
                         try
@@ -621,74 +623,119 @@ namespace WinFIM.NET_Service
             }
         }
 
-        //function for file integrity checking
-        private bool FileIntegrityCheck()
+        private string[] GetFileMonList()
         {
-            string dbFile = _workDir + "\\fimdb.db";
-            string connectionString = @"URI=file:" + dbFile + ";PRAGMA journal_mode=WAL;";
-
-            bool haveBaseline;
-            string output;
+            //read the monitoring list (line by line)
+            string monListPath = _workDir + "\\monlist.txt";
+            string[] monFileLines;
             try
             {
-                string sql = "SELECT COUNT(*) FROM baseline_table";
-                output = SQLiteHelper.Query(connectionString, sql);
-                haveBaseline = !output.Equals("0");
+                monFileLines = File.ReadAllLines(monListPath);
             }
             catch (Exception e)
             {
-                string errorMessage = "Exception : " + e.Message + "\nPlease make sure local database file \"fimdb.db\" exists.";
+                string errorMessage = "Exception : " + e.Message +
+                                      "\nPlease make sure all input entries are correct under \"monlist.txt\".\nPlease restart the service after correction.";
                 Log.Error(errorMessage);
                 eventLog1.WriteEntry(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
-                return false;
+                throw;
+            }
+            return monFileLines;
+        }
+
+        private string[] GetFileList(string[] monFileLines)
+        {
+            string fileList = string.Empty;
+            //get the full file mon list for further processing
+            foreach (string line in monFileLines)
+            {
+                if (string.IsNullOrWhiteSpace(line))
+                {
+                    continue;
+                }
+                if (!(CheckIfBasePathExists(ConnectionString, line)))
+                {
+                    continue;
+                }
+
+                //1. check the line entry is a file or a directory
+                FileAttributes attr = File.GetAttributes(line);
+                if (attr.HasFlag(FileAttributes.Directory))
+                {
+                    //2. if it is a directory
+                    //try to use cmd to get a full files (including hidden files) and all level of sub-directories list from a directory
+                    using (Process process = new Process())
+                    {
+                        process.StartInfo.FileName = @"cmd.exe";
+                        process.StartInfo.Arguments = @"/c dir /a: /b /s " + "\"" + line + "\"";
+                        process.StartInfo.CreateNoWindow = true;
+                        process.StartInfo.UseShellExecute = false;
+                        process.StartInfo.RedirectStandardOutput = true;
+                        process.Start();
+                        fileList = fileList + line + "\n"; //make sure the most outer directory is included in the list
+                        fileList += process.StandardOutput.ReadToEnd();
+                        process.WaitForExit();
+                    }
+                }
+                else
+                {
+                    //3. if it is a file
+                    fileList = fileList + line + "\n";
+                }
             }
 
-            //debug - printout the sql return result
-            Log.Verbose(output);
+            //change all string in filelist to lowercase for easy comparison to exclusion list
+            fileList = fileList.ToLower();
+            fileList = fileList.TrimEnd('\r', '\n');
+            Log.Verbose(fileList);
 
-            //create variable to store the full file list
-            string fileList = "";
-            string exFileList = "";
+            //convert fileList string to string array
+            string[] fileListArray = fileList.Split(
+                new[] { "\r\n", "\r", "\n" },
+                StringSplitOptions.None
+            );
 
-            //create a stop watch the time consumed by the whole process
-            Stopwatch watch = new Stopwatch();
-            watch.Start();
+            //remove duplicate elements in fileListArray
+            fileListArray = fileListArray.Distinct().ToArray();
 
-            //read the monitoring list (line by line)
-            string monList = _workDir + "\\monlist.txt";
+            return fileListArray;
+        }
+
+        private string[] GetFileExcludePath()
+        {
+            //read the exclude list (line by line)
+            string excludePathFilePath = _workDir + "\\exclude_path.txt";
             string[] lines;
             try
             {
-                lines = File.ReadAllLines(monList);
+                lines = File.ReadAllLines(excludePathFilePath);
             }
             catch (Exception e)
             {
-                string errorMessage = "Exception : " + e.Message + "\nPlease make sure all input entries are correct under \"monlist.txt\".\nPlease restart the service after correction.";
+                string errorMessage = "Exception : " + e.Message +
+                                      "\nPlease make sure all input entries are correct under \"exclude_path.txt\".\nPlease restart the service after correction.";
                 Log.Error(errorMessage);
                 eventLog1.WriteEntry(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
-                return false;
+                throw;
             }
 
+            return lines;
+        }
 
-            try
+        private string[] GetExcludeList(string[] lines)
+        {
+            string exFileList = string.Empty;
+            //get the full exclude file list for further processing
+            foreach (string line in lines)
             {
-                //temp variable to store the file attributes for file or directory
-                FileAttributes attr;
-                Log.Information("Starting checks");
-                //get the full file mon list for further processing
-                foreach (string line in lines)
+                if (string.IsNullOrWhiteSpace(line))
                 {
-                    if (string.IsNullOrWhiteSpace(line))
-                    {
-                        continue;
-                    }
-                    if (!(CheckIfBasePathExists(connectionString, line)))
-                    {
-                        continue;
-                    }
-
+                    continue;
+                }
+                try
+                {
                     //1. check the line entry is a file or a directory
-                    attr = File.GetAttributes(line);
+                    FileAttributes attr = File.GetAttributes(line);
                     if (attr.HasFlag(FileAttributes.Directory))
                     {
                         //2. if it is a directory
@@ -701,105 +748,83 @@ namespace WinFIM.NET_Service
                             process.StartInfo.UseShellExecute = false;
                             process.StartInfo.RedirectStandardOutput = true;
                             process.Start();
-                            fileList = fileList + line + "\n"; //make sure the most outer directory is included in the list
-                            fileList += process.StandardOutput.ReadToEnd();
+                            exFileList = exFileList + line + "\n"; //make sure the most outer directory is included in the list
+                            exFileList += process.StandardOutput.ReadToEnd();
                             process.WaitForExit();
                         }
                     }
                     else
                     {
                         //3. if it is a file
-                        fileList = fileList + line + "\n";
+                        exFileList = exFileList + line + "\n";
                     }
-                }
 
-                //change all string in filelist to lowercase for easy comparison to exclusion list
-                fileList = fileList.ToLower();
-                fileList = fileList.TrimEnd('\r', '\n');
-                Log.Verbose(fileList);
-
-                //read the exclude list (line by line)
-                string excludeList = _workDir + "\\exclude_path.txt";
-                try
-                {
-                    lines = File.ReadAllLines(excludeList);
                 }
                 catch (Exception e)
                 {
-                    string errorMessage = "Exception : " + e.Message + "\nPlease make sure all input entries are correct under \"exclude_path.txt\".\nPlease restart the service after correction.";
+                    string errorMessage = "Exclusion error:" + e.Message;
                     Log.Error(errorMessage);
-                    eventLog1.WriteEntry(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
-                    return false;
+                    //The file path on the exclusion could be not exist
                 }
+            }
+            //change all string in exFileList to lowercase for easy comparison to exclusion list
+            exFileList = exFileList.ToLower();
+            exFileList = exFileList.TrimEnd('\r', '\n');
+            Log.Verbose($"exclude_path.txt contents: {exFileList}");
 
+            //convert exFileList string to string array
+            string[] exFileListArray = exFileList.Split(
+                new[] { "\r\n", "\r", "\n" },
+                StringSplitOptions.None
+            );
+            //remove duplicate element in exFileListArray
+            exFileListArray = exFileListArray.Distinct().ToArray();
+            return exFileListArray;
+        }
 
-                //get the full exclude file list for further processing
-                foreach (string line in lines)
-                {
-                    if (string.IsNullOrWhiteSpace(line))
-                    {
-                        continue;
-                    }
-                    try
-                    {
-                        //1. check the line entry is a file or a directory
-                        attr = File.GetAttributes(line);
-                        if (attr.HasFlag(FileAttributes.Directory))
-                        {
-                            //2. if it is a directory
-                            //try to use cmd to get a full files (including hidden files) and all level of sub-directories list from a directory
-                            using (Process process = new Process())
-                            {
-                                process.StartInfo.FileName = @"cmd.exe";
-                                process.StartInfo.Arguments = @"/c dir /a: /b /s " + "\"" + line + "\"";
-                                process.StartInfo.CreateNoWindow = true;
-                                process.StartInfo.UseShellExecute = false;
-                                process.StartInfo.RedirectStandardOutput = true;
-                                process.Start();
-                                exFileList = exFileList + line + "\n"; //make sure the most outer directory is included in the list
-                                exFileList += process.StandardOutput.ReadToEnd();
-                                process.WaitForExit();
-                            }
-                        }
-                        else
-                        {
-                            //3. if it is a file
-                            exFileList = exFileList + line + "\n";
-                        }
+        //function for file integrity checking
+        private bool FileIntegrityCheck()
+        {
+            string dbFile = _workDir + "\\fimdb.db";
+            ConnectionString = @"URI=file:" + dbFile + ";PRAGMA journal_mode=WAL;";
 
-                    }
-                    catch (Exception e)
-                    {
-                        string errorMessage = "Exclusion error:" + e.Message;
-                        Log.Error(errorMessage);
-                        //The file path on the exclusion could be not exist
-                    }
+            bool haveBaseline;
+            string output;
+            try
+            {
+                string sql = "SELECT COUNT(*) FROM baseline_table";
+                output = SQLiteHelper.Query(ConnectionString, sql);
+                haveBaseline = !output.Equals("0");
+            }
+            catch (Exception e)
+            {
+                string errorMessage = $"Exception : {e.Message} \nPlease make sure local database file \"fimdb.db\" exists.";
+                Log.Error(errorMessage);
+                eventLog1.WriteEntry(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                return false;
+            }
 
+            //debug - printout the sql return result
+            Log.Verbose(output);
 
-                }
-                //change all string in exFileList to lowercase for easy comparison to exclusion list
-                exFileList = exFileList.ToLower();
-                exFileList = exFileList.TrimEnd('\r', '\n');
-                Log.Verbose(exFileList);
+            //create a stop watch to record the time consumed by the whole process
+            Stopwatch watch = new Stopwatch();
+            watch.Start();
 
-                //convert fileList string to string array
-                string[] fileListArray = fileList.Split(
-                    new[] { "\r\n", "\r", "\n" },
-                    StringSplitOptions.None
-                );
-                //remove duplicate element in fileListArray
-                fileListArray = fileListArray.Distinct().ToArray();
+            try
+            {
+                Log.Information("Starting checks");
 
-                //convert exFileList string to string array
-                string[] exFileListArray = exFileList.Split(
-                    new[] { "\r\n", "\r", "\n" },
-                    StringSplitOptions.None
-                );
-                //remove duplicate element in exFileListArray
-                exFileListArray = exFileListArray.Distinct().ToArray();
+                string[] monFileLines = GetFileMonList(); //get the list of paths in the monlist.txt file
 
+                string[] fileList = GetFileList(monFileLines); //get the list of files to watch
+
+                string[] excludePathLines = GetFileExcludePath(); //get the list of paths in the exclude_path.txt file
+
+                string[] excludeList = GetExcludeList(excludePathLines);  
+                
                 //filter exclusion file list
-                IEnumerable<string> finalFileList = fileListArray.Except(exFileListArray);
+                IEnumerable<string> finalFileList = fileList.Except(excludeList);
 
                 //get the regex of file extension exclusion
                 string regex = ExcludeExtensionRegex();
@@ -809,7 +834,7 @@ namespace WinFIM.NET_Service
                 //This is for debug purpose to test checksum output
 
                 //setup another DB connection to access the baseline_table
-                SQLiteConnection con2 = new SQLiteConnection(connectionString);
+                SQLiteConnection con2 = new SQLiteConnection(ConnectionString);
                 SQLiteCommand command2;
                 SQLiteDataReader dataReader2;
                 string sql2;
@@ -825,7 +850,7 @@ namespace WinFIM.NET_Service
                         string lineOutput;
 
                         //1. check the line entry is a file or a directory
-                        attr = File.GetAttributes(s);
+                        FileAttributes attr = File.GetAttributes(s);
                         if (attr.HasFlag(FileAttributes.Directory))
                         {
                             //2. if it is a directory, no need to do checksum
@@ -833,11 +858,11 @@ namespace WinFIM.NET_Service
                             //if there is content in baseline_table before, write to current_table
                             if (haveBaseline)
                             {
-                                string sql = "INSERT INTO current_table (filename, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + s + "',0,'" + GetFileOwner(s) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','NA','Directory')";
+                                string sql = "INSERT INTO current_table (pathname, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + s + "',0,'" + GetFileOwner(s) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','NA','Directory')";
                                 Log.Verbose(sql);
                                 try
                                 {
-                                    SQLiteHelper.NonQuery(connectionString,sql);
+                                    SQLiteHelper.NonQuery(ConnectionString,sql);
                                 }
                                 catch (Exception e)
                                 {
@@ -848,7 +873,7 @@ namespace WinFIM.NET_Service
 
                                 //compare with baseline_table
                                 //1. check if the file exist in baseline_table
-                                sql2 = "SELECT COUNT(*) FROM baseline_table WHERE filename='" + s + "'";
+                                sql2 = "SELECT COUNT(*) FROM baseline_table WHERE pathname='" + s + "'";
                                 command2 = new SQLiteCommand(sql2, con2);
                                 dataReader2 = command2.ExecuteReader();
                                 if (dataReader2.Read())
@@ -871,11 +896,11 @@ namespace WinFIM.NET_Service
                             //if there is no content in baseline_table, write to baseline_table instead
                             else
                             {
-                                string sql = "INSERT INTO baseline_table (filename, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + s + "',0,'" + GetFileOwner(s) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','NA','Directory')";
+                                string sql = "INSERT INTO baseline_table (pathname, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + s + "',0,'" + GetFileOwner(s) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','NA','Directory')";
                                 Log.Verbose(sql);
                                 try
                                 {
-                                    SQLiteHelper.Query(connectionString, sql);
+                                    SQLiteHelper.Query(ConnectionString, sql);
                                 }
                                 catch (Exception e)
                                 {
@@ -907,11 +932,11 @@ namespace WinFIM.NET_Service
                                 //if there is content in baseline_table before, write to current_table
                                 if (haveBaseline)
                                 {
-                                    string sql = "INSERT INTO current_table (filename, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + s + "','" + GetFileSize(s) + "','" + GetFileOwner(s) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
+                                    string sql = "INSERT INTO current_table (pathname, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + s + "','" + GetFileSize(s) + "','" + GetFileOwner(s) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
                                     Log.Verbose(sql);
                                     try
                                     {
-                                        SQLiteHelper.NonQuery(connectionString, sql);
+                                        SQLiteHelper.NonQuery(ConnectionString, sql);
                                     }
                                     catch (Exception e)
                                     {
@@ -921,7 +946,7 @@ namespace WinFIM.NET_Service
 
                                     //compare with baseline_table
                                     //1. check if the file exist in baseline_table
-                                    sql2 = "SELECT COUNT(*) FROM baseline_table WHERE filename='" + s + "'";
+                                    sql2 = "SELECT COUNT(*) FROM baseline_table WHERE pathname='" + s + "'";
                                     command2 = new SQLiteCommand(sql2, con2);
                                     dataReader2 = command2.ExecuteReader();
                                     if (dataReader2.Read())
@@ -932,7 +957,7 @@ namespace WinFIM.NET_Service
                                     if (!output2.Equals("0"))
                                     {
                                         //1. check if the file hash in baseline_table changed
-                                        sql2 = "SELECT COUNT(*) FROM baseline_table WHERE filename='" + s + "' AND filehash='" + tempHash + "'";
+                                        sql2 = "SELECT COUNT(*) FROM baseline_table WHERE pathname='" + s + "' AND filehash='" + tempHash + "'";
                                         command2 = new SQLiteCommand(sql2, con2);
                                         dataReader2 = command2.ExecuteReader();
                                         if (dataReader2.Read())
@@ -946,7 +971,7 @@ namespace WinFIM.NET_Service
                                         }
                                         else
                                         {
-                                            sql2 = "SELECT filename, filesize, fileowner, filehash, checktime FROM baseline_table WHERE filename='" + s + "'";
+                                            sql2 = "SELECT pathname, filesize, fileowner, filehash, checktime FROM baseline_table WHERE pathname='" + s + "'";
                                             command2 = new SQLiteCommand(sql2, con2);
                                             dataReader2 = command2.ExecuteReader();
                                             if (dataReader2.Read())
@@ -970,11 +995,11 @@ namespace WinFIM.NET_Service
                                 //if there is no content in baseline_table, write to baseline_table instead
                                 else
                                 {
-                                    string sql = "INSERT INTO baseline_table (filename, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + s + "'," + GetFileSize(s) + ",'" + GetFileOwner(s) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
+                                    string sql = "INSERT INTO baseline_table (pathname, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + s + "'," + GetFileSize(s) + ",'" + GetFileOwner(s) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
                                     Log.Verbose(sql);
                                     try
                                     {
-                                        SQLiteHelper.NonQuery(connectionString, sql);
+                                        SQLiteHelper.NonQuery(ConnectionString, sql);
                                     }
                                     catch (Exception e)
                                     {
@@ -1005,11 +1030,11 @@ namespace WinFIM.NET_Service
                                     lineOutput = s + " | File | " + " file size = " + GetFileSize(s) + " | files owner = " + GetFileOwner(s) + " | file hash = " + tempHash;
                                     if (haveBaseline)
                                     {
-                                        string sql = "INSERT INTO current_table (filename, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + s + "'," + GetFileSize(s) + ",'" + GetFileOwner(s) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
+                                        string sql = "INSERT INTO current_table (pathname, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + s + "'," + GetFileSize(s) + ",'" + GetFileOwner(s) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
                                         Log.Verbose(sql);
                                         try
                                         {
-                                            SQLiteHelper.NonQuery(connectionString, sql);
+                                            SQLiteHelper.NonQuery(ConnectionString, sql);
                                         }
                                         catch (Exception e)
                                         {
@@ -1019,7 +1044,7 @@ namespace WinFIM.NET_Service
 
                                         //compare with baseline_table
                                         //1. check if the file exist in baseline_table
-                                        sql2 = "SELECT COUNT(*) FROM baseline_table WHERE filename='" + s + "'";
+                                        sql2 = "SELECT COUNT(*) FROM baseline_table WHERE pathname='" + s + "'";
                                         command2 = new SQLiteCommand(sql2, con2);
                                         dataReader2 = command2.ExecuteReader();
                                         if (dataReader2.Read())
@@ -1030,7 +1055,7 @@ namespace WinFIM.NET_Service
                                         if (!output2.Equals("0"))
                                         {
                                             //1. check if the file hash in baseline_table changed
-                                            sql2 = "SELECT COUNT(*) FROM baseline_table WHERE filename='" + s + "' AND filehash='" + tempHash + "'";
+                                            sql2 = "SELECT COUNT(*) FROM baseline_table WHERE pathname='" + s + "' AND filehash='" + tempHash + "'";
                                             command2 = new SQLiteCommand(sql2, con2);
                                             dataReader2 = command2.ExecuteReader();
                                             if (dataReader2.Read())
@@ -1044,7 +1069,7 @@ namespace WinFIM.NET_Service
                                             }
                                             else
                                             {
-                                                sql2 = "SELECT filename, filesize, fileowner, filehash, checktime FROM baseline_table WHERE filename='" + s + "'";
+                                                sql2 = "SELECT pathname, filesize, fileowner, filehash, checktime FROM baseline_table WHERE pathname='" + s + "'";
                                                 command2 = new SQLiteCommand(sql2, con2);
                                                 dataReader2 = command2.ExecuteReader();
                                                 if (dataReader2.Read())
@@ -1068,10 +1093,10 @@ namespace WinFIM.NET_Service
                                     //if there is no content in baseline_table, write to baseline_table instead
                                     else
                                     {
-                                        string sql = "INSERT INTO baseline_table (filename, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + s + "'," + GetFileSize(s) + ",'" + GetFileOwner(s) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
+                                        string sql = "INSERT INTO baseline_table (pathname, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + s + "'," + GetFileSize(s) + ",'" + GetFileOwner(s) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
                                         try
                                         {
-                                            SQLiteHelper.NonQuery(connectionString, sql);
+                                            SQLiteHelper.NonQuery(ConnectionString, sql);
                                         }
                                         catch (Exception e)
                                         {
@@ -1096,7 +1121,7 @@ namespace WinFIM.NET_Service
                 //final check if any files / directory is deleted
                 if (haveBaseline)
                 {
-                    sql2 = "SELECT baseline_table.filename FROM baseline_table LEFT JOIN current_table ON baseline_table.filename = current_table.filename WHERE current_table.filename IS NULL";
+                    sql2 = "SELECT baseline_table.pathname FROM baseline_table LEFT JOIN current_table ON baseline_table.pathname = current_table.pathname WHERE current_table.pathname IS NULL";
                     command2 = new SQLiteCommand(sql2, con2);
                     dataReader2 = command2.ExecuteReader();
                     while (dataReader2.Read())
@@ -1108,7 +1133,7 @@ namespace WinFIM.NET_Service
                     }
                     dataReader2.Close();
                     //delete all rows in baseline_table, copy all rows from current_table to baseline_table, then clear current_table
-                    sql2 = "DELETE FROM baseline_table WHERE filename IS NOT NULL";
+                    sql2 = "DELETE FROM baseline_table";
                     command2 = new SQLiteCommand(sql2, con2);
                     try
                     {
@@ -1134,7 +1159,7 @@ namespace WinFIM.NET_Service
                         Log.Error(errorMessage);
                     }
 
-                    sql2 = "DELETE FROM current_table WHERE filename IS NOT NULL";
+                    sql2 = "DELETE FROM current_table";
                     command2 = new SQLiteCommand(sql2, con2);
                     try
                     {
@@ -1158,7 +1183,6 @@ namespace WinFIM.NET_Service
                 eventLog1.WriteEntry(stopMessage, EventLogEntryType.Information, 7771); //setting the Event ID as 7771
                 Log.Verbose("Total time consumed in this round file integrity checking  = " + watch.ElapsedMilliseconds + "ms (" + Math.Round(Convert.ToDouble(watch.ElapsedMilliseconds) / 1000, 3).ToString(CultureInfo.InvariantCulture) + "s).");
                 return true;
-
             }
             catch (Exception e)
             {
@@ -1167,7 +1191,6 @@ namespace WinFIM.NET_Service
                 eventLog1.WriteEntry(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
                 return false;
             }
-
         }
     }
 }
