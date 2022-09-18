@@ -1,5 +1,6 @@
 ﻿using Serilog;
 using System;
+using System.Diagnostics;
 using System.ServiceProcess;
 
 namespace WinFIM.NET_Service
@@ -14,6 +15,14 @@ namespace WinFIM.NET_Service
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.AppSettings()
                 .CreateLogger();
+
+            string currentProcessName = Process.GetCurrentProcess().ProcessName;
+            if (Process.GetProcessesByName(currentProcessName).Length > 1)
+            {
+                Log.Error($"Application {currentProcessName} already running. Only one instance of this application is allowed. Exiting");
+                return;
+            }
+
 
             if (Environment.UserInteractive)
             {
