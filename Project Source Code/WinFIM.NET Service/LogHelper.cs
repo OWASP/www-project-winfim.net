@@ -1,12 +1,17 @@
 ﻿using Serilog;
 using System;
 using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Reflection;
 using System.Runtime.InteropServices;
 
 namespace WinFIM.NET_Service
 {
     internal static class LogHelper
     {
+        internal static string WorkDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern int Wow64DisableWow64FsRedirection(ref IntPtr ptr);
 
@@ -63,6 +68,24 @@ namespace WinFIM.NET_Service
                 return output + "\n" + e.Message;
             }
 
+        }
+
+        internal static int GetSchedule()
+        {
+            string schedulerConf = LogHelper.WorkDir + "\\scheduler.txt";
+            int schedulerMin = 0;
+            try
+            {
+                string timerMinute = File.ReadLines(schedulerConf).First();
+                timerMinute = timerMinute.Trim();
+                schedulerMin = Convert.ToInt32(timerMinute);
+            }
+            catch (IOException e)
+            {
+                string message = $"Please check if the file '{WorkDir}\\scheduler.txt' exists or a numeric value is input into the file 'scheduler.txt'. Defaulting to a timer of 0 minutes.";
+                Log.Error(e, message);
+            }
+            return schedulerMin;
         }
     }
 }

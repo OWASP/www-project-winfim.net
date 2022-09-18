@@ -29,9 +29,9 @@ namespace WinFIM.NET_Service
                 // Startup as application
                 using (Service1 service1 = new Service1())
                 {
-                    Log.Debug(("Running in console app mode"));
+                    Log.Debug(("Starting WinFIM.NET in console mode"));
                     service1.ConsoleScheduled();
-                    Log.Debug(("Exiting "));
+                    Log.Debug(("Exiting WinFIM.NET console mode"));
                 }
             }
             else

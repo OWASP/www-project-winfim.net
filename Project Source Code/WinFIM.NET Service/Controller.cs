@@ -7,7 +7,6 @@ using System.Diagnostics;
 using System.Globalization;
 using System.IO;
 using System.Linq;
-using System.Reflection;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 
@@ -15,8 +14,6 @@ namespace WinFIM.NET_Service
 {
     internal class Controller
     {
-        internal readonly string WorkDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
-
         private string ConnectionString { get; }
 
         private string DbFile { get; }
@@ -26,7 +23,7 @@ namespace WinFIM.NET_Service
         //constructor
         internal Controller()
         {
-            DbFile = WorkDir + "\\fimdb.db";
+            DbFile = LogHelper.WorkDir + "\\fimdb.db";
             ConnectionString = @"URI=file:" + DbFile + ";PRAGMA journal_mode=WAL;";
         }
 
@@ -67,7 +64,7 @@ namespace WinFIM.NET_Service
         {
             try
             {
-                string excludeExtensionPath = WorkDir + "\\exclude_extension.txt";
+                string excludeExtensionPath = LogHelper.WorkDir + "\\exclude_extension.txt";
                 string[] lines = File.ReadAllLines(excludeExtensionPath);
                 lines = lines.Distinct().ToArray();
                 List<string> extName = new List<string>();
@@ -149,9 +146,9 @@ namespace WinFIM.NET_Service
             try
             {
                 //create checksum for config files: exclude_extension.txt | exclude_path.txt | monlist.txt
-                exExtHash = BytesToString(GetHashSha256(WorkDir + "\\exclude_extension.txt"));
-                exPathHash = BytesToString(GetHashSha256(WorkDir + "\\exclude_path.txt"));
-                monHash = BytesToString(GetHashSha256(WorkDir + "\\monlist.txt"));
+                exExtHash = BytesToString(GetHashSha256(LogHelper.WorkDir + "\\exclude_extension.txt"));
+                exPathHash = BytesToString(GetHashSha256(LogHelper.WorkDir + "\\exclude_path.txt"));
+                monHash = BytesToString(GetHashSha256(LogHelper.WorkDir + "\\monlist.txt"));
             }
             catch (Exception e)
             {
@@ -184,15 +181,15 @@ namespace WinFIM.NET_Service
                         sqLiteHelper.ExecuteNonQuery(sql);
 
                         //insert the current hash to DB
-                        sql = "INSERT INTO conf_file_checksum (pathname, filehash) VALUES ('" + WorkDir +
+                        sql = "INSERT INTO conf_file_checksum (pathname, filehash) VALUES ('" + LogHelper.WorkDir +
                               "\\exclude_extension.txt','" + exExtHash + "')";
                         sqLiteHelper.ExecuteNonQuery(sql);
 
-                        sql = "INSERT INTO conf_file_checksum (pathname, filehash) VALUES ('" + WorkDir +
+                        sql = "INSERT INTO conf_file_checksum (pathname, filehash) VALUES ('" + LogHelper.WorkDir +
                               "\\exclude_path.txt','" + exPathHash + "')";
                         sqLiteHelper.ExecuteNonQuery(sql);
 
-                        sql = "INSERT INTO conf_file_checksum (pathname, filehash) VALUES ('" + WorkDir +
+                        sql = "INSERT INTO conf_file_checksum (pathname, filehash) VALUES ('" + LogHelper.WorkDir +
                               "\\monlist.txt','" + monHash + "')";
                         sqLiteHelper.ExecuteNonQuery(sql);
                     }
@@ -207,7 +204,7 @@ namespace WinFIM.NET_Service
                     //else compare the checksum, if difference, store the new checksum into DB, and empty both baseline_table and current_table
                     int count = 0;
 
-                    sql = "SELECT filehash FROM conf_file_checksum WHERE pathname='" + WorkDir +
+                    sql = "SELECT filehash FROM conf_file_checksum WHERE pathname='" + LogHelper.WorkDir +
                           "\\exclude_extension.txt" + "'";
                     output = sqLiteHelper.ExecuteScalar(sql)?.ToString() ?? "";
                     if (output.Equals(exExtHash))
@@ -215,7 +212,7 @@ namespace WinFIM.NET_Service
                         count++;
                     }
 
-                    sql = "SELECT filehash FROM conf_file_checksum WHERE pathname='" + WorkDir + "\\exclude_path.txt" +
+                    sql = "SELECT filehash FROM conf_file_checksum WHERE pathname='" + LogHelper.WorkDir + "\\exclude_path.txt" +
                           "'";
                     output = sqLiteHelper.ExecuteScalar(sql)?.ToString() ?? "";
                     if (output.Equals(exExtHash))
@@ -223,7 +220,7 @@ namespace WinFIM.NET_Service
                         count++;
                     }
 
-                    sql = "SELECT filehash FROM conf_file_checksum WHERE pathname='" + WorkDir + "\\monlist.txt" + "'";
+                    sql = "SELECT filehash FROM conf_file_checksum WHERE pathname='" + LogHelper.WorkDir + "\\monlist.txt" + "'";
                     output = sqLiteHelper.ExecuteScalar(sql)?.ToString() ?? "";
                     if (output.Equals(monHash))
                     {
@@ -253,15 +250,15 @@ namespace WinFIM.NET_Service
                             sqLiteHelper.ExecuteNonQuery(sql);
 
                             //insert the current hash to DB
-                            sql = "INSERT INTO conf_file_checksum (pathname, filehash) VALUES ('" + WorkDir +
+                            sql = "INSERT INTO conf_file_checksum (pathname, filehash) VALUES ('" + LogHelper.WorkDir +
                                   "\\exclude_extension.txt','" + exExtHash + "')";
                             sqLiteHelper.ExecuteNonQuery(sql);
 
-                            sql = "INSERT INTO conf_file_checksum (pathname, filehash) VALUES ('" + WorkDir +
+                            sql = "INSERT INTO conf_file_checksum (pathname, filehash) VALUES ('" + LogHelper.WorkDir +
                                   "\\exclude_path.txt','" + exPathHash + "')";
                             sqLiteHelper.ExecuteNonQuery(sql);
 
-                            sql = "INSERT INTO conf_file_checksum (pathname, filehash) VALUES ('" + WorkDir +
+                            sql = "INSERT INTO conf_file_checksum (pathname, filehash) VALUES ('" + LogHelper.WorkDir +
                                   "\\monlist.txt','" + monHash + "')";
                             sqLiteHelper.ExecuteNonQuery(sql);
                         }
@@ -348,7 +345,7 @@ namespace WinFIM.NET_Service
         private string[] GetFileMonList()
         {
             //read the monitoring list (line by line)
-            string monListPath = WorkDir + "\\monlist.txt";
+            string monListPath = LogHelper.WorkDir + "\\monlist.txt";
             string[] monFileLines;
             try
             {
@@ -427,7 +424,7 @@ namespace WinFIM.NET_Service
         private string[] GetFileExcludePath()
         {
             //read the exclude list (line by line)
-            string excludePathFilePath = WorkDir + "\\exclude_path.txt";
+            string excludePathFilePath = LogHelper.WorkDir + "\\exclude_path.txt";
             string[] lines;
             try
             {
@@ -783,7 +780,8 @@ namespace WinFIM.NET_Service
 
         internal bool FileIntegrityCheck()
         {
-            Log.Information("Starting checks");
+            int schedulerMin = LogHelper.GetSchedule();
+            Log.Information($"Starting FIM checks on a {schedulerMin} minute timer");
             SQLiteHelper1 = new SQLiteHelper(ConnectionString);
 
             bool haveBaseline = CheckBaseLineTable(); //check if there is already data in the baseline table from a previous FIM check
