@@ -30,15 +30,9 @@ namespace WinFIM.NET_Service
                 using (Service1 service1 = new Service1())
                 {
                     Log.Debug(("Running in console app mode"));
-                    service1.TestStartupAndStop();
-                    Log.Debug(("Exiting"));
+                    service1.ConsoleScheduled();
+                    Log.Debug(("Exiting "));
                 }
-
-                //Controller controller = new Controller();
-                //Log.Debug(("Running in console app mode"));
-                //controller.Initialise();
-                //controller.FileIntegrityCheck();
-                //Log.Debug(("Exiting"));
             }
             else
             {

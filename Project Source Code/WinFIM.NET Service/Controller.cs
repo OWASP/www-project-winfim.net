@@ -365,7 +365,7 @@ namespace WinFIM.NET_Service
             return monFileLines;
         }
 
-        private string[] GetFileList(string[] monFileLines)
+        private string[] GetPathList(string[] monFileLines)
         {
             string fileList = string.Empty;
             //get the full file mon list for further processing
@@ -505,7 +505,7 @@ namespace WinFIM.NET_Service
             return exFileListArray;
         }
 
-        private bool CheckBaseLine()
+        private bool CheckBaseLineTable()
         {
             bool haveBaseline;
             try
@@ -786,7 +786,7 @@ namespace WinFIM.NET_Service
             Log.Information("Starting checks");
             SQLiteHelper1 = new SQLiteHelper(ConnectionString);
 
-            bool haveBaseline = CheckBaseLine(); //check if there is already data in the baseline table from a previous FIM check
+            bool haveBaseline = CheckBaseLineTable(); //check if there is already data in the baseline table from a previous FIM check
 
             Stopwatch watch = new Stopwatch();
             watch.Start();
@@ -795,7 +795,7 @@ namespace WinFIM.NET_Service
             {
                 string[] monListFileLines = GetFileMonList(); //get the list of paths in the monlist.txt file
 
-                string[] pathList = GetFileList(monListFileLines); //get the list of files to watch
+                string[] pathList = GetPathList(monListFileLines); //get the list of files / directories to watch
 
                 string[] excludePathLines = GetFileExcludePath(); //get the list of paths in the exclude_path.txt file
 
