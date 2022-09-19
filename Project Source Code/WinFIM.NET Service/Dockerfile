@@ -29,7 +29,7 @@ SHELL   ["powershell", "$ErrorActionPreference = 'Stop'; $ProgressPreference = '
 RUN     New-Service -Name "WinFIM.NET` Service" -BinaryPathName "c:\tools\WinFIM.NET\WinFIM.NET` Service.exe"
 
 # Set the WinFIM.NET service to delayed start, to give time for the host directories to be recognized by the container
-RUN     sc.exe config "WinFIM.NET` Service" start=delayed-auto
+# RUN     sc.exe config "WinFIM.NET` Service" start=delayed-auto
 
 # Install fluent-bit for logging to Docker stdout
 RUN     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; \
@@ -49,7 +49,7 @@ RUN     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]
         Expand-Archive -LiteralPath \"$DownloadedFilePath\" -DestinationPath \"$TempDir\"; \
         Move-Item \"$TempDir\fluent-bit-1.9.7-win64\bin\*\" \"$targetDirName\" -Force; \
         Move-Item \"$TempDir\fluent-bit-1.9.7-win64\conf\*\" \"$targetDirName\" -Force; \
-        remove-item \"$TempDir\" -Force -Recurse;
+        remove-item \"$TempDir\" -Force -Recurse
 
 # Install vim for editing files directly in container
 RUN     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; \
@@ -69,7 +69,19 @@ RUN     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]
         Expand-Archive -LiteralPath \"$DownloadedFilePath\" -DestinationPath \"$TempDir\"; \
         Move-Item \"$TempDir\vim\vim90\vim.exe\" \"$TargetDirName\" -Force; \
         [Environment]::SetEnvironmentVariable(\"Path\", $env:Path + \";$targetDirName\", [EnvironmentVariableTarget]::Machine); \
-        remove-item \"$TempDir\" -Force -Recurse;
+        remove-item \"$TempDir\" -Force -Recurse
+
+# replace contents of monlist.txt with paths relevant to a WinFIM.NET Docker container monitoring it's host
+RUN     Write-Output "C:\host\autoexec.bat" > monlist.txt; \
+        Write-Output "C:\host\boot.ini" >> monlist.txt; \
+        Write-Output "C:\host\config.sys" >> monlist.txt; \
+        Write-Output "C:\host\Program` Files\Microsoft` Security` Client\msseces.exe" >> monlist.txt; \
+        Write-Output "C:\host\Windows\explorer.exe" >> monlist.txt; \
+        Write-Output "C:\host\Windows\regedit.exe" >> monlist.txt; \
+        Write-Output "C:\host\windows\system.ini" >> monlist.txt; \
+        Write-Output "C:\host\Windows\System32\userinit.exe" >> monlist.txt; \
+        Write-Output "C:\host\windows\win.ini" >> monlist.txt; \
+        Write-Output "C:\host\test" >> monlist.txt
 
 CMD     Write-Host "WinFIM.net container"; \
         Write-Host "Starting fluent-bit"; \
