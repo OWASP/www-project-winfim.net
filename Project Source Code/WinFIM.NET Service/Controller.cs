@@ -30,17 +30,29 @@ namespace WinFIM.NET_Service
         //get file owner information
         private static string GetFileOwner(string path)
         {
+            string fileOwner;
             try
             {
-                string fileOwner = File.GetAccessControl(path).GetOwner(typeof(System.Security.Principal.NTAccount)).ToString();
-                return fileOwner;
+                if (!(File.Exists(path)))
+                {
+                    fileOwner = $"File not found: {path}";
+                }
+                fileOwner = File.GetAccessControl(path).GetOwner(typeof(System.Security.Principal.NTAccount)).ToString();
             }
-            catch (Exception e)
+            catch
             {
-                string errorMessage = $"Error in GetFileOwner - {e.Message} for path: {path}";
-                Log.Error(errorMessage);
-                return "UNKNOWN";
+                try
+                {
+                    fileOwner = File.GetAccessControl(path).GetOwner(typeof(System.Security.Principal.SecurityIdentifier)).ToString();
+                }
+                catch (Exception e)
+                {
+                    string errorMessage = $"Error in GetFileOwner - {e.Message} for path: {path}";
+                    Console.WriteLine(errorMessage);
+                    fileOwner = "UNKNOWN";
+                }
             }
+            return fileOwner;
         }
 
         //get file size information (MB)
