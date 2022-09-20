@@ -5,8 +5,10 @@
 # A Dockerfile to build winfim.net as a Windows container image which can be used in Docker / Kubernetes.
 
 # This Dockerfile was designed to be run from Visual Studio using the "Docker Compose" project, select the Release profile for this dockerfile to build properly
-# To build this Docker image from a commandline instead, replace the below copy command with: COPY  . C:\\Tools\WinFIM.NET
-# docker build --tag winfim.net:1.0.0 --tag winfim.net:latest .
+# To build this Docker image from a commandline instead, with the compiled project do the following:
+#   Replace the below copy command with: COPY  . C:\\Tools\WinFIM.NET
+#   Then run this sample command:
+#   docker build --tag winfim.net:1.0.0 --tag winfim.net:latest .
 
 # Sample Command to run this Docker image in docker:
 # docker run --name winfim --volume "C:\:C:\host:ro" --rm -it winfim.net:latest
@@ -29,7 +31,12 @@ SHELL   ["powershell", "$ErrorActionPreference = 'Stop'; $ProgressPreference = '
 RUN     New-Service -Name "WinFIM.NET` Service" -BinaryPathName "c:\tools\WinFIM.NET\WinFIM.NET` Service.exe"
 
 # Set the WinFIM.NET service to delayed start, to give time for the host directories to be recognized by the container
-# RUN     sc.exe config "WinFIM.NET` Service" start=delayed-auto
+# RUN   sc.exe config "WinFIM.NET` Service" start=delayed-auto
+#
+# Restart the Windows service if it fails, where:
+#    The Failure count is reset to 0 after 30 seconds
+#    Restart the failed service after 5 seconds.
+RUN     sc.exe failure "WinFIM.NET` Service" reset= 30 actions= restart/5000
 
 RUN     .\Update-DockerImage.ps1"; \
         Remove-Item "Update-DockerImage.ps1"
