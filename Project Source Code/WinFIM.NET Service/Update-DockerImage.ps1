@@ -65,6 +65,7 @@ function Get-FluentBit {
     Invoke-WebRequest $DownloadUrl -OutFile "$DownloadedFilePath"
     Expand-Archive -LiteralPath "$DownloadedFilePath" -DestinationPath $TempDir
     Move-Item $TempDir\fluent-bit-1.9.7-win64\bin\* $TargetDirName -Force
+    Move-Item $TempDir\fluent-bit-1.9.7-win64\conf\* $TargetDirName -Force
     Remove-Directory $TempDir
 }
 function Get-Vim {
@@ -109,8 +110,11 @@ function Update-FluentBitConf{
 [OUTPUT]
     name  stdout
     match *
+
 '@
     write-output $fluentBitConf > $TargetFilePath
+    Write-Host "Converting $TargetFilePath to Linux line endings"
+    ((Get-Content $TargetFilePath) -join "`n") + "`n" | Set-Content -NoNewline $TargetFilePath
 }
 
 function Update-MonList{
@@ -127,7 +131,6 @@ C:\host\Windows\regedit.exe
 C:\host\windows\system.ini
 C:\host\Windows\System32\userinit.exe
 C:\host\windows\win.ini
-C:\host
 C:\host\test
 '@
     write-output $monListTxt > $TargetFilePath

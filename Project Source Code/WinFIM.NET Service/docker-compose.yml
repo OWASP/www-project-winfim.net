@@ -2,7 +2,7 @@ version: '3.4'
 
 services:
   winfim.netservice:
-    image: ${DOCKER_REGISTRY-}winfimnetservice
+    image: ${DOCKER_REGISTRY-}winfim.net
     build:
       context: .
       dockerfile: Dockerfile

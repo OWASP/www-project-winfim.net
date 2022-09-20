@@ -9,7 +9,7 @@
 # docker build --tag winfim.net:1.0.0 --tag winfim.net:latest .
 
 # Sample Command to run this Docker image in docker:
-# docker run --name winfim.net_sample --volume "C:\:C:\host:ro" --rm -it winfim.net:1.0.0
+# docker run --name winfim --volume "C:\:C:\host:ro" --rm -it winfim.net:latest
 
 # Indicates that the windowsservercore image will be used as the base image.
 FROM mcr.microsoft.com/dotnet/framework/runtime:4.8-windowsservercore-ltsc2019
