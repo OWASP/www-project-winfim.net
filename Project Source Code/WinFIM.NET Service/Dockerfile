@@ -31,57 +31,8 @@ RUN     New-Service -Name "WinFIM.NET` Service" -BinaryPathName "c:\tools\WinFIM
 # Set the WinFIM.NET service to delayed start, to give time for the host directories to be recognized by the container
 # RUN     sc.exe config "WinFIM.NET` Service" start=delayed-auto
 
-# Install fluent-bit for logging to Docker stdout
-RUN     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; \
-        $serverAddress = \"1.1.1.1\"; \
-        write-host "Setting DNS Client server address to $serverAddress"; \
-        $networkInterfaceIndex = Get-NetAdapter | Select-Object -ExpandProperty InterfaceIndex; \
-        Set-DnsClientServerAddress -InterfaceIndex $networkInterfaceIndex -ServerAddress $serverAddress; \
-        $targetDirName=\"C:\Tools\fluent-bit\"; \
-        $DownloadUrl=\"https://fluentbit.io/releases/1.9/fluent-bit-1.9.7-win64.zip\"; \
-        $DownloadFileName=\"fluent-bit-1.9.7-win64.zip\"; \
-        $TempDir=Join-Path \"$Env:Temp\" \"fluent-bit\"; \
-        New-Item -Type Directory -Path \"$TempDir\"; \
-        New-Item -Type Directory -Path \"$targetDirName\"; \
-        Write-Host "Downloading file $DownloadFileName to: $targetDirName"; \
-        $DownloadedFilePath = Join-Path \"$TempDir\" \"$DownloadFileName\"; \
-        Invoke-WebRequest $DownloadUrl -OutFile \"$DownloadedFilePath\"; \
-        Expand-Archive -LiteralPath \"$DownloadedFilePath\" -DestinationPath \"$TempDir\"; \
-        Move-Item \"$TempDir\fluent-bit-1.9.7-win64\bin\*\" \"$targetDirName\" -Force; \
-        Move-Item \"$TempDir\fluent-bit-1.9.7-win64\conf\*\" \"$targetDirName\" -Force; \
-        remove-item \"$TempDir\" -Force -Recurse
-
-# Install vim for editing files directly in container
-RUN     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; \
-        $serverAddress = \"1.1.1.1\"; \
-        write-host "Setting DNS Client server address to $serverAddress"; \
-        $networkInterfaceIndex = Get-NetAdapter | Select-Object -ExpandProperty InterfaceIndex; \
-        Set-DnsClientServerAddress -InterfaceIndex $networkInterfaceIndex -ServerAddress $serverAddress; \
-        $targetDirName=\"C:\Tools\vim\"; \
-        $DownloadUrl = \"https://github.com/vim/vim-win32-installer/releases/download/v9.0.0292/gvim_9.0.0292_x64_signed.zip\"; \
-        $DownloadFileName = \"gvim_9.0.0292_x64_signed.zip\"; \
-        $TempDir = Join-Path \"$Env:Temp\" \"vim\"; \
-        New-Item -Type Directory -Path \"$TempDir\"; \
-        New-Item -Type Directory -Path \"$TargetDirName\"; \
-        Write-Host "Downloading file $DownloadFileName to: $TargetDirName"; \
-        $DownloadedFilePath = Join-Path \"$TempDir\" \"$DownloadFileName\"; \
-        Invoke-WebRequest $DownloadUrl -OutFile \"$DownloadedFilePath\"; \
-        Expand-Archive -LiteralPath \"$DownloadedFilePath\" -DestinationPath \"$TempDir\"; \
-        Move-Item \"$TempDir\vim\vim90\vim.exe\" \"$TargetDirName\" -Force; \
-        [Environment]::SetEnvironmentVariable(\"Path\", $env:Path + \";$targetDirName\", [EnvironmentVariableTarget]::Machine); \
-        remove-item \"$TempDir\" -Force -Recurse
-
-# replace contents of monlist.txt with paths relevant to a WinFIM.NET Docker container monitoring it's host
-RUN     Write-Output "C:\host\autoexec.bat" > monlist.txt; \
-        Write-Output "C:\host\boot.ini" >> monlist.txt; \
-        Write-Output "C:\host\config.sys" >> monlist.txt; \
-        Write-Output "C:\host\Program` Files\Microsoft` Security` Client\msseces.exe" >> monlist.txt; \
-        Write-Output "C:\host\Windows\explorer.exe" >> monlist.txt; \
-        Write-Output "C:\host\Windows\regedit.exe" >> monlist.txt; \
-        Write-Output "C:\host\windows\system.ini" >> monlist.txt; \
-        Write-Output "C:\host\Windows\System32\userinit.exe" >> monlist.txt; \
-        Write-Output "C:\host\windows\win.ini" >> monlist.txt; \
-        Write-Output "C:\host\test" >> monlist.txt
+RUN     .\Update-DockerImage.ps1"; \
+        Remove-Item "Update-DockerImage.ps1"
 
 CMD     Write-Host "WinFIM.net container"; \
         Write-Host "Starting fluent-bit"; \

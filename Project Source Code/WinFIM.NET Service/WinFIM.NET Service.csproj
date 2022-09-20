@@ -170,6 +170,9 @@
     <None Include=".editorconfig" />
     <None Include="App.config" />
     <None Include="Dockerfile" />
+    <None Include="Update-DockerImage.ps1">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="install_service.bat">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
