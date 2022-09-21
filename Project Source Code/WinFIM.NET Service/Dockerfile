@@ -1,17 +1,19 @@
 # A Dockerfile to build winfim.net as a Windows container image which can be used in Docker / Kubernetes.
 
-# Depending on the operating system of the host machines(s) that will build or run the containers, the image specified in the FROM statement may need to be changed.
-# For more information, please see https://aka.ms/containercompat
-
 # This Dockerfile cam be built from Visual Studio or from a commandline.
 # To build from Visual Studio, using the "Docker Compose" project, select the Release profile for this dockerfile to build properly
-# To build this Docker image from a commandline, you can run this sample command:
-#   docker build --tag winfim.net:1.0.0 .
 
-# Sample Command to run this Docker image in docker:
-# docker run --name winfim --volume "C:\:C:\host:ro" --rm -it winfim.net:latest
+# Sample command to build this Docker image from a commandline:
+# docker build --tag winfim.net:dev .
 
-# Indicates that the windowsservercore image will be used as the base image.
+# Sample command to run this Docker image in docker:
+# docker run --name winfim --volume "C:\:C:\host:ro" --rm -it winfim.net:dev
+
+# Sample command to give this image a new tag:
+# docker tag winfim.net:dev winfim.net:1.0.0
+
+# Depending on the operating system of the host machines(s) that will build or run the containers, the image specified in the FROM statement may need to be changed.
+# For more information, please see https://aka.ms/containercompat
 FROM mcr.microsoft.com/dotnet/framework/runtime:4.8-windowsservercore-ltsc2019
 
 ARG     source
@@ -36,9 +38,11 @@ RUN     New-Service -Name "WinFIM.NET` Service" -BinaryPathName "c:\tools\WinFIM
 #    Restart the failed service after 5 seconds.
 RUN     sc.exe failure "WinFIM.NET` Service" reset= 30 actions= restart/5000
 
+# Run a script to install Fluent-bit, VIM and replace monlist.txt with watched paths that make sense for a Docker container watching it's host's C drive
 RUN     .\Update-DockerImage.ps1"; \
         Remove-Item "Update-DockerImage.ps1"
 
+# Commands to launch on container startup
 CMD     Write-Host "WinFIM.net container"; \
         Write-Host "Starting fluent-bit"; \
         c:\tools\fluent-bit\fluent-bit.exe -c c:\tools\fluent-bit\fluent-bit.conf
