@@ -85,7 +85,7 @@ namespace WinFIM.NET_Service
             Log.Debug("Setting database version...");
             sql = @"
                 INSERT OR REPLACE INTO version_control (version, notes) VALUES (1, 'Initial version');
-                INSERT OR REPLACE INTO version_control (version, notes) VALUES (2, 'changed field filename to pathname and set as primary key;\n added field isbasepath to tables baseline_table, current_table; added tables version_control, monlist_baseline_table, monlist_current_table');
+                INSERT OR REPLACE INTO version_control (version, notes) VALUES (2, 'changed field filename to pathname and set as primary key; added tables version_control, monlist');
             ";
             ExecuteNonQuery(sql);
         }
