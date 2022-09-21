@@ -54,6 +54,7 @@ Enjoy!
 - The .mdb is Database is a SQL Server 2019 Local DB - it's not currently deployed
 - The current database is a SQLite 3 database, and is built / tables created if not exist on program startup
 - Is currently built with Visual Studio 2022
+- Uses the Visual Studio Addon [Microsoft Visual Studio Installer Projects](https://marketplace.visualstudio.com/items?itemName=VisualStudioClient.MicrosoftVisualStudio2022InstallerProjects) to build the MSI installer
 
 ## Database structure
 - Filename: fimdb.db
