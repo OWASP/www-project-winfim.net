@@ -164,30 +164,30 @@
     <Compile Include="SQLiteHelper.cs" />
   </ItemGroup>
   <ItemGroup>
-    <None Include=".dockerignore">
+    <Content Include=".dockerignore">
       <DependentUpon>Dockerfile</DependentUpon>
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    </Content>
     <None Include=".editorconfig" />
     <None Include="App.config" />
-    <None Include="Dockerfile">
+    <Content Include="Dockerfile">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="Update-DockerImage.ps1">
+    </Content>
+    <Content Include="Update-DockerImage.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
-    <None Include="install_service.bat">
+    </Content>
+    <Content Include="install_service.bat">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    </Content>
     <None Include="packages.config" />
     <None Include="Properties\app.manifest" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
-    <None Include="uninstall_service.bat">
+    <Content Include="uninstall_service.bat">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
+    </Content>
     <None Include="WinFIM.NET Service_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
@@ -217,7 +217,7 @@
     <Content Include="exclude_path.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="icon.ico" />
+    <None Include="icon.ico" />
     <Content Include="monlist.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
