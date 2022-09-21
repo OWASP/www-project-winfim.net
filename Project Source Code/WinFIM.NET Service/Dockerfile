@@ -3,11 +3,10 @@
 # Depending on the operating system of the host machines(s) that will build or run the containers, the image specified in the FROM statement may need to be changed.
 # For more information, please see https://aka.ms/containercompat
 
-# This Dockerfile was designed to be run from Visual Studio using the "Docker Compose" project, select the Release profile for this dockerfile to build properly
-# To build this Docker image from a commandline instead, with the compiled project do the following:
-#   Replace the below copy command with: COPY  . C:\\Tools\WinFIM.NET
-#   Then run this sample command:
-#   docker build --tag winfim.net:1.0.0 --tag winfim.net:latest .
+# This Dockerfile cam be built from Visual Studio or from a commandline.
+# To build from Visual Studio, using the "Docker Compose" project, select the Release profile for this dockerfile to build properly
+# To build this Docker image from a commandline, you can run this sample command:
+#   docker build --tag winfim.net:1.0.0 .
 
 # Sample Command to run this Docker image in docker:
 # docker run --name winfim --volume "C:\:C:\host:ro" --rm -it winfim.net:latest
