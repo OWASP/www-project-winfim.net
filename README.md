@@ -19,7 +19,10 @@ The characteristics of this small application are:
 - Deployment friendly
 - Using SHA256 for hashing
 
-# Installation (single machine)
+# Installation (local machine)
+## Option 1: Via MSI installer
+1. Double click the setup.exe or WinFIM.NET-setup.msi file and follow the prompts to install WinFIM and setup the service
+## Option 2: Manually install
 1. Manual download all files to destination computer
 2. Configure the parameters to fill your own environment
     1. `monlist.txt` – put your in-scope monitoring files / directories (Absolute path) line by line under this file
@@ -36,7 +39,15 @@ The characteristics of this small application are:
     - `%SystemRoot%\System32\Winevt\Logs\WinFIM.NET.evtx`
   
 # Uninstallation
-  Bring up an Administrator command prompt and navigate to the deployed folder, then execute `uninstall_service.bat`
+## Option 1: Via Add or Remove Programs
+Locate the program "WinFIM.NET" and click Uninstall
+
+## Option 2: via the MSI installer
+1. Run the MSI installer (or setup.exe file) and click "Remove WinFIM.NET"
+
+## Option 3: Manually uninstall
+If you manually installed WinFIM.NET:
+- Bring up an Administrator command prompt and navigate to the deployed folder, then execute `uninstall_service.bat`
   
 # Windows Event IDs
 There are 4 types of Windows event IDs:
@@ -46,13 +57,37 @@ There are 4 types of Windows event IDs:
 - 7776 - File / directory creation
 - 7777 - File modification
 - 7778 - File / directory deletion  
-Enjoy!
+
+# Installation (Docker)
+- By installation, we mean: Build and run the WinFIM.NETDocker image
+- Requirements: Docker Desktop
+## Installation via Visual Studio
+- Launch visual Studio
+- Switch to the "Docker Compose" project
+- Select the Release profile
+- Click Build > Build Solution
+- To run the Docker image, run from a command prompt:
+  ```
+  docker run --name winfim --volume "C:\:C:\host:ro" --rm -it winfim.net:latest
+  ```
+
+
+## Installation from commandline
+- To build the Docker image, from the compiled WinFIM directory, run: 
+  ```
+  docker build --tag winfim.net:latest . 
+  ```
+- To run the Docker image, run from a command prompt:
+  ```
+  docker run --name winfim --volume "C:\:C:\host:ro" --rm -it winfim.net:latest
+  ```
+
+- Note: The Instructions to install and run the WinFIM.NET Docker image are also added as comments in the Dockerfile
  
 # Development notes
 - Source code available in Github project [OWASP/www-project-winfim.net](https://github.com/OWASP/www-project-winfim.net)
 - Targets the .NET 4.8 framework
-- The .mdb is Database is a SQL Server 2019 Local DB - it's not currently deployed
-- The current database is a SQLite 3 database, and is built / tables created if not exist on program startup
+- The current database is a SQLite 3 database, and is built if not exist on program startup
 - Is currently built with Visual Studio 2022
 - Uses the Visual Studio Addon [Microsoft Visual Studio Installer Projects](https://marketplace.visualstudio.com/items?itemName=VisualStudioClient.MicrosoftVisualStudio2022InstallerProjects) to build the MSI installer
 

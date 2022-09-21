@@ -4,13 +4,13 @@
 # To build from Visual Studio, using the "Docker Compose" project, select the Release profile for this dockerfile to build properly
 
 # Sample command to build this Docker image from a commandline:
-# docker build --tag winfim.net:dev .
+# docker build --tag winfim.net:latest .
 
 # Sample command to run this Docker image in docker:
-# docker run --name winfim --volume "C:\:C:\host:ro" --rm -it winfim.net:dev
+# docker run --name winfim --volume "C:\:C:\host:ro" --rm -it winfim.net:latest
 
 # Sample command to give this image a new tag:
-# docker tag winfim.net:dev winfim.net:1.0.0
+# docker tag winfim.net:latest winfim.net:1.0.0
 
 # Depending on the operating system of the host machines(s) that will build or run the containers, the image specified in the FROM statement may need to be changed.
 # For more information, please see https://aka.ms/containercompat
