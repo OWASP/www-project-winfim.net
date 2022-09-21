@@ -1,8 +1,7 @@
-#Depending on the operating system of the host machines(s) that will build or run the containers, the image specified in the FROM statement may need to be changed.
-#For more information, please see https://aka.ms/containercompat
-
-
 # A Dockerfile to build winfim.net as a Windows container image which can be used in Docker / Kubernetes.
+
+# Depending on the operating system of the host machines(s) that will build or run the containers, the image specified in the FROM statement may need to be changed.
+# For more information, please see https://aka.ms/containercompat
 
 # This Dockerfile was designed to be run from Visual Studio using the "Docker Compose" project, select the Release profile for this dockerfile to build properly
 # To build this Docker image from a commandline instead, with the compiled project do the following:
@@ -32,7 +31,7 @@ RUN     New-Service -Name "WinFIM.NET` Service" -BinaryPathName "c:\tools\WinFIM
 
 # Set the WinFIM.NET service to delayed start, to give time for the host directories to be recognized by the container
 # RUN   sc.exe config "WinFIM.NET` Service" start=delayed-auto
-#
+
 # Restart the Windows service if it fails, where:
 #    The Failure count is reset to 0 after 30 seconds
 #    Restart the failed service after 5 seconds.

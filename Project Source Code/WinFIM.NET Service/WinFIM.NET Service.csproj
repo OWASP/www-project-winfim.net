@@ -166,10 +166,13 @@
   <ItemGroup>
     <None Include=".dockerignore">
       <DependentUpon>Dockerfile</DependentUpon>
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
     <None Include=".editorconfig" />
     <None Include="App.config" />
-    <None Include="Dockerfile" />
+    <None Include="Dockerfile">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="Update-DockerImage.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
