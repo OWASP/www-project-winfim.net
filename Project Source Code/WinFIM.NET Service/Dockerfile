@@ -1,10 +1,13 @@
 # A Dockerfile to build winfim.net as a Windows container image which can be used in Docker / Kubernetes.
 
-# This Dockerfile cam be built from Visual Studio or from a commandline.
+# This Dockerfile cam be built from Visual Studio.
 # To build from Visual Studio, using the "Docker Compose" project, select the Release profile for this dockerfile to build properly
 
-# Sample command to build this Docker image from a commandline:
-# docker build --tag winfim.net:latest .
+# To build this Docker image from a commandline instead, from the compiled directory:
+#   Replace the below COPY command with: COPY  . C:\\Tools\WinFIM.NET
+#   And replace the contents of the .dockerignore file with: Dockerfile
+#   Then run this sample command:
+#   docker build --tag winfim.net:latest .
 
 # Sample command to run this Docker image in docker:
 # docker run --name winfim --volume "C:\:C:\host:ro" --rm -it winfim.net:latest
