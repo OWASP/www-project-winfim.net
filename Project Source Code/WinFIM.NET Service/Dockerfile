@@ -13,7 +13,7 @@
 # docker run --name winfim --volume "C:\:C:\host:ro" --rm -it winfim.net:latest
 
 # Sample command to give this image a new tag:
-# docker tag winfim.net:latest winfim.net:1.0.0
+# docker tag winfim.net:latest winfim.net:1.1.1
 
 # Depending on the operating system of the host machines(s) that will build or run the containers, the image specified in the FROM statement may need to be changed.
 # For more information, please see https://aka.ms/containercompat

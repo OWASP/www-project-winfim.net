@@ -7,7 +7,7 @@
         - replace contents of monlist.txt with paths relevant to a WinFIM.NET Docker container monitoring it's host
 
     .NOTES
-        Author: StarRez
+        Author: WinFIM.NET
 #>
 
 # Powershell runtime options
