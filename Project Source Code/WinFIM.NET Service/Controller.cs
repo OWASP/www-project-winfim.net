@@ -36,6 +36,7 @@ namespace WinFIM.NET_Service
                 if (!(File.Exists(path)))
                 {
                     fileOwner = $"File not found: {path}";
+                    return fileOwner;
                 }
                 fileOwner = File.GetAccessControl(path).GetOwner(typeof(System.Security.Principal.NTAccount)).ToString();
             }

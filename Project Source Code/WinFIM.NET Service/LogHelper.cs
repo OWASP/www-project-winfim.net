@@ -40,7 +40,7 @@ namespace WinFIM.NET_Service
             }
             catch (ConfigurationErrorsException)
             {
-                Console.WriteLine("Error writing app settings");
+                Log.Error("Error writing app settings");
             }
         }
 

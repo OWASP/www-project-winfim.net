@@ -23,7 +23,7 @@ namespace WinFIM.NET_Service
             //this.OnStop();
         }
 
-        // run in scheduled / continous mode if the "WinFIM.NET Service.exe" executable is directly run as a console app (as opposed to running as a service)
+        // run in scheduled / continuous mode if the "WinFIM.NET Service.exe" executable is directly run as a console app (as opposed to running as a service)
         internal void ConsoleScheduled()
         {
             _controller.Initialise();
@@ -39,7 +39,6 @@ namespace WinFIM.NET_Service
                 Thread.Sleep(1000 * 60 * schedulerMin); // sleep for the number of minutes specified in scheduler.txt
                 _controller.FileIntegrityCheck();
             }
-
         }
 
         protected override void OnStart(string[] args)
@@ -57,7 +56,6 @@ namespace WinFIM.NET_Service
             // Read if there is any valid schedule timer (in minute)
             _controller.Initialise();
             string serviceStartMessage;
-            string schedulerConf = LogHelper.WorkDir + "\\scheduler.txt";
             int schedulerMin = LogHelper.GetSchedule();
 
             if (schedulerMin > 0)
