@@ -54,8 +54,9 @@ function Set-DnsServer {
 function Get-FluentBit {
     param ($TargetDirName)
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    $DownloadUrl = "https://fluentbit.io/releases/1.9/fluent-bit-1.9.7-win64.zip"
-    $DownloadFileName = "fluent-bit-1.9.7-win64.zip"
+    $version = "1.9.9"
+    $DownloadUrl = "https://fluentbit.io/releases/1.9/fluent-bit-${version}-win64.zip"
+    $DownloadFileName = "fluent-bit-${version}-win64.zip"
     $TempDir = Join-Path "$Env:Temp" "fluent-bit"
     Remove-Directory $TempDir
     New-Directory $TempDir
@@ -64,15 +65,16 @@ function Get-FluentBit {
     $DownloadedFilePath = Join-Path "$TempDir" "$DownloadFileName"
     Invoke-WebRequest $DownloadUrl -OutFile "$DownloadedFilePath"
     Expand-Archive -LiteralPath "$DownloadedFilePath" -DestinationPath $TempDir
-    Move-Item $TempDir\fluent-bit-1.9.7-win64\bin\* $TargetDirName -Force
-    Move-Item $TempDir\fluent-bit-1.9.7-win64\conf\* $TargetDirName -Force
+    Move-Item $TempDir\fluent-bit-${version}-win64\bin\* $TargetDirName -Force
+    Move-Item $TempDir\fluent-bit-${version}-win64\conf\* $TargetDirName -Force
     Remove-Directory $TempDir
 }
 function Get-Vim {
     param ($TargetDirName)
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    $DownloadUrl = "https://github.com/vim/vim-win32-installer/releases/download/v9.0.0292/gvim_9.0.0292_x64_signed.zip"
-    $DownloadFileName = "gvim_9.0.0292_x64_signed.zip"
+    $version = "9.0.0619"
+    $DownloadUrl = "https://github.com/vim/vim-win32-installer/releases/download/v${version}/gvim_${version}_x64_signed.zip"
+    $DownloadFileName = "gvim_${version}_x64_signed.zip"
     $TempDir = Join-Path "$Env:Temp" "vim"
     Remove-Directory $TempDir
     New-Directory $TempDir

@@ -1,5 +1,6 @@
 ﻿using Serilog;
 using System;
+using System.Configuration;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -10,7 +11,7 @@ namespace WinFIM.NET_Service
 {
     internal static class LogHelper
     {
-        internal static string WorkDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        internal static readonly string WorkDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern int Wow64DisableWow64FsRedirection(ref IntPtr ptr);
@@ -20,6 +21,54 @@ namespace WinFIM.NET_Service
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern int Wow64EnableWow64FsRedirection(ref IntPtr ptr);
 
+        private static void AddOrUpdateAppSettings(string key, string value)
+        {
+            try
+            {
+                var configFile = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+                var settings = configFile.AppSettings.Settings;
+                if (settings[key] == null)
+                {
+                    settings.Add(key, value);
+                }
+                else
+                {
+                    settings[key].Value = value;
+                }
+                configFile.Save(ConfigurationSaveMode.Modified);
+                ConfigurationManager.RefreshSection(configFile.AppSettings.SectionInformation.Name);
+            }
+            catch (ConfigurationErrorsException)
+            {
+                Console.WriteLine("Error writing app settings");
+            }
+        }
+
+        internal static void ConfigureLogging()
+        {
+            string logFilePath = ConfigurationManager.AppSettings["serilog:write-to:File.path"];
+            if (!(string.IsNullOrEmpty(logFilePath)))
+            {
+
+                //if the configured log file path has a filename but not directory, set the directory to the same directory as this WinFIM.NET binary file
+                string[] directoryDelimeters = { "/", "\\" };
+                if (!(directoryDelimeters.Any(logFilePath.Contains)))
+                {
+                    logFilePath = Path.Combine(LogHelper.WorkDir, logFilePath);
+                    AddOrUpdateAppSettings("serilog:write-to:File.path", logFilePath);
+                }
+            }
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.AppSettings()
+                .CreateLogger();
+
+            if (!(string.IsNullOrEmpty(logFilePath)))
+            {
+                Log.Information($"Logging to file: {logFilePath}");
+            }
+
+        }
+
         internal static void Initialize()
         {
             if (!EventLog.SourceExists("WinFIM.NET"))
@@ -28,10 +77,12 @@ namespace WinFIM.NET_Service
             }
         }
 
+
         internal static void WriteEventLog(string message, EventLogEntryType eventType, int eventId)
         {
             EventLog1.Source = "WinFIM.NET";
             EventLog1.Log = "WinFIM.NET";
+            message = message.Truncate(32768);  // Windows Event log strings are limited to a maximum of 32768 characters
             EventLog1.WriteEntry(message, eventType, eventId);
         }
 
