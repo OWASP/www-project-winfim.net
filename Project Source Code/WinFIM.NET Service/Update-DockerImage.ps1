@@ -107,7 +107,7 @@ function Update-FluentBitConf{
 [INPUT]
     Name        tail
     Path        C:\Tools\WinFIM.NET\*.log
-    db          fluent-bit.db
+    db          C:\Tools\fluent-bit\fluent-bit.db
 
 [OUTPUT]
     name  stdout

@@ -1,4 +1,5 @@
 # A Dockerfile to build winfim.net as a Windows container image which can be used in Docker / Kubernetes.
+# Don't forget to launch Docker Deskop in Windows mode before building! (& $Env:ProgramFiles\Docker\Docker\DockerCli.exe -SwitchWindowsEngine)
 
 # This Dockerfile cam be built from Visual Studio.
 # To build from Visual Studio, using the "Docker Compose" project, select the Release profile for this dockerfile to build properly
@@ -49,3 +50,9 @@ RUN     .\Update-DockerImage.ps1"; \
 CMD     Write-Host "WinFIM.net container"; \
         Write-Host "Starting fluent-bit"; \
         c:\tools\fluent-bit\fluent-bit.exe -c c:\tools\fluent-bit\fluent-bit.conf
+
+# Cleanup
+RUN     Stop-Service -Name "WinFIM.NET` Service"; \
+        Remove-Item *.log; \
+        Remove-Item fimdb.db; \
+        remove-item c:\tools\fluent-bit\fluent-bit.db*
