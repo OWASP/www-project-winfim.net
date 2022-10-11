@@ -2,7 +2,7 @@
     .SYNOPSIS
         This Powershell script updates the WinFIM.NET docker image.
         It does the following:
-        - Downloads / installs / configures Fluent-bit to pipe logs to STDOUT which can be read by Docker logs (e.g. docker log winfim)
+        - Downloads / installs / configures Fluent-bit to pipe logs to STDOUT which can be read by Docker logs (Example docker command: docker logs winfim)
         - Downloads / installs vim  to enable editing of files directly in a running container
         - replace contents of monlist.txt with paths relevant to a WinFIM.NET Docker container monitoring it's host
         - Configures WinFIM.NET to not save to Windows Event logs - Fluent-bit is used instead
