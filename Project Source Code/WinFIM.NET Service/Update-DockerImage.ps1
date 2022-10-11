@@ -140,7 +140,7 @@ C:\host\test
     write-output $monListTxt > $TargetFilePath
 }
 
-function Update-AppConfig{
+function Update-WinFimAppConfig{
     $targetFile = "WinFIM.NET Service.exe.config"
     $find =     '<setting name="is_log_to_windows_eventlog" serializeAs="String"><value>True</value></setting>'
     $replace =  '<setting name="is_log_to_windows_eventlog" serializeAs="String"><value>False</value></setting>'
@@ -148,10 +148,19 @@ function Update-AppConfig{
     $newContent | Set-Content $targetFile
 }
 
+function ImportAzureRootCert{
+    # We need to import the Azure root cert for Fluent-bit to be able to upload to Azure blobs. Add more root certs if using a Fluent-bit plugin that needs it
+    $AzureBaltimoreCyberTrustRoot = "https://crt.sh/?d=76"
+    Invoke-WebRequest -URI $AzureBaltimoreCyberTrustRoot -OutFile "C:\AzureBaltimoreCyberTrustRoot.cer"
+    Import-Certificate -FilePath C:\AzureBaltimoreCyberTrustRoot.cer -CertStoreLocation Cert:\LocalMachine\Root\
+}
+
+
 # main program
 Set-DnsServer
 Get-FluentBit           -TargetDirName "C:\Tools\fluent-bit"
 Update-FluentBitConf    -TargetDirName "C:\Tools\fluent-bit"
 Get-Vim                 -TargetDirName "C:\Tools\vim"
 Update-monlist          -TargetDirName "C:\Tools\WinFIM.NET"
-Update-AppConfig
+WinFimAppConfig
+ImportAzureRootCert
