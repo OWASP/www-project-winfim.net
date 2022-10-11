@@ -5,6 +5,8 @@
         - Downloads / installs / configures Fluent-bit to pipe logs to STDOUT which can be read by Docker logs,
         - Downloads / installs vim  to enable editing of files directly in a running container
         - replace contents of monlist.txt with paths relevant to a WinFIM.NET Docker container monitoring it's host
+        - Configures WinFIM.NET not to save to Windows Event logs
+        - Has a function to import root certs - useful for Fluent-bit plugins, with the Azure root cert as an example
 
     .NOTES
         Author: WinFIM.NET
@@ -148,13 +150,13 @@ function Update-WinFimAppConfig{
     $newContent | Set-Content $targetFile
 }
 
-function ImportAzureRootCert{
-    # We need to import the Azure root cert for Fluent-bit to be able to upload to Azure blobs. Add more root certs if using a Fluent-bit plugin that needs it
+function Import-RootCerts{
+    # Example: Import the Azure root cert for the built in Fluent-bit Azure plugins to be able to upload to Azure. Add more root certs if using different Fluent-bit plugin(s) that need them.
+    # The $AzureBaltimoreCyberTrustRoot link is from site: https://learn.microsoft.com/en-us/azure/security/fundamentals/azure-ca-details
     $AzureBaltimoreCyberTrustRoot = "https://crt.sh/?d=76"
     Invoke-WebRequest -URI $AzureBaltimoreCyberTrustRoot -OutFile "C:\AzureBaltimoreCyberTrustRoot.cer"
     Import-Certificate -FilePath C:\AzureBaltimoreCyberTrustRoot.cer -CertStoreLocation Cert:\LocalMachine\Root\
 }
-
 
 # main program
 Set-DnsServer
@@ -162,5 +164,5 @@ Get-FluentBit           -TargetDirName "C:\Tools\fluent-bit"
 Update-FluentBitConf    -TargetDirName "C:\Tools\fluent-bit"
 Get-Vim                 -TargetDirName "C:\Tools\vim"
 Update-monlist          -TargetDirName "C:\Tools\WinFIM.NET"
-WinFimAppConfig
-ImportAzureRootCert
+Update-WinFimAppConfig
+Import-RootCerts
