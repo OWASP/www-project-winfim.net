@@ -29,9 +29,10 @@ namespace WinFIM.NET_Service
             _controller.Initialise();
             int schedulerMin = LogHelper.GetSchedule();
             string serviceStartMessage = Properties.Settings.Default.service_start_message + ": (UTC) " + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "\n\n";
-            serviceStartMessage = serviceStartMessage + LogHelper.GetRemoteConnections() + "\nThis console started service will run every " + schedulerMin.ToString() + " minute(s).";
-            Log.Debug(serviceStartMessage);
-            LogHelper.WriteEventLog(serviceStartMessage, EventLogEntryType.Information, 7771); // setting the Event ID as 7771
+            serviceStartMessage = serviceStartMessage + LogHelper.GetRemoteConnections() + "This console started service will run every " + schedulerMin.ToString() + " minute(s).";
+            Log.Information(serviceStartMessage);
+            LogHelper.WriteEventLog(serviceStartMessage, EventLogEntryType.Information, 7771);
+
             _controller.FileIntegrityCheck();
 
             while (true)
@@ -68,37 +69,41 @@ namespace WinFIM.NET_Service
                 timer.Elapsed += OnTimer;
                 timer.Start();
                 serviceStartMessage = Properties.Settings.Default.service_start_message + ": (UTC) " + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "\n\n";
-                serviceStartMessage = serviceStartMessage + LogHelper.GetRemoteConnections() + "\nThis service will run every " + schedulerMin.ToString() + " minute(s).";
-                Log.Debug(serviceStartMessage);
-                LogHelper.WriteEventLog(serviceStartMessage, EventLogEntryType.Information, 7771); // setting the Event ID as 7771
+                serviceStartMessage = serviceStartMessage + LogHelper.GetRemoteConnections() + "This service will run every " + schedulerMin.ToString() + " minute(s).";
+                if (Properties.Settings.Default.is_capture_remote_connection_status)
+                {
+                    Log.Information(serviceStartMessage);
+                    LogHelper.WriteEventLog(serviceStartMessage, EventLogEntryType.Information, 7771);
+                }
                 _controller.FileIntegrityCheck();
             }
             else
             // run in continuous mode
             {
                 serviceStartMessage = Properties.Settings.Default.service_start_message + ": (UTC) " + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "\n\n";
-                serviceStartMessage = serviceStartMessage + LogHelper.GetRemoteConnections() + "\nThis service will run continuously.";
-                Log.Debug(serviceStartMessage);
-                LogHelper.WriteEventLog(serviceStartMessage, EventLogEntryType.Information, 7771); // setting the Event ID as 7771
-                bool trackerBoolean = true;
-                while (trackerBoolean)
+                serviceStartMessage = serviceStartMessage + LogHelper.GetRemoteConnections() + "This service will run continuously.";
+                Log.Information(serviceStartMessage);
+                LogHelper.WriteEventLog(serviceStartMessage, EventLogEntryType.Information, 7771);
+                while (true)
                 {
-                    trackerBoolean = _controller.FileIntegrityCheck();
+                    Log.Debug("Looping in continuous mode");
+                    _controller.FileIntegrityCheck();
                 }
             }
         }
 
         private void OnTimer(object sender, ElapsedEventArgs args)
         {
+            Log.Debug("Looping on timer");
             _controller.FileIntegrityCheck();
         }
 
         protected override void OnStop()
         {
             string serviceStopMessage = Properties.Settings.Default.service_stop_message + ": (UTC) " + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "\n\n";
-            serviceStopMessage = serviceStopMessage + LogHelper.GetRemoteConnections() + "\n";
+            serviceStopMessage += LogHelper.GetRemoteConnections();
             Log.Information(serviceStopMessage);
-            LogHelper.WriteEventLog(serviceStopMessage, EventLogEntryType.Information, 7770); //setting the Event ID as 7770
+            LogHelper.WriteEventLog(serviceStopMessage, EventLogEntryType.Information, 7770);
         }
 
     }

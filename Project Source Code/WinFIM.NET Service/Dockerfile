@@ -1,17 +1,18 @@
 # A Dockerfile to build winfim.net as a Windows container image which can be used in Docker / Kubernetes.
-# Don't forget to launch Docker Deskop in Windows mode before building! (& $Env:ProgramFiles\Docker\Docker\DockerCli.exe -SwitchWindowsEngine)
+# Docker Deskop should be in Windows mode before building. (& $Env:ProgramFiles\Docker\Docker\DockerCli.exe -SwitchWindowsEngine)
 
 # This Dockerfile cam be built from Visual Studio.
 # To build from Visual Studio, using the "Docker Compose" project, select the Release profile for this dockerfile to build properly
 
 # To build this Docker image from a commandline instead, from the compiled directory:
 #   Replace the below COPY command with: COPY  . C:\\Tools\WinFIM.NET
-#   And replace the contents of the .dockerignore file with: Dockerfile
+#   Replace the contents of the .dockerignore file with: Dockerfile
 #   Then run this sample command:
 #   docker build --tag winfim.net:latest .
 
-# Sample command to run this Docker image in docker:
-# docker run --name winfim --volume "C:\:C:\host:ro" --rm -it winfim.net:latest
+# Sample commands to run this Docker image in docker:
+# docker run --name winfim --volume "C:\:C:\host:ro" --net "Default Switch" --rm -it winfim.net:latest
+# docker run --name winfim --volume "C:\:C:\host:ro" --net "Default Switch" --rm -it winfim.net:latest powershell
 
 # Sample command to give this image a new tag:
 # docker tag winfim.net:latest winfim.net:1.1.1
@@ -37,17 +38,21 @@ RUN     New-Service -Name "WinFIM.NET` Service" -BinaryPathName "c:\tools\WinFIM
 # Set the WinFIM.NET service to delayed start, to give time for the host directories to be recognized by the container
 # RUN   sc.exe config "WinFIM.NET` Service" start=delayed-auto
 
-# Restart the Windows service if it fails, where:
-#    The Failure count is reset to 0 after 30 seconds
-#    Restart the failed service after 5 seconds.
-RUN     sc.exe failure "WinFIM.NET` Service" reset= 30 actions= restart/5000
+# Restart the Windows service if it fails, where the Failure count is reset to 0 after 30 seconds, Restart the failed service after 5 seconds.
+# Set startup to delayed so the service startup doesn't conflict with other starting processes, e.g. networking
+RUN     sc.exe failure "WinFIM.NET` Service" reset= 30 actions= restart/5000; \
+        sc.exe config "WinFIM.NET` Service" start=delayed-auto
 
 # Run a script to install Fluent-bit, VIM and replace monlist.txt with watched paths that make sense for a Docker container watching it's host's C drive
 RUN     .\Update-DockerImage.ps1"; \
         Remove-Item "Update-DockerImage.ps1"
 
-# Commands to launch on container startup
+# Commands to launch on container startup. 
+# Start the WinFIM.NET service with a short delay so there are no conflicts with other starting up processes, e.g. networking.
 CMD     Write-Host "WinFIM.net container"; \
+        Sleep 1; \
+        Write-Host "Starting the 'WinFIM.NET Service' service; \
+        Start-Service "WinFIM.NET` Service"; \
         Write-Host "Starting fluent-bit"; \
         c:\tools\fluent-bit\fluent-bit.exe -c c:\tools\fluent-bit\fluent-bit.conf
 

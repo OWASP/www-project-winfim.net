@@ -72,7 +72,7 @@ function Get-FluentBit {
 function Get-Vim {
     param ($TargetDirName)
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    $version = "9.0.0619"
+    $version = "9.0.0000"
     $DownloadUrl = "https://github.com/vim/vim-win32-installer/releases/download/v${version}/gvim_${version}_x64_signed.zip"
     $DownloadFileName = "gvim_${version}_x64_signed.zip"
     $TempDir = Join-Path "$Env:Temp" "vim"
@@ -83,6 +83,8 @@ function Get-Vim {
     $DownloadedFilePath = Join-Path "$TempDir" "$DownloadFileName"
     Invoke-WebRequest $DownloadUrl -OutFile "$DownloadedFilePath"
     Expand-Archive -LiteralPath "$DownloadedFilePath" -DestinationPath $TempDir
+    # Remove-Item $DownloadedFilePath
+    # Get-ChildItem $TempDir\vim\vim90\*.* -Recurse | Move-Item -Destination $TargetDirName -Force
     Move-Item $TempDir\vim\vim90\vim.exe $TargetDirName -Force
     Set-WindowsPath -TargetDirName $TargetDirName -Scope Machine
     Remove-Directory $TempDir

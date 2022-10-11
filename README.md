@@ -6,15 +6,16 @@ For a detailed introduction, please visit the [Cyber Security Corner](https://re
 # Introduction
 There are plenty of commercial tools to do file integrity monitoring (FIM). But, not many freeware / Open Source options, especially for Windows.
 
-A small Windows Service named [WinFIM.NET](https://github.com/redblueteam/WinFIM.NET) has been developed to try to fill this gap.
+A small application named [WinFIM.NET](https://github.com/OWASP/www-project-winfim.net/) has been developed to try to fill this gap.
 
 # characteristics
-The characteristics of this small application are:
+The characteristics of this application are:
 
 - Identify added / removed / modified files and directories since the previous run
 - The monitoring scope can be easily customized
 - Path exclusion (e.g. sub-directory) could be configured
 - File extension exclusion could be configured (e.g. *.bak, *.tmp, *.log, *.mdf, *.ldf, *.xel, *. installlog)
+- Can be launched as a Windows service or as a console application
 - Logging is configurable, with the following defaults:
   - Logs to Native Windows Events, which can integrate with existing log management mechanisms (e.g. Windows Event Subscription, Winlogbeat , nxlog, etc.)
   - Logs to file and the console with customisable logging levels (verbose, debug, information, warning, error)
@@ -60,27 +61,36 @@ To build the Docker image, from the compiled WinFIM directory:
   ```
 
 # Configuation
-1. Configure the parameters to suit your own environment
+1. Configure WinFIM.NET to suit your own environment
     1. `monlist.txt` – put your in-scope monitoring files / directories (Absolute path) line by line under this file
     2. `exclude_path.txt` – put your exclusion (Absolute path) line by line under this file (the exclusion should be overlapped with the paths in `monlist.txt` (e.g. Sub-directory of the in-scope directory)
     3. `exclude_extension.txt` – put all whitelisted file extension (normally, those extensions should be related to some frequent changing files, e.g. *.log, *.tmp)
     4. `scheduler.txt` – This file is to control whether the WinFIM.NET will be run in schedule mode or continuous mode.
         - Put a number `0` to the file, if you want the WinFIM.NET keep running.
         - Put a number (in minute) for the time separation of each run. e.g. 30 (that means file checksum will be run every 30 minutes).
-2. For Windows Event logs
-   1. Make sure that the maximum log size is configured according to your deployment environment. By default, only 1MB is reserved for Windows Event logs.
-      - `%SystemRoot%\System32\Winevt\Logs\WinFIM.NET.evtx`
-3. File and console level logs use the customisable [Serilog](https://serilog.net/) logging framework.
-   1. The Serilog configuration can be modified from the file `WinFIM.NET Service.exe.config`. (The sourcecode filename: `App.config`)
-         1. The log file is saved to the file `c:\tools\WinFIM.NET\{yyyymmdd}.log` by default
-            1. per the setting `<add key="serilog:write-to:File.path" value="c:\tools\WinFIM.NET\.log" />` in file `WinFIM.NET Service.exe.config`
-            2. Note that the date in `yyyymmdd` format is automatically inserted into the filename before the dot, e.g. `20221004.log`
-      1. More information about the log configuration settings are here:  https://github.com/serilog/serilog-settings-appsettings
-      2. The following Serilog plugins have been installed: 
+2. Configure Windows Event logs
+   1. Windows Event logging is enabled by default. 
+      1. To disable, edit the file `WinFIM.NET Service.exe.config` (Sourcecode filename: `App.config`
+         1. Change the entry `is_log_to_windows_eventlog` to `False`
+   2. If you want to log to Windows Event logs, make sure that the maximum log size is configured according to your deployment environment. By default, only 1MB is reserved for Windows Event logs.
+   3. The Windows Event log file is located here: `%SystemRoot%\System32\Winevt\Logs\WinFIM.NET.evtx`
+3. File and console level logs use the [Serilog](https://serilog.net/) logging framework.
+   1. The Serilog configuration is stored in the a text file called the app.config file. To modify:
+      1. Edit the file `WinFIM.NET Service.exe.config` (Sourcecode filename: `App.config`)
+         1. Review the entries starting with `<add key="serilog:`
+            1. Example: The log file location is defined in setting `<add key="serilog:write-to:File.path" value="c:\tools\WinFIM.NET\.log" />`
+               1. Note that the date in `yyyymmdd` format is automatically inserted into the filename before the dot, e.g. `20221004.log`
+      2. More information about configuring log settings are here:  https://github.com/serilog/serilog-settings-appsettings
+      3. The following Serilog plugins have been installed: 
          1. Serilog.Settings.AppSettings - enables the Serilog settings to be stored in the .NET framework app.config file
          2. Serilog.Sinks.Console - outputs logs to the console when running the .exe file directly (rather than running as a service)
          3. Serilog.Sinks.File - outputs logs to a file
-         4. Serilog.Formatting.Compact - produces compact JSON format logs
+4. Configuring the capture of remote connections
+   1. WinFIM.NET can capture the current remote connection status at the beginning of every file checking cycle.  
+      When suspicious file changes are identified, this information may able to speed up the whole forensic / threat hunting process.
+      1. This is disabled by default. To enable:
+         1. Edit the file `WinFIM.NET Service.exe.config` (Sourcecode filename: `App.config`
+         2. To enable, edit app.config file, change the entry `is_capture_remote_connection_status` to `True`
 
 # Running
 - If the Windows service has been installed, WinFIM.NET will automatically start on system startup

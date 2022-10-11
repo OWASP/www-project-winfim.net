@@ -587,7 +587,7 @@ namespace WinFIM.NET_Service
                     tempHash = "UNKNOWN";
                     string errorMessage = $"File '{path}' is locked and not accessible for Hash calculation - {e.Message}.";
                     Log.Error(errorMessage);
-                    LogHelper.WriteEventLog(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                    LogHelper.WriteEventLog(errorMessage, EventLogEntryType.Error, 7773);
                 }
                 //if there is content in baseline_table before, write to current_table
                 if (haveBaseline)
@@ -618,7 +618,7 @@ namespace WinFIM.NET_Service
                             {
                                 message = "File :'" + path + "' is modified. \nPrevious check at:" + dataReader.GetValue(4) + "\nFile hash: (Previous)" + dataReader.GetValue(3) + " (Current)" + tempHash + "\nFile Size: (Previous)" + dataReader.GetValue(1) + "MB (Current)" + GetFileSize(path) + "MB\nFile Owner: (Previous)" + dataReader.GetValue(2) + " (Current)" + GetFileOwner(path);
                                 Log.Warning(message);
-                                LogHelper.WriteEventLog(message, EventLogEntryType.Warning, 7777); //setting the Event ID as 7777
+                                LogHelper.WriteEventLog(message, EventLogEntryType.Warning, 7777);
                             }
                             dataReader.Close();
                             command.Dispose();
