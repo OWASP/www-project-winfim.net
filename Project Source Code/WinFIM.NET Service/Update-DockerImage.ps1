@@ -2,11 +2,11 @@
     .SYNOPSIS
         This Powershell script updates the WinFIM.NET docker image.
         It does the following:
-        - Downloads / installs / configures Fluent-bit to pipe logs to STDOUT which can be read by Docker logs,
+        - Downloads / installs / configures Fluent-bit to pipe logs to STDOUT which can be read by Docker logs (e.g. docker log winfim)
         - Downloads / installs vim  to enable editing of files directly in a running container
         - replace contents of monlist.txt with paths relevant to a WinFIM.NET Docker container monitoring it's host
-        - Configures WinFIM.NET not to save to Windows Event logs
-        - Has a function to import root certs - useful for Fluent-bit plugins, with the Azure root cert as an example
+        - Configures WinFIM.NET to not save to Windows Event logs - Fluent-bit is used instead
+        - Has a function to import root certs - useful for Fluent-bit output plugins, with the Azure root cert as an example. Tested using the Fluent-Bit azure_blob plugin
 
     .NOTES
         Author: WinFIM.NET
@@ -47,6 +47,7 @@ function Set-WindowsPath {
 }
 
 function Set-DnsServer {
+    # Temporarily set the DNS Server while building the image to enable downloading files from the Internet
     $serverAddress = "1.1.1.1"
     write-host "Setting DNS Client server address to $serverAddress"
     $networkInterfaceIndex = Get-NetAdapter | Select-Object -ExpandProperty InterfaceIndex
@@ -54,6 +55,7 @@ function Set-DnsServer {
 }
 
 function Get-FluentBit {
+    # Download a popular opensource log processor and forwarder called Fluent Bit
     param ($TargetDirName)
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     $version = "1.9.9"
@@ -72,6 +74,7 @@ function Get-FluentBit {
     Remove-Directory $TempDir
 }
 function Get-Vim {
+    # Download a popular opensource text editor called VIM so users can edit text based files inside the container
     param ($TargetDirName)
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
     $version = "9.0.0000"
