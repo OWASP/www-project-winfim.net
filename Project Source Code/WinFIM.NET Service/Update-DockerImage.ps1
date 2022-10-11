@@ -140,9 +140,18 @@ C:\host\test
     write-output $monListTxt > $TargetFilePath
 }
 
+function Update-AppConfig{
+    $targetFile = "WinFIM.NET Service.exe.config"
+    $find =     '<setting name="is_log_to_windows_eventlog" serializeAs="String"><value>True</value></setting>'
+    $replace =  '<setting name="is_log_to_windows_eventlog" serializeAs="String"><value>False</value></setting>'
+    $newContent = (Get-Content $targetFile) -replace $find, $replace
+    $newContent | Set-Content $targetFile
+}
+
 # main program
 Set-DnsServer
 Get-FluentBit           -TargetDirName "C:\Tools\fluent-bit"
 Update-FluentBitConf    -TargetDirName "C:\Tools\fluent-bit"
 Get-Vim                 -TargetDirName "C:\Tools\vim"
 Update-monlist          -TargetDirName "C:\Tools\WinFIM.NET"
+Update-AppConfig

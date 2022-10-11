@@ -40,8 +40,8 @@ RUN     New-Service -Name "WinFIM.NET` Service" -BinaryPathName "c:\tools\WinFIM
 
 # Restart the Windows service if it fails, where the Failure count is reset to 0 after 30 seconds, Restart the failed service after 5 seconds.
 # Set startup to delayed so the service startup doesn't conflict with other starting processes, e.g. networking
-RUN     sc.exe failure "WinFIM.NET` Service" reset= 30 actions= restart/5000; \
-        sc.exe config "WinFIM.NET` Service" start=delayed-auto
+RUN     sc.exe failure "WinFIM.NET` Service" reset= 30 actions= restart/5000
+        # sc.exe config "WinFIM.NET` Service" start=delayed-auto
 
 # Run a script to install Fluent-bit, VIM and replace monlist.txt with watched paths that make sense for a Docker container watching it's host's C drive
 RUN     .\Update-DockerImage.ps1"; \
@@ -49,12 +49,7 @@ RUN     .\Update-DockerImage.ps1"; \
 
 # Commands to launch on container startup. 
 # Start the WinFIM.NET service with a short delay so there are no conflicts with other starting up processes, e.g. networking.
-CMD     Write-Host "WinFIM.net container"; \
-        Sleep 1; \
-        Write-Host "Starting the 'WinFIM.NET Service' service; \
-        Start-Service "WinFIM.NET` Service"; \
-        Write-Host "Starting fluent-bit"; \
-        c:\tools\fluent-bit\fluent-bit.exe -c c:\tools\fluent-bit\fluent-bit.conf
+CMD     c:\tools\fluent-bit\fluent-bit.exe -c c:\tools\fluent-bit\fluent-bit.conf
 
 # Cleanup
 RUN     Stop-Service -Name "WinFIM.NET` Service"; \
