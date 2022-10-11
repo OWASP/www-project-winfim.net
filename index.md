@@ -15,7 +15,7 @@ WinFIM.NET - File Integrity Monitoring For Windows
 <b>#Introduction</b>
 There are plenty of commercial tools to do file integrity monitoring (FIM). But, for freeware / Open Source, especially for Windows, it seems not much options.
 
-A small Windows Service named [“WinFIM.NET”](https://github.com/OWASP/www-project-winfim.net/releases/tag/Release) was developed trying to fill up this gap.
+A small Windows Service named [“WinFIM.NET”](https://github.com/OWASP/www-project-winfim.net) was developed trying to fill up this gap.
 
 <b>#characteristics</b>
 The characteristics of this small application are:
