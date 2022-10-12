@@ -147,7 +147,7 @@ C:\host\test
 }
 
 function Update-WinFimAppConfig {
-    # set is_log_to_windows_eventlog to False
+    # set App.Config setting "is_log_to_windows_eventlog" to False
     $targetFile = "$PSScriptRoot\WinFIM.NET Service.exe.config"
     $xmlContent = [xml](Get-Content -Path $targetFile)
     if (($node = $xmlContent.SelectSingleNode("//configuration/applicationSettings/WinFIM.NET_Service.Properties.Settings/setting[@name = 'is_log_to_windows_eventlog']"))) {
