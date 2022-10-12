@@ -34,15 +34,16 @@ function Remove-Directory {
 
 function Set-WindowsPath {
     param ($TargetDirName, [ValidateSet('User', 'Machine')] $Scope)
-    $oldPath = [System.Environment]::GetEnvironmentVariable("Path",$Scope)
-    $oldPathArray=($oldPath) -split ";"
-    if($oldPathArray -Contains "$TargetDirName") {
+    $oldPath = [System.Environment]::GetEnvironmentVariable("Path", $Scope)
+    $oldPathArray = ($oldPath) -split ";"
+    if ($oldPathArray -Contains "$TargetDirName") {
         write-host "Skipping Adding directory $TargetDirName to $Scope Path - already exists"
-    } else {
+    }
+    else {
         write-host "Adding directory $TargetDirName to $Scope Path"
         $newPath = $oldPath, $TargetDirName -join ";" -replace ";+", ";"
-        [System.Environment]::SetEnvironmentVariable("Path",$newPath,$Scope)
-        $env:Path = [System.Environment]::GetEnvironmentVariable("Path","User"),[System.Environment]::GetEnvironmentVariable("Path","Machine") -join ";"
+        [System.Environment]::SetEnvironmentVariable("Path", $newPath, $Scope)
+        $env:Path = [System.Environment]::GetEnvironmentVariable("Path", "User"), [System.Environment]::GetEnvironmentVariable("Path", "Machine") -join ";"
     }
 }
 
@@ -95,11 +96,11 @@ function Get-Vim {
     Remove-Directory $TempDir
 }
 
-function Update-FluentBitConf{
+function Update-FluentBitConf {
     param ($TargetDirName)
     $TargetFilePath = Join-Path "$TargetDirName" "fluent-bit.conf"
     Write-Host "Updating file $TargetFilePath"
-    $fluentBitConf=@'
+    $fluentBitConf = @'
 [SERVICE]
     flush        1
     daemon       Off
@@ -126,11 +127,11 @@ function Update-FluentBitConf{
     ((Get-Content $TargetFilePath) -join "`n") + "`n" | Set-Content -NoNewline $TargetFilePath
 }
 
-function Update-MonList{
+function Update-MonList {
     param ($TargetDirName)
     $TargetFilePath = Join-Path "$TargetDirName" "monlist.txt"
     Write-Host "Updating file $TargetFilePath"
-    $monListTxt=@'
+    $monListTxt = @'
 C:\host\autoexec.bat
 C:\host\boot.ini
 C:\host\config.sys
@@ -145,15 +146,20 @@ C:\host\test
     write-output $monListTxt > $TargetFilePath
 }
 
-function Update-WinFimAppConfig{
-    $targetFile = "WinFIM.NET Service.exe.config"
-    $find =     '<setting name="is_log_to_windows_eventlog" serializeAs="String"><value>True</value></setting>'
-    $replace =  '<setting name="is_log_to_windows_eventlog" serializeAs="String"><value>False</value></setting>'
-    $newContent = (Get-Content $targetFile) -replace $find, $replace
-    $newContent | Set-Content $targetFile
+function Update-WinFimAppConfig {
+    # set is_log_to_windows_eventlog to False
+    $targetFile = "$PSScriptRoot\WinFIM.NET Service.exe.config"
+    $xmlContent = [xml](Get-Content -Path $targetFile)
+    if (($node = $xmlContent.SelectSingleNode("//configuration/applicationSettings/WinFIM.NET_Service.Properties.Settings/setting[@name = 'is_log_to_windows_eventlog']"))) {
+        if ($node.Value -ne "False") { 
+            $node.value = "False"
+            $xmlContent.Save($targetFile)
+        }
+    }
+    
 }
 
-function Import-RootCerts{
+function Import-RootCerts {
     # Example: Import the Azure root cert for the built in Fluent-bit Azure plugins to be able to upload to Azure. Add more root certs if using different Fluent-bit plugin(s) that need them.
     # The $AzureBaltimoreCyberTrustRoot link is from site: https://learn.microsoft.com/en-us/azure/security/fundamentals/azure-ca-details
     $AzureBaltimoreCyberTrustRoot = "https://crt.sh/?d=76"
