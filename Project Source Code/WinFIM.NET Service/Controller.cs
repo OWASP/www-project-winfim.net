@@ -9,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace WinFIM.NET_Service
 {
@@ -54,6 +55,35 @@ namespace WinFIM.NET_Service
                 }
             }
             return fileOwner;
+        }
+
+        //get directory owner information
+        private static string GetDirectoryOwner(string path)
+        {
+            string directoryOwner;
+            try
+            {
+                if (!(Directory.Exists(path)))
+                {
+                    directoryOwner = $"Directory not found: {path}";
+                    return directoryOwner;
+                }
+                directoryOwner = Directory.GetAccessControl(path).GetOwner(typeof(System.Security.Principal.NTAccount)).ToString();
+            }
+            catch
+            {
+                try
+                {
+                    directoryOwner = Directory.GetAccessControl(path).GetOwner(typeof(System.Security.Principal.SecurityIdentifier)).ToString();
+                }
+                catch (Exception e)
+                {
+                    string errorMessage = $"Error in GetDirectoryOwner - {e.Message} for path: {path}";
+                    Console.WriteLine(errorMessage);
+                    directoryOwner = "UNKNOWN";
+                }
+            }
+            return directoryOwner;
         }
 
         //get file size information (MB)
@@ -535,12 +565,47 @@ namespace WinFIM.NET_Service
             return haveBaseline;
         }
 
+        private void CheckPath(bool haveBaseline, string path, int attempt = 0)
+        {
+            Log.Debug($"Checking path {path}");
+            try
+            {
+                attempt++;
+                //1. check the line entry is a file or a directory
+                FileAttributes attr = File.GetAttributes(path);
+                if (attr.HasFlag(FileAttributes.Directory))
+                {
+                    CheckDirectory(haveBaseline, path);
+                }
+                else
+                {
+                    CheckFile(haveBaseline, path);
+                }
+            }
+            catch (Exception e)
+            {
+                if (attempt < 2)
+                {
+                    Thread.Sleep(500);
+                    CheckPath(haveBaseline, path, attempt);
+                } else
+                {
+                    string errorMessage =
+                        $"File '{path}' could be renamed / deleted during the hash calculation. This file is ignored in this checking cycle - {e.Message}.";
+                    Log.Error(errorMessage);
+                    LogHelper.WriteEventLog(errorMessage, EventLogEntryType.Error,
+                        7773); //setting the Event ID as 7773
+                }
+            }
+        }
+
         private void CheckDirectory(bool haveBaseline, string path)
         {
+            string directoryOwner = GetDirectoryOwner(path);
             //if there is content in baseline_table before, write to current_table
             if (haveBaseline)
             {
-                string sql = "INSERT INTO current_table (pathname, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + path + "',0,'" + GetFileOwner(path) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','NA','Directory')";
+                string sql = "INSERT INTO current_table (pathname, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + path + "',0,'" + directoryOwner + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','NA','Directory')";
                 SQLiteHelper1.ExecuteNonQuery(sql);
 
                 //compare with baseline_table
@@ -553,7 +618,7 @@ namespace WinFIM.NET_Service
                 }
                 else
                 {
-                    string message = "Directory :'" + path + "' is newly created.\nOwner: " + GetFileOwner(path);
+                    string message = "Directory :'" + path + "' is newly created.\nOwner: " + directoryOwner;
                     Log.Warning(message);
                     LogHelper.WriteEventLog(message, EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
                 }
@@ -561,7 +626,7 @@ namespace WinFIM.NET_Service
             //if there is no content in baseline_table, write to baseline_table instead
             else
             {
-                string sql = "INSERT INTO baseline_table (pathname, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + path + "',0,'" + GetFileOwner(path) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','NA','Directory')";
+                string sql = "INSERT INTO baseline_table (pathname, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + path + "',0,'" + directoryOwner + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','NA','Directory')";
                 SQLiteHelper1.ExecuteScalar(sql);
             }
         }
@@ -569,6 +634,7 @@ namespace WinFIM.NET_Service
         private void CheckFile(bool haveBaseline, string path)
         {
             string regex = ExcludeExtensionRegex();  //get the regex of file extension exclusion
+            string fileOwner = GetFileOwner(path);
             Log.Verbose("File Extension Exclusion REGEX:" + regex);
             SQLiteCommand command;
             SQLiteDataReader dataReader;
@@ -592,7 +658,7 @@ namespace WinFIM.NET_Service
                 //if there is content in baseline_table before, write to current_table
                 if (haveBaseline)
                 {
-                    string sql = "INSERT INTO current_table (pathname, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + path + "','" + GetFileSize(path) + "','" + GetFileOwner(path) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
+                    string sql = "INSERT INTO current_table (pathname, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + path + "','" + GetFileSize(path) + "','" + fileOwner + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
                     SQLiteHelper1.ExecuteNonQuery(sql);
 
                     //compare with baseline_table
@@ -616,7 +682,7 @@ namespace WinFIM.NET_Service
                             dataReader = command.ExecuteReader();
                             if (dataReader.Read())
                             {
-                                message = "File :'" + path + "' is modified. \nPrevious check at:" + dataReader.GetValue(4) + "\nFile hash: (Previous)" + dataReader.GetValue(3) + " (Current)" + tempHash + "\nFile Size: (Previous)" + dataReader.GetValue(1) + "MB (Current)" + GetFileSize(path) + "MB\nFile Owner: (Previous)" + dataReader.GetValue(2) + " (Current)" + GetFileOwner(path);
+                                message = "File :'" + path + "' is modified. \nPrevious check at:" + dataReader.GetValue(4) + "\nFile hash: (Previous)" + dataReader.GetValue(3) + " (Current)" + tempHash + "\nFile Size: (Previous)" + dataReader.GetValue(1) + "MB (Current)" + GetFileSize(path) + "MB\nFile Owner: (Previous)" + dataReader.GetValue(2) + " (Current)" + fileOwner;
                                 Log.Warning(message);
                                 LogHelper.WriteEventLog(message, EventLogEntryType.Warning, 7777);
                             }
@@ -626,15 +692,15 @@ namespace WinFIM.NET_Service
                     }
                     else
                     {
-                        message = "File :'" + path + "' is newly created.\nOwner: " + GetFileOwner(path) + " Hash:" + tempHash;
+                        message = "File :'" + path + "' is newly created.\nOwner: " + fileOwner + " Hash:" + tempHash;
                         Log.Warning(message);
-                        LogHelper.WriteEventLog("File :'" + path + "' is newly created.\nOwner: " + GetFileOwner(path) + " Hash:" + tempHash, EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
+                        LogHelper.WriteEventLog("File :'" + path + "' is newly created.\nOwner: " + fileOwner + " Hash:" + tempHash, EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
                     }
                 }
                 //if there is no content in baseline_table, write to baseline_table instead
                 else
                 {
-                    string sql = "INSERT INTO baseline_table (pathname, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + path + "'," + GetFileSize(path) + ",'" + GetFileOwner(path) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
+                    string sql = "INSERT INTO baseline_table (pathname, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + path + "'," + GetFileSize(path) + ",'" + fileOwner + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
                     Log.Verbose(sql);
                     try
                     {
@@ -667,7 +733,7 @@ namespace WinFIM.NET_Service
                     }
                     if (haveBaseline)
                     {
-                        string sql = "INSERT INTO current_table (pathname, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + path + "'," + GetFileSize(path) + ",'" + GetFileOwner(path) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
+                        string sql = "INSERT INTO current_table (pathname, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + path + "'," + GetFileSize(path) + ",'" + fileOwner + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
                         try
                         {
                             SQLiteHelper1.ExecuteNonQuery(sql);
@@ -699,7 +765,7 @@ namespace WinFIM.NET_Service
                                 dataReader = command.ExecuteReader();
                                 if (dataReader.Read())
                                 {
-                                    message = "File :'" + path + "' is modified. Previous check at:" + dataReader.GetValue(4) + "\nFile hash: (Previous)" + dataReader.GetValue(3) + " (Current)" + tempHash + "\nFile Size: (Previous)" + dataReader.GetValue(1) + "MB (Current)" + GetFileSize(path) + "MB\nFile Owner: (Previous)" + dataReader.GetValue(2) + " (Current)" + GetFileOwner(path);
+                                    message = "File :'" + path + "' is modified. Previous check at:" + dataReader.GetValue(4) + "\nFile hash: (Previous)" + dataReader.GetValue(3) + " (Current)" + tempHash + "\nFile Size: (Previous)" + dataReader.GetValue(1) + "MB (Current)" + GetFileSize(path) + "MB\nFile Owner: (Previous)" + dataReader.GetValue(2) + " (Current)" + fileOwner;
                                     Log.Warning(message);
                                     LogHelper.WriteEventLog(message, EventLogEntryType.Warning, 7777); //setting the Event ID as 7777
                                 }
@@ -709,7 +775,7 @@ namespace WinFIM.NET_Service
                         }
                         else
                         {
-                            message = "File :'" + path + "' is newly created.\nOwner: " + GetFileOwner(path) + " Hash:" + tempHash;
+                            message = "File :'" + path + "' is newly created.\nOwner: " + fileOwner + " Hash:" + tempHash;
                             Log.Warning(message);
                             LogHelper.WriteEventLog(message, EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
                         }
@@ -717,7 +783,7 @@ namespace WinFIM.NET_Service
                     //if there is no content in baseline_table, write to baseline_table instead
                     else
                     {
-                        string sql = "INSERT INTO baseline_table (pathname, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + path + "'," + GetFileSize(path) + ",'" + GetFileOwner(path) + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
+                        string sql = "INSERT INTO baseline_table (pathname, filesize, fileowner, checktime, filehash, filetype) VALUES ('" + path + "'," + GetFileSize(path) + ",'" + fileOwner + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
                         try
                         {
                             SQLiteHelper1.ExecuteNonQuery(sql);
@@ -750,9 +816,17 @@ namespace WinFIM.NET_Service
                 LogHelper.WriteEventLog(deletedMessage, EventLogEntryType.Warning, 7778); //setting the Event ID as 7778
             }
             dataReader.Close();
+        }
+
+        private void ResetDatabaseTables(bool haveBaseline)
+        {
+            if (!haveBaseline)
+            {
+                return;
+            }
             //delete all rows in baseline_table, copy all rows from current_table to baseline_table, then clear current_table
-            sql = "DELETE FROM baseline_table";
-            command = new SQLiteCommand(sql, SQLiteHelper1.Connection);
+            string sql = "DELETE FROM baseline_table";
+            SQLiteCommand command = new SQLiteCommand(sql, SQLiteHelper1.Connection);
             try
             {
                 command.ExecuteNonQuery();
@@ -795,6 +869,8 @@ namespace WinFIM.NET_Service
         {
             int schedulerMin = LogHelper.GetSchedule();
             Log.Information($"Starting FIM checks on a {schedulerMin} minute timer");
+            if (Properties.Settings.Default.is_capture_remote_connection_status)
+                Log.Information(LogHelper.GetRemoteConnections());
             SQLiteHelper1 = new SQLiteHelper(ConnectionString);
 
             bool haveBaseline = CheckBaseLineTable(); //check if there is already data in the baseline table from a previous FIM check
@@ -816,32 +892,11 @@ namespace WinFIM.NET_Service
 
                 foreach (string path in finalPathList)
                 {
-                    Log.Debug($"Checking path {path}");
-                    try
-                    {
-                        //1. check the line entry is a file or a directory
-                        FileAttributes attr = File.GetAttributes(path);
-                        if (attr.HasFlag(FileAttributes.Directory))
-                        {
-                            CheckDirectory(haveBaseline, path);
-                        }
-                        else
-                        {
-                            CheckFile(haveBaseline, path);
-                        }
-                    }
-                    catch (Exception e)
-                    {
-                        string errorMessage =
-                            $"File '{path}' could be renamed / deleted during the hash calculation. This file is ignored in this checking cycle - {e.Message}.";
-                        Log.Error(errorMessage);
-                        LogHelper.WriteEventLog(errorMessage, EventLogEntryType.Error,
-                            7773); //setting the Event ID as 7773
-                    }
-
+                    CheckPath(haveBaseline, path);
                 }
 
                 CheckIfDeleted(haveBaseline);
+                ResetDatabaseTables(haveBaseline);
 
                 watch.Stop();
                 string stopMessage = "Total time consumed in this round file integrity checking  = " +
