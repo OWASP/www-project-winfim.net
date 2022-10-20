@@ -7,85 +7,124 @@ namespace WinFIM.NET_Service
 {
     internal class SQLiteHelper : IDisposable
     {
+        private string ConnectionString { get; }
+        private string DbFilePath { get; }
+        private const int CurrentDatabaseVersion = 3;
+        private const string CurrentDatabaseVersionNotes =
+            "capitalised table names," +
+            "renamed field fileowner to owner," +
+            "added tables VERSION_CONTROL," +
+            "removed table monlist," +
+            "renamed table BASELINE_TABLE to BASELINE_PATH," +
+            "renamed table CURRENT_TABLE to CURRENT_PATH";
         internal SQLiteConnection Connection { get; }
 
         private bool _disposed;
 
-        internal SQLiteHelper(string connectionString)
+        internal SQLiteHelper()
         {
-            Connection = new SQLiteConnection(connectionString);
-            Connection.Open();
+            DbFilePath = LogHelper.WorkDir + "\\fimdb.db";
+            ConnectionString = @"URI=file:" + DbFilePath + ";PRAGMA journal_mode=WAL;";
+            Connection = new SQLiteConnection(ConnectionString);
+            EnsureDatabaseExists();
         }
 
-        internal static void EnsureDatabaseExists(string dbFile)
-        // Create the database if it doesn't exist
+        internal void EnsureDatabaseExists()
+        // Create the database if it doesn't exist or is the wrong version
         {
-            if (File.Exists(dbFile))
+            if (File.Exists(DbFilePath))
             {
-                Log.Debug($"SQLite database file {dbFile} already exists");
+                Log.Debug($"SQLite database file {DbFilePath} exists");
+                Connection.Open();
+                int checkedDatabaseVersion = CheckDatabaseVersion(DbFilePath);
+                if (checkedDatabaseVersion != CurrentDatabaseVersion)
+                {
+                    string dbFileName = Path.GetFileNameWithoutExtension(DbFilePath);
+                    string dbFileExt = Path.GetExtension(DbFilePath);
+                    string dbDirName = Path.GetDirectoryName(DbFilePath);
+                    string currentFileFriendlyDateTime = DateTime.Now.ToString("yyyyMMdd-HHmmss");
+                    string backupDbFileName = $"{dbFileName}-old-version-v{checkedDatabaseVersion}-{currentFileFriendlyDateTime}{dbFileExt}";
+                    string backupDbPath = $"{dbDirName}\\{backupDbFileName}";
+                    Log.Information($"SQLite database {DbFilePath} is version {checkedDatabaseVersion}. Required version {CurrentDatabaseVersion}. Renaming to {backupDbPath}");
+                    Connection.Close();
+                    File.Move(DbFilePath, backupDbPath);
+                    Connection.Open();
+                }
             }
-            else
+            if (!File.Exists(DbFilePath))
             {
-                Log.Warning($"SQLite database file {dbFile} Does not exist. Creating");
-                SQLiteConnection.CreateFile(dbFile);
+                Log.Information($"Creating SQLite database file {DbFilePath}");
+                SQLiteConnection.CreateFile(DbFilePath);
+                Connection.Open();
             }
+            EnsureTablesExist();
         }
 
-        internal void EnsureTablesExist()
+        private int CheckDatabaseVersion(string DbFilePath)
+        {
+            Log.Debug("Checking database version");
+            int checkedDatabaseVersion = 0;
+            try
+            {
+                string sql = "SELECT version FROM VERSION_CONTROL order by version desc limit 1";
+                object output = ExecuteScalar(sql, false)??0;
+                checkedDatabaseVersion = Convert.ToInt32(output); // try convert to integer, or output 0
+                Log.Debug($"Database version for {DbFilePath}: {checkedDatabaseVersion}");
+            }
+            catch
+            {
+                Log.Debug($"Database version for {DbFilePath} not found. Interpreting as version {checkedDatabaseVersion}");
+            }
+            return checkedDatabaseVersion;
+        }
+
+        private void EnsureTablesExist()
         // Ensure that all required tables exist
         {
-            Log.Debug("Creating SQlite table baseline_table if it doesn't exist...");
+            Log.Debug("Creating SQlite table BASELINE_PATH if it doesn't exist...");
             string sql = @"
-                CREATE TABLE IF NOT EXISTS baseline_table (
+                CREATE TABLE IF NOT EXISTS BASELINE_PATH (
                     pathname    TEXT PRIMARY KEY,
                     filesize    INT,
-                    fileowner   TEXT NOT NULL,
+                    owner   TEXT NOT NULL,
                     checktime   TEXT NOT NULL,
                     filehash    TEXT,
                     filetype    TEXT NOT NULL
                 );";
             ExecuteNonQuery(sql);
-            Log.Debug("Creating SQlite table conf_file_checksum if it doesn't exist...");
+
+            Log.Debug("Creating SQlite table CURRENT_PATH if it doesn't exist...");
             sql = @"
-                CREATE TABLE IF NOT EXISTS conf_file_checksum (
+                CREATE TABLE IF NOT EXISTS CURRENT_PATH (
+                    pathname    TEXT PRIMARY KEY,
+                    filesize    INT,
+                    owner   TEXT NOT NULL,
+                    checktime   TEXT NOT NULL,
+                    filehash    TEXT,
+                    filetype    TEXT NOT NULL
+                );";
+            ExecuteNonQuery(sql);
+
+            Log.Debug("Creating SQlite table CONF_FILE_CHECKSUM if it doesn't exist...");
+            sql = @"
+                CREATE TABLE IF NOT EXISTS CONF_FILE_CHECKSUM (
                     pathname    TEXT PRIMARY KEY,
                     filehash    TEXT
                 );";
             ExecuteNonQuery(sql);
 
-            Log.Debug("Creating SQlite table current_table if it doesn't exist...");
+            Log.Debug("Creating SQlite table VERSION_CONTROL if it doesn't exist...");
             sql = @"
-                CREATE TABLE IF NOT EXISTS current_table (
-                    pathname    TEXT PRIMARY KEY,
-                    filesize    INT,
-                    fileowner   TEXT NOT NULL,
-                    checktime   TEXT NOT NULL,
-                    filehash    TEXT,
-                    filetype    TEXT NOT NULL
-                );";
-            ExecuteNonQuery(sql);
-
-            Log.Debug("Creating SQlite table monlist if it doesn't exist...");
-            sql = @"
-                CREATE TABLE IF NOT EXISTS monlist (
-                    pathname TEXT PRIMARY KEY,
-                    pathexists BOOLEAN  CHECK (pathexists IN (0, 1)) NOT NULL,
-                    checktime TEXT NOT NULL
-                );";
-            ExecuteNonQuery(sql);
-
-            Log.Debug("Creating SQlite table version_control if it doesn't exist...");
-            sql = @"
-                CREATE TABLE IF NOT EXISTS version_control (
+                CREATE TABLE IF NOT EXISTS VERSION_CONTROL (
                     version     INT PRIMARY KEY,
                     notes       TEXT NOT NULL
                 );";
             ExecuteNonQuery(sql);
 
             Log.Debug("Setting database version...");
-            sql = @"
-                INSERT OR REPLACE INTO version_control (version, notes) VALUES (1, 'Initial version');
-                INSERT OR REPLACE INTO version_control (version, notes) VALUES (2, 'changed field filename to pathname and set as primary key; added tables version_control, monlist');
+            sql = $@"
+                INSERT OR REPLACE INTO VERSION_CONTROL (version, notes) 
+                VALUES ({CurrentDatabaseVersion}, '{CurrentDatabaseVersionNotes}');
             ";
             ExecuteNonQuery(sql);
         }
@@ -111,7 +150,7 @@ namespace WinFIM.NET_Service
         }
 
         // A query that returns the first value in the first row as an object
-        internal object ExecuteScalar(string sql)
+        internal object ExecuteScalar(string sql, bool isLogError = true)
         {
             object output;
             try
@@ -125,9 +164,13 @@ namespace WinFIM.NET_Service
             }
             catch (Exception e)
             {
-                string errorMessage = $"Error running query {sql}";
-                Log.Error(e, errorMessage);
-                throw;
+                if (isLogError)
+                {
+                    string errorMessage = $"Error running query {sql}";
+                    Log.Error(e, errorMessage);
+                    throw;
+                }
+                return null;
             }
 
             return output;
