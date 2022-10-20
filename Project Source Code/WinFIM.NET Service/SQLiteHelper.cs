@@ -13,10 +13,12 @@ namespace WinFIM.NET_Service
         private const string CurrentDatabaseVersionNotes =
             "capitalised table names," +
             "renamed field fileowner to owner," +
-            "added tables VERSION_CONTROL," +
+            "renamed field filetype to pathtype," +
+            "added field pathexists to tables BASELINE_PATH and CURRENT_PATH," +
+            "added table VERSION_CONTROL," +
             "removed table monlist," +
-            "renamed table BASELINE_TABLE to BASELINE_PATH," +
-            "renamed table CURRENT_TABLE to CURRENT_PATH";
+            "renamed table baseline_table to BASELINE_PATH," +
+            "renamed table current_table  to CURRENT_PATH";
         internal SQLiteConnection Connection { get; }
 
         private bool _disposed;
@@ -29,14 +31,14 @@ namespace WinFIM.NET_Service
             EnsureDatabaseExists();
         }
 
-        internal void EnsureDatabaseExists()
+        private void EnsureDatabaseExists()
         // Create the database if it doesn't exist or is the wrong version
         {
             if (File.Exists(DbFilePath))
             {
                 Log.Debug($"SQLite database file {DbFilePath} exists");
                 Connection.Open();
-                int checkedDatabaseVersion = CheckDatabaseVersion(DbFilePath);
+                int checkedDatabaseVersion = CheckDatabaseVersion();
                 if (checkedDatabaseVersion != CurrentDatabaseVersion)
                 {
                     string dbFileName = Path.GetFileNameWithoutExtension(DbFilePath);
@@ -47,7 +49,7 @@ namespace WinFIM.NET_Service
                     string backupDbPath = $"{dbDirName}\\{backupDbFileName}";
                     Log.Information($"SQLite database {DbFilePath} is version {checkedDatabaseVersion}. Required version {CurrentDatabaseVersion}. Renaming to {backupDbPath}");
                     Connection.Close();
-                    File.Move(DbFilePath, backupDbPath);
+                    if (DbFilePath != null) File.Move(DbFilePath, backupDbPath);
                     Connection.Open();
                 }
             }
@@ -60,13 +62,13 @@ namespace WinFIM.NET_Service
             EnsureTablesExist();
         }
 
-        private int CheckDatabaseVersion(string DbFilePath)
+        private int CheckDatabaseVersion()
         {
             Log.Debug("Checking database version");
             int checkedDatabaseVersion = 0;
             try
             {
-                string sql = "SELECT version FROM VERSION_CONTROL order by version desc limit 1";
+                string sql = $"SELECT version FROM VERSION_CONTROL order by version desc limit 1";
                 object output = ExecuteScalar(sql, false)??0;
                 checkedDatabaseVersion = Convert.ToInt32(output); // try convert to integer, or output 0
                 Log.Debug($"Database version for {DbFilePath}: {checkedDatabaseVersion}");
@@ -85,11 +87,12 @@ namespace WinFIM.NET_Service
             string sql = @"
                 CREATE TABLE IF NOT EXISTS BASELINE_PATH (
                     pathname    TEXT PRIMARY KEY,
+                    pathexists  BOOLEAN  CHECK (pathexists IN (0, 1)) NOT NULL,
                     filesize    INT,
-                    owner   TEXT NOT NULL,
+                    owner       TEXT NOT NULL,
                     checktime   TEXT NOT NULL,
                     filehash    TEXT,
-                    filetype    TEXT NOT NULL
+                    pathtype    TEXT NOT NULL
                 );";
             ExecuteNonQuery(sql);
 
@@ -97,11 +100,12 @@ namespace WinFIM.NET_Service
             sql = @"
                 CREATE TABLE IF NOT EXISTS CURRENT_PATH (
                     pathname    TEXT PRIMARY KEY,
+                    pathexists  BOOLEAN  CHECK (pathexists IN (0, 1)) NOT NULL,
                     filesize    INT,
-                    owner   TEXT NOT NULL,
+                    owner       TEXT NOT NULL,
                     checktime   TEXT NOT NULL,
                     filehash    TEXT,
-                    filetype    TEXT NOT NULL
+                    pathtype    TEXT NOT NULL
                 );";
             ExecuteNonQuery(sql);
 

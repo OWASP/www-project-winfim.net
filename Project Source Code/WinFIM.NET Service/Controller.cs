@@ -191,7 +191,7 @@ namespace WinFIM.NET_Service
             try
             {
                 //check if the baseline table is empty (If count is 0 then the table is empty.)
-                string sql = "SELECT COUNT(*) FROM CONF_FILE_CHECKSUM";
+                string sql = $"SELECT COUNT(*) FROM CONF_FILE_CHECKSUM";
                 string output = sqLiteHelper.ExecuteScalar(sql)?.ToString() ?? "";
                 Log.Verbose("Output count conf file hash: " + output);
 
@@ -200,26 +200,23 @@ namespace WinFIM.NET_Service
                     try
                     {
                         //no checksum or incompetent checksum, empty all table
-                        sql = "DELETE FROM CONF_FILE_CHECKSUM";
+                        sql = $"DELETE FROM CONF_FILE_CHECKSUM";
                         sqLiteHelper.ExecuteNonQuery(sql);
 
-                        sql = "DELETE FROM BASELINE_PATH";
+                        sql = $"DELETE FROM BASELINE_PATH";
                         sqLiteHelper.ExecuteNonQuery(sql);
 
-                        sql = "DELETE FROM CURRENT_PATH";
+                        sql = $"DELETE FROM CURRENT_PATH";
                         sqLiteHelper.ExecuteNonQuery(sql);
 
                         //insert the current hash to DB
-                        sql = "INSERT INTO CONF_FILE_CHECKSUM (pathname, filehash) VALUES ('" + LogHelper.WorkDir +
-                              "\\exclude_extension.txt','" + exExtHash + "')";
+                        sql = $"INSERT INTO CONF_FILE_CHECKSUM (pathname, filehash) VALUES ('{LogHelper.WorkDir}\\exclude_extension.txt','{exExtHash}')";
                         sqLiteHelper.ExecuteNonQuery(sql);
 
-                        sql = "INSERT INTO CONF_FILE_CHECKSUM (pathname, filehash) VALUES ('" + LogHelper.WorkDir +
-                              "\\exclude_path.txt','" + exPathHash + "')";
+                        sql = $"INSERT INTO CONF_FILE_CHECKSUM (pathname, filehash) VALUES ('{LogHelper.WorkDir}\\exclude_path.txt','{exPathHash}')";
                         sqLiteHelper.ExecuteNonQuery(sql);
 
-                        sql = "INSERT INTO CONF_FILE_CHECKSUM (pathname, filehash) VALUES ('" + LogHelper.WorkDir +
-                              "\\monlist.txt','" + monHash + "')";
+                        sql = $"INSERT INTO CONF_FILE_CHECKSUM (pathname, filehash) VALUES ('{LogHelper.WorkDir}\\monlist.txt','{monHash}')";
                         sqLiteHelper.ExecuteNonQuery(sql);
                     }
                     catch (Exception e)
@@ -233,23 +230,21 @@ namespace WinFIM.NET_Service
                     //else compare the checksum, if difference, store the new checksum into DB, and empty both BASELINE_PATH and CURRENT_PATH
                     int count = 0;
 
-                    sql = "SELECT filehash FROM CONF_FILE_CHECKSUM WHERE pathname='" + LogHelper.WorkDir +
-                          "\\exclude_extension.txt" + "'";
+                    sql = $"SELECT filehash FROM CONF_FILE_CHECKSUM WHERE pathname='{LogHelper.WorkDir}\\exclude_extension.txt'";
                     output = sqLiteHelper.ExecuteScalar(sql)?.ToString() ?? "";
                     if (output.Equals(exExtHash))
                     {
                         count++;
                     }
 
-                    sql = "SELECT filehash FROM CONF_FILE_CHECKSUM WHERE pathname='" + LogHelper.WorkDir + "\\exclude_path.txt" +
-                          "'";
+                    sql = $"SELECT filehash FROM CONF_FILE_CHECKSUM WHERE pathname='{LogHelper.WorkDir}\\exclude_path.txt'";
                     output = sqLiteHelper.ExecuteScalar(sql)?.ToString() ?? "";
                     if (output.Equals(exExtHash))
                     {
                         count++;
                     }
 
-                    sql = "SELECT filehash FROM CONF_FILE_CHECKSUM WHERE pathname='" + LogHelper.WorkDir + "\\monlist.txt" + "'";
+                    sql = $"SELECT filehash FROM CONF_FILE_CHECKSUM WHERE pathname='{LogHelper.WorkDir}\\monlist.txt'";
                     output = sqLiteHelper.ExecuteScalar(sql)?.ToString() ?? "";
                     if (output.Equals(monHash))
                     {
@@ -268,27 +263,24 @@ namespace WinFIM.NET_Service
                         try
                         {
                             //clear all tables
-                            sql = "DELETE FROM CONF_FILE_CHECKSUM";
+                            sql = $"DELETE FROM CONF_FILE_CHECKSUM";
                             sqLiteHelper.ExecuteNonQuery(sql);
 
-                            sql = "DELETE FROM BASELINE_PATH";
+                            sql = $"DELETE FROM BASELINE_PATH";
                             sqLiteHelper.ExecuteNonQuery(sql);
 
-                            sql = "DELETE FROM CURRENT_PATH";
+                            sql = $"DELETE FROM CURRENT_PATH";
                             Log.Verbose(sql);
                             sqLiteHelper.ExecuteNonQuery(sql);
 
                             //insert the current hash to DB
-                            sql = "INSERT INTO CONF_FILE_CHECKSUM (pathname, filehash) VALUES ('" + LogHelper.WorkDir +
-                                  "\\exclude_extension.txt','" + exExtHash + "')";
+                            sql = $"INSERT INTO CONF_FILE_CHECKSUM (pathname, filehash) VALUES ('{LogHelper.WorkDir}\\exclude_extension.txt','{exExtHash}')";
                             sqLiteHelper.ExecuteNonQuery(sql);
 
-                            sql = "INSERT INTO CONF_FILE_CHECKSUM (pathname, filehash) VALUES ('" + LogHelper.WorkDir +
-                                  "\\exclude_path.txt','" + exPathHash + "')";
+                            sql = $"INSERT INTO CONF_FILE_CHECKSUM (pathname, filehash) VALUES ('{LogHelper.WorkDir}\\exclude_path.txt','{exPathHash}')";
                             sqLiteHelper.ExecuteNonQuery(sql);
 
-                            sql = "INSERT INTO CONF_FILE_CHECKSUM (pathname, filehash) VALUES ('" + LogHelper.WorkDir +
-                                  "\\monlist.txt','" + monHash + "')";
+                            sql = $"INSERT INTO CONF_FILE_CHECKSUM (pathname, filehash) VALUES ('{LogHelper.WorkDir}\\monlist.txt','{monHash}')";
                             sqLiteHelper.ExecuteNonQuery(sql);
                         }
                         catch (Exception e)
@@ -303,7 +295,7 @@ namespace WinFIM.NET_Service
             catch (Exception e)
             {
                 Log.Error(e, e.Message);
-                string sql = "DELETE FROM CONF_FILE_CHECKSUM";
+                string sql = $"DELETE FROM CONF_FILE_CHECKSUM";
                 try
                 {
                     sqLiteHelper.ExecuteNonQuery(sql);
@@ -321,16 +313,22 @@ namespace WinFIM.NET_Service
 
         }
 
-        private bool CheckIfMonListBasePathExists(string line)
+        private bool CheckIfMonListBasePathExists(string path, bool haveBaseLinePath)
         {
-            if (Directory.Exists(line) || File.Exists(line))
+            if (Directory.Exists(path) || File.Exists(path))
             {
-                return true;
+                return true; // we just need to know that the base path exists - the CheckPath method later on will compare hashes
             }
-            else
+            else if(haveBaseLinePath)
             {
-                return false;
+                string sql = $"SELECT COUNT(*) FROM BASELINE_PATH WHERE pathname='{path}'";
+                string output = SQLiteHelper1.ExecuteScalar(sql)?.ToString() ?? "";
+                if (!output.Equals("0"))
+                {
+                    Log.Warning($"Base path from monlist.txt:'{path}' has been deleted.");
+                }
             }
+            return false;
         }
 
         private string[] GetFileMonList()
@@ -353,7 +351,7 @@ namespace WinFIM.NET_Service
             return monFileLines;
         }
 
-        private string[] GetPathList(string[] monFileLines)
+        private string[] GetPathList(string[] monFileLines, bool haveBaseLine)
         {
             string fileList = string.Empty;
             //get the full file mon list for further processing
@@ -363,7 +361,7 @@ namespace WinFIM.NET_Service
                 {
                     continue;
                 }
-                if (!(CheckIfMonListBasePathExists(line)))
+                if (!(CheckIfMonListBasePathExists(line, haveBaseLine)))
                 {
                     continue;
                 }
@@ -553,20 +551,21 @@ namespace WinFIM.NET_Service
             //if there is content in BASELINE_PATH before, write to CURRENT_PATH
             if (haveBaseLinePath)
             {
-                string sql = "INSERT INTO CURRENT_PATH (pathname, filesize, owner, checktime, filehash, filetype) VALUES ('" + path + "',0,'" + directoryOwner + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','NA','Directory')";
+                string sql = $"INSERT INTO CURRENT_PATH (pathname, pathexists, filesize, owner, checktime, filehash, pathtype) " +
+                             $"VALUES ('{path}',true,0,'{directoryOwner}','(UTC){DateTime.UtcNow:yyyy/dd/MM hh:mm:ss tt}','NA','Directory')";
                 SQLiteHelper1.ExecuteNonQuery(sql);
 
                 //compare with BASELINE_PATH
                 //1. check if the file exist in BASELINE_PATH
-                sql = "SELECT COUNT(*) FROM BASELINE_PATH WHERE pathname='" + path + "'";
+                sql = $"SELECT COUNT(*) FROM BASELINE_PATH WHERE pathname='{path}'";
                 string output = SQLiteHelper1.ExecuteScalar(sql).ToString();
                 if (!output.Equals("0"))
                 {
-                    Log.Verbose("Directory :'" + path + "' has no change.");
+                    Log.Verbose($"Directory :'{path}' has no change.");
                 }
                 else
                 {
-                    string message = "Directory :'" + path + "' is newly created.\nOwner: " + directoryOwner;
+                    string message = $"Directory :'{path}' is newly created. Owner: {directoryOwner}";
                     Log.Warning(message);
                     LogHelper.WriteEventLog(message, EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
                 }
@@ -574,8 +573,10 @@ namespace WinFIM.NET_Service
             //if there is no content in BASELINE_PATH, write to BASELINE_PATH instead
             else
             {
-                string sql = "INSERT INTO BASELINE_PATH (pathname, filesize, owner, checktime, filehash, filetype) VALUES ('" + path + "',0,'" + directoryOwner + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','NA','Directory')";
+                string sql = $"INSERT INTO BASELINE_PATH (pathname, pathexists, filesize, owner, checktime, filehash, pathtype) " +
+                             $"VALUES ('{path}',true,0,'{directoryOwner}','(UTC){DateTime.UtcNow:yyyy/dd/MM hh:mm:ss tt}','NA','Directory')";
                 SQLiteHelper1.ExecuteScalar(sql);
+                Log.Debug($"Directory {path} exists");
             }
         }
 
@@ -606,31 +607,36 @@ namespace WinFIM.NET_Service
                 //if there is content in BASELINE_PATH before, write to CURRENT_PATH
                 if (haveBaseLinePath)
                 {
-                    string sql = "INSERT INTO CURRENT_PATH (pathname, filesize, owner, checktime, filehash, filetype) VALUES ('" + path + "','" + GetFileSize(path) + "','" + fileOwner + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
+                    string sql = $"INSERT INTO CURRENT_PATH (pathname, pathexists, filesize, owner, checktime, filehash, pathtype) " +
+                                 $"VALUES ('{path}',true,'{GetFileSize(path)}','{fileOwner}','(UTC){DateTime.UtcNow:yyyy/dd/MM hh:mm:ss tt}','{tempHash}','File'";
                     SQLiteHelper1.ExecuteNonQuery(sql);
 
                     //compare with BASELINE_PATH
                     //1. check if the file exist in BASELINE_PATH
-                    sql = "SELECT COUNT(*) FROM BASELINE_PATH WHERE pathname='" + path + "'";
+                    sql = $"SELECT COUNT(*) FROM BASELINE_PATH WHERE pathname='{path}'";
                     string output = SQLiteHelper1.ExecuteScalar(sql)?.ToString() ?? "";
                     if (!output.Equals("0"))
                     {
                         //1. check if the file hash in BASELINE_PATH changed
-                        sql = "SELECT COUNT(*) FROM BASELINE_PATH WHERE pathname='" + path + "' AND filehash='" + tempHash + "'";
+                        sql = $"SELECT COUNT(*) FROM BASELINE_PATH WHERE pathname='{path}' AND filehash='{tempHash}'";
                         output = SQLiteHelper1.ExecuteScalar(sql)?.ToString() ?? "";
                         if (!output.Equals("0"))
                         {
-                            Log.Verbose("File :'" + path + "' has no change.");
+                            Log.Verbose($"File: '{path}' has no change.");
                         }
                         else
                         {
-                            sql = "SELECT pathname, filesize, owner, filehash, checktime FROM BASELINE_PATH WHERE pathname=@path";
+                            sql = $"SELECT pathname, pathexists, filesize, owner, filehash, checktime FROM BASELINE_PATH WHERE pathname=@path";
                             command = new SQLiteCommand(sql, SQLiteHelper1.Connection);
                             command.Parameters.Add("@path", DbType.String).Value = path;
                             dataReader = command.ExecuteReader();
                             if (dataReader.Read())
                             {
-                                message = "File :'" + path + "' is modified. \nPrevious check at:" + dataReader.GetValue(4) + "\nFile hash: (Previous)" + dataReader.GetValue(3) + " (Current)" + tempHash + "\nFile Size: (Previous)" + dataReader.GetValue(1) + "MB (Current)" + GetFileSize(path) + "MB\nFile Owner: (Previous)" + dataReader.GetValue(2) + " (Current)" + fileOwner;
+                                message = $"File: '{path}' is modified. \n" +
+                                          $"Previous check at:{dataReader.GetValue(4)}\n" +
+                                          $"File hash: (Previous){dataReader.GetValue(3)} (Current){tempHash}\n" +
+                                          $"File Size: (Previous){dataReader.GetValue(1)}MB (Current){GetFileSize(path)}MB\n" +
+                                          $"File Owner: (Previous){dataReader.GetValue(2)} (Current){fileOwner}";
                                 Log.Warning(message);
                                 LogHelper.WriteEventLog(message, EventLogEntryType.Warning, 7777);
                             }
@@ -640,15 +646,16 @@ namespace WinFIM.NET_Service
                     }
                     else
                     {
-                        message = "File :'" + path + "' is newly created.\nOwner: " + fileOwner + " Hash:" + tempHash;
+                        message = $"File: '{path}' is newly created. Owner: {fileOwner} Hash: {tempHash}";
                         Log.Warning(message);
-                        LogHelper.WriteEventLog("File :'" + path + "' is newly created.\nOwner: " + fileOwner + " Hash:" + tempHash, EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
+                        LogHelper.WriteEventLog($"File: '{path}' is newly created.\nOwner: {fileOwner} Hash:{tempHash}", EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
                     }
                 }
                 //if there is no content in BASELINE_PATH, write to BASELINE_PATH instead
                 else
                 {
-                    string sql = "INSERT INTO BASELINE_PATH (pathname, filesize, owner, checktime, filehash, filetype) VALUES ('" + path + "'," + GetFileSize(path) + ",'" + fileOwner + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
+                    string sql = $"INSERT INTO BASELINE_PATH (pathname, pathexists, filesize, owner, checktime, filehash, pathtype) " +
+                                 $"VALUES ('{path}',true,{GetFileSize(path)},'{fileOwner}','(UTC){DateTime.UtcNow:yyyy/dd/MM hh:mm:ss tt}','{tempHash}','File')";
                     Log.Verbose(sql);
                     try
                     {
@@ -681,7 +688,8 @@ namespace WinFIM.NET_Service
                     }
                     if (haveBaseLinePath)
                     {
-                        string sql = "INSERT INTO CURRENT_PATH (pathname, filesize, owner, checktime, filehash, filetype) VALUES ('" + path + "'," + GetFileSize(path) + ",'" + fileOwner + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
+                        string sql = $"INSERT INTO CURRENT_PATH (pathname, pathexists, filesize, owner, checktime, filehash, pathtype) " +
+                                     $"VALUES ('{path}',true,{GetFileSize(path)},'{fileOwner}','(UTC){DateTime.UtcNow:yyyy/dd/MM hh:mm:ss tt}','{tempHash}','File')";
                         try
                         {
                             SQLiteHelper1.ExecuteNonQuery(sql);
@@ -694,26 +702,29 @@ namespace WinFIM.NET_Service
 
                         //compare with BASELINE_PATH
                         //1. check if the file exist in BASELINE_PATH
-                        sql = "SELECT COUNT(*) FROM BASELINE_PATH WHERE pathname='" + path + "'";
+                        sql = $"SELECT COUNT(*) FROM BASELINE_PATH WHERE pathname='{path}'";
                         string output = SQLiteHelper1.ExecuteScalar(sql)?.ToString() ?? "";
                         if (!output.Equals("0"))
                         {
                             //1. check if the file hash in BASELINE_PATH changed
-                            sql = "SELECT COUNT(*) FROM BASELINE_PATH WHERE pathname='" + path + "' AND filehash='" + tempHash + "'";
+                            sql = $"SELECT COUNT(*) FROM BASELINE_PATH WHERE pathname='{path}' AND filehash='{tempHash}'";
                             output = SQLiteHelper1.ExecuteScalar(sql)?.ToString() ?? "";
                             if (!output.Equals("0"))
                             {
-                                Log.Verbose("File :'" + path + "' has no change.");
+                                Log.Verbose($"File: '{path}' has no change.");
                             }
                             else
                             {
-                                sql = "SELECT pathname, filesize, owner, filehash, checktime FROM BASELINE_PATH WHERE pathname=@path";
+                                sql = $"SELECT pathname, pathexists, filesize, owner, filehash, checktime FROM BASELINE_PATH WHERE pathname=@path";
                                 command = new SQLiteCommand(sql, SQLiteHelper1.Connection);
                                 command.Parameters.Add("@path", DbType.String).Value = path;
                                 dataReader = command.ExecuteReader();
                                 if (dataReader.Read())
                                 {
-                                    message = "File :'" + path + "' is modified. Previous check at:" + dataReader.GetValue(4) + "\nFile hash: (Previous)" + dataReader.GetValue(3) + " (Current)" + tempHash + "\nFile Size: (Previous)" + dataReader.GetValue(1) + "MB (Current)" + GetFileSize(path) + "MB\nFile Owner: (Previous)" + dataReader.GetValue(2) + " (Current)" + fileOwner;
+                                    message = $"File: '{path}' is modified. Previous check at:{dataReader.GetValue(4)}\n" +
+                                              $"File hash: (Previous){dataReader.GetValue(3)} (Current){tempHash}\n" +
+                                              $"File Size: (Previous){dataReader.GetValue(1)}MB (Current){GetFileSize(path)}MB\n" +
+                                              $"File Owner: (Previous)" + dataReader.GetValue(2) + " (Current)" + fileOwner;
                                     Log.Warning(message);
                                     LogHelper.WriteEventLog(message, EventLogEntryType.Warning, 7777); //setting the Event ID as 7777
                                 }
@@ -723,7 +734,7 @@ namespace WinFIM.NET_Service
                         }
                         else
                         {
-                            message = "File :'" + path + "' is newly created.\nOwner: " + fileOwner + " Hash:" + tempHash;
+                            message = $"File: '{path}' is newly created. Owner: {fileOwner} Hash: {tempHash}";
                             Log.Warning(message);
                             LogHelper.WriteEventLog(message, EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
                         }
@@ -731,7 +742,8 @@ namespace WinFIM.NET_Service
                     //if there is no content in BASELINE_PATH, write to BASELINE_PATH instead
                     else
                     {
-                        string sql = "INSERT INTO BASELINE_PATH (pathname, filesize, owner, checktime, filehash, filetype) VALUES ('" + path + "'," + GetFileSize(path) + ",'" + fileOwner + "','(UTC)" + DateTime.UtcNow.ToString(@"M/d/yyyy hh:mm:ss tt") + "','" + tempHash + "','File')";
+                        string sql = $"INSERT INTO BASELINE_PATH (pathname, pathexists, filesize, owner, checktime, filehash, pathtype) " +
+                                     $"VALUES ('{path}',true,{GetFileSize(path)},'{fileOwner}','(UTC){DateTime.UtcNow:yyyy/dd/MM hh:mm:ss tt}','{tempHash}','File')";
                         try
                         {
                             SQLiteHelper1.ExecuteNonQuery(sql);
@@ -753,13 +765,14 @@ namespace WinFIM.NET_Service
                 return;
             }
 
-            string sql = "SELECT BASELINE_PATH.pathname FROM BASELINE_PATH LEFT JOIN CURRENT_PATH ON BASELINE_PATH.pathname = CURRENT_PATH.pathname WHERE CURRENT_PATH.pathname IS NULL";
+            string sql = $"SELECT BASELINE_PATH.pathname, BASELINE_PATH.pathtype FROM BASELINE_PATH LEFT JOIN CURRENT_PATH ON BASELINE_PATH.pathname = CURRENT_PATH.pathname WHERE CURRENT_PATH.pathname IS NULL";
             SQLiteCommand command = new SQLiteCommand(sql, SQLiteHelper1.Connection);
             SQLiteDataReader dataReader = command.ExecuteReader();
             while (dataReader.Read())
             {
-                string output = dataReader.GetValue(0).ToString();
-                string deletedMessage = "The file / directory '" + output + "' is deleted.";
+                string deletedPathName = dataReader.GetValue(0).ToString();
+                string deletedPathType = dataReader.GetValue(1).ToString();
+                string deletedMessage = $"The base {deletedPathType} '{deletedPathName}' listed in monlist.txt is deleted.";
                 Log.Warning(deletedMessage);
                 LogHelper.WriteEventLog(deletedMessage, EventLogEntryType.Warning, 7778); //setting the Event ID as 7778
             }
@@ -773,7 +786,7 @@ namespace WinFIM.NET_Service
                 return;
             }
             //delete all rows in BASELINE_PATH, copy all rows from CURRENT_PATH to BASELINE_PATH, then clear CURRENT_PATH
-            string sql = "DELETE FROM BASELINE_PATH";
+            string sql = $"DELETE FROM BASELINE_PATH";
             SQLiteCommand command = new SQLiteCommand(sql, SQLiteHelper1.Connection);
             try
             {
@@ -786,7 +799,7 @@ namespace WinFIM.NET_Service
                 Log.Error(errorMessage);
             }
 
-            sql = "INSERT INTO BASELINE_PATH SELECT * FROM CURRENT_PATH";
+            sql = $"INSERT INTO BASELINE_PATH SELECT * FROM CURRENT_PATH";
             command = new SQLiteCommand(sql, SQLiteHelper1.Connection);
             try
             {
@@ -799,7 +812,7 @@ namespace WinFIM.NET_Service
                 Log.Error(errorMessage);
             }
 
-            sql = "DELETE FROM CURRENT_PATH";
+            sql = $"DELETE FROM CURRENT_PATH";
             command = new SQLiteCommand(sql, SQLiteHelper1.Connection);
             try
             {
@@ -830,7 +843,7 @@ namespace WinFIM.NET_Service
             {
                 string[] monListFileLines = GetFileMonList(); //get the list of paths in the monlist.txt file
 
-                string[] pathList = GetPathList(monListFileLines); //get the list of files / directories to watch
+                string[] pathList = GetPathList(monListFileLines, haveBaseLinePath); //get the list of files / directories to watch
 
                 string[] excludePathLines = GetFileExcludePath(); //get the list of paths in the exclude_path.txt file
 
