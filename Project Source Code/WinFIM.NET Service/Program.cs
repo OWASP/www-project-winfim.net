@@ -12,17 +12,13 @@ namespace WinFIM.NET_Service
         /// </summary>
         private static void Main()
         {
-            Log.Logger = new LoggerConfiguration()
-                .ReadFrom.AppSettings()
-                .CreateLogger();
-
+            LogHelper.ConfigureLogging();
             string currentProcessName = Process.GetCurrentProcess().ProcessName;
             if (Process.GetProcessesByName(currentProcessName).Length > 1)
             {
                 Log.Error($"Application {currentProcessName} already running. Only one instance of this application is allowed. Exiting");
                 return;
             }
-
 
             if (Environment.UserInteractive)
             {

@@ -14,5 +14,11 @@
     <Setting Name="service_stop_message" Type="System.String" Scope="Application">
       <Value Profile="(Default)">WinFIM.NET Stopped</Value>
     </Setting>
+    <Setting Name="is_log_to_windows_eventlog" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">True</Value>
+    </Setting>
+    <Setting Name="is_capture_remote_connection_status" Type="System.Boolean" Scope="Application">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
   </Settings>
 </SettingsFile>
