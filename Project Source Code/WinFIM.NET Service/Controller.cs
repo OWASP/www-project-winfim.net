@@ -634,11 +634,10 @@ namespace WinFIM.NET_Service
                             dataReader = command.ExecuteReader();
                             if (dataReader.Read())
                             {
-                                message = $"File: '{path}' is modified. \n" +
-                                          $"Previous check at:{dataReader.GetValue(4)}\n" +
-                                          $"File hash: (Previous){dataReader.GetValue(3)} (Current){tempHash}\n" +
-                                          $"File Size: (Previous){dataReader.GetValue(1)}MB (Current){GetFileSize(path)}MB\n" +
-                                          $"File Owner: (Previous){dataReader.GetValue(2)} (Current){fileOwner}";
+                                message = $"File: '{path}' is modified. Previous check at:{dataReader.GetValue(5)} \n" +
+                                          $"File hash: (Previous){dataReader.GetValue(4)} (Current){tempHash} \n" +
+                                          $"File Size: (Previous){dataReader.GetValue(2)}MB (Current){GetFileSize(path)}MB \n" +
+                                          $"File Owner: (Previous)" + dataReader.GetValue(3) + " (Current){fileOwner}";
                                 Log.Warning(message);
                                 LogHelper.WriteEventLog(message, EventLogEntryType.Warning, 7777);
                             }
@@ -723,10 +722,10 @@ namespace WinFIM.NET_Service
                                 dataReader = command.ExecuteReader();
                                 if (dataReader.Read())
                                 {
-                                    message = $"File: '{path}' is modified. Previous check at:{dataReader.GetValue(4)}\n" +
-                                              $"File hash: (Previous){dataReader.GetValue(3)} (Current){tempHash}\n" +
-                                              $"File Size: (Previous){dataReader.GetValue(1)}MB (Current){GetFileSize(path)}MB\n" +
-                                              $"File Owner: (Previous)" + dataReader.GetValue(2) + " (Current)" + fileOwner;
+                                    message = $"File: '{path}' is modified. Previous check at:{dataReader.GetValue(5)} \n" +
+                                              $"File hash: (Previous){dataReader.GetValue(4)} (Current){tempHash} \n" +
+                                              $"File Size: (Previous){dataReader.GetValue(2)}MB (Current){GetFileSize(path)}MB \n" +
+                                              $"File Owner: (Previous)" + dataReader.GetValue(3) + " (Current){fileOwner}";
                                     Log.Warning(message);
                                     LogHelper.WriteEventLog(message, EventLogEntryType.Warning, 7777); //setting the Event ID as 7777
                                 }
