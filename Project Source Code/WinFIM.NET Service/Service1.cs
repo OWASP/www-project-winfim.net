@@ -65,7 +65,7 @@ namespace WinFIM.NET_Service
             int schedulerMin = LogHelper.GetSchedule();
 
             if (schedulerMin > 0)
-                // using timer mode
+            // using timer mode
             {
                 System.Timers.Timer timer = new System.Timers.Timer
                 {
@@ -86,7 +86,7 @@ namespace WinFIM.NET_Service
                 _controller.FileIntegrityCheck();
             }
             else
-                // run in continuous mode
+            // run in continuous mode
             {
                 serviceStartMessage = Properties.Settings.Default.service_start_message +
                                       ": (UTC) {DateTime.UtcNow:yyyy/dd/MM hh:mm:ss tt}\n\n";

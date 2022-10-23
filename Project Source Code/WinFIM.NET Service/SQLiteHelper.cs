@@ -5,7 +5,7 @@ using System.IO;
 
 namespace WinFIM.NET_Service
 {
-    internal class SQLiteHelper : IDisposable
+    internal sealed class SQLiteHelper : IDisposable
     {
         private string ConnectionString { get; }
         private string DbFilePath { get; }
@@ -28,10 +28,14 @@ namespace WinFIM.NET_Service
             DbFilePath = LogHelper.WorkDir + "\\fimdb.db";
             ConnectionString = @"URI=file:" + DbFilePath + ";PRAGMA journal_mode=WAL;";
             Connection = new SQLiteConnection(ConnectionString);
-            EnsureDatabaseExists();
         }
 
-        private void EnsureDatabaseExists()
+        internal void Open()
+        {
+            Connection.Open();
+        }
+
+        internal void EnsureDatabaseExists()
         // Create the database if it doesn't exist or is the wrong version
         {
             if (File.Exists(DbFilePath))
@@ -51,6 +55,7 @@ namespace WinFIM.NET_Service
                     Connection.Close();
                     if (DbFilePath != null) File.Move(DbFilePath, backupDbPath);
                     Connection.Open();
+                    EnsureTablesExist();
                 }
             }
             if (!File.Exists(DbFilePath))
@@ -58,8 +63,8 @@ namespace WinFIM.NET_Service
                 Log.Information($"Creating SQLite database file {DbFilePath}");
                 SQLiteConnection.CreateFile(DbFilePath);
                 Connection.Open();
+                EnsureTablesExist();
             }
-            EnsureTablesExist();
         }
 
         private int CheckDatabaseVersion()
@@ -69,7 +74,7 @@ namespace WinFIM.NET_Service
             try
             {
                 string sql = $"SELECT version FROM VERSION_CONTROL order by version desc limit 1";
-                object output = ExecuteScalar(sql, false)??0;
+                object output = ExecuteScalar(sql, false) ?? 0;
                 checkedDatabaseVersion = Convert.ToInt32(output); // try convert to integer, or output 0
                 Log.Debug($"Database version for {DbFilePath}: {checkedDatabaseVersion}");
             }
@@ -186,7 +191,7 @@ namespace WinFIM.NET_Service
             GC.SuppressFinalize(this);
         }
 
-        protected virtual void Dispose(bool disposing)
+        private void Dispose(bool disposing)
         {
             // Check to see if Dispose has already been called.
             if (!this._disposed)

@@ -15,11 +15,13 @@
 # docker run --name winfim --volume "C:\:C:\host:ro" --net "Default Switch" --rm -it winfim.net:latest powershell
 
 # Sample command to give this image a new tag:
-# docker tag winfim.net:latest winfim.net:1.1.1
+# docker tag winfim.net:latest winfim.net:1.2.0-2019
+# docker tag winfim.net:latest winfim.net:1.2.0-2022
 
 # Depending on the operating system of the host machines(s) that will build or run the containers, the image specified in the FROM statement may need to be changed.
 # For more information, please see https://aka.ms/containercompat
 FROM mcr.microsoft.com/dotnet/framework/runtime:4.8-windowsservercore-ltsc2019
+# FROM    mcr.microsoft.com/dotnet/framework/runtime:4.8-windowsservercore-ltsc2022
 
 ARG     source
 
