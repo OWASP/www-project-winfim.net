@@ -6,7 +6,7 @@ using System.ServiceProcess;
 namespace WinFIM.NET_Service
 {
     [RunInstaller(true)]
-    public partial class ProjectInstaller : System.Configuration.Install.Installer
+    public partial class ProjectInstaller : Installer
     {
         public ProjectInstaller()
         {

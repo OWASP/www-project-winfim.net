@@ -61,5 +61,23 @@ namespace WinFIM.NET_Service.Properties {
                 return ((string)(this["service_stop_message"]));
             }
         }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        public bool is_log_to_windows_eventlog {
+            get {
+                return ((bool)(this["is_log_to_windows_eventlog"]));
+            }
+        }
+        
+        [global::System.Configuration.ApplicationScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool is_capture_remote_connection_status {
+            get {
+                return ((bool)(this["is_capture_remote_connection_status"]));
+            }
+        }
     }
 }
