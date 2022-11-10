@@ -455,7 +455,7 @@ namespace WinFIM.NET_Service
         private static ICollection<string> GetFiles(string path)
         {
             var files = new List<string>();
-            string[] directories = null;
+            string[] directories = Array.Empty<string>();
             try
             {
                 files.AddRange(Directory.GetFiles(path, "*", SearchOption.TopDirectoryOnly));
