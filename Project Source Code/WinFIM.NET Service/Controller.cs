@@ -354,7 +354,7 @@ namespace WinFIM.NET_Service
 
         private string[] GetPathList(string[] monFileLines, bool haveBaseLine)
         {
-            string fileList = string.Empty;
+            var fileList = new List<string>();
             //get the full file mon list for further processing
             foreach (string line in monFileLines)
             {
@@ -367,47 +367,26 @@ namespace WinFIM.NET_Service
                     continue;
                 }
 
-                //1. check the line entry is a file or a directory
-                FileAttributes attr = File.GetAttributes(line);
-                if (attr.HasFlag(FileAttributes.Directory))
+                var fileOrDirectory = new FileInfo(line);
+                
+                if (fileOrDirectory.Attributes.HasFlag(FileAttributes.Directory))
                 {
-                    //2. if it is a directory
-                    //try to use cmd to get a full files (including hidden files) and all level of sub-directories list from a directory
-                    Log.Debug($"Checking directory {line}");
-                    using (Process process = new Process())
-                    {
-                        process.StartInfo.FileName = @"cmd.exe";
-                        process.StartInfo.Arguments = @"/c dir /a: /b /s " + "\"" + line + "\"";
-                        process.StartInfo.CreateNoWindow = true;
-                        process.StartInfo.UseShellExecute = false;
-                        process.StartInfo.RedirectStandardOutput = true;
-                        process.Start();
-                        fileList = fileList + line + "\n"; //make sure the most outer directory is included in the list
-                        fileList += process.StandardOutput.ReadToEnd();
-                        process.WaitForExit();
-                    }
+                    var files = GetFiles(line);
+                    fileList.AddRange(files);
                 }
                 else
                 {
-                    //3. if it is a file
-                    fileList = fileList + line + "\n";
+                    fileList.Add(fileOrDirectory.FullName);
                 }
             }
 
             //change all string in filelist to lowercase for easy comparison to exclusion list
-            fileList = fileList.ToLower();
-            fileList = fileList.TrimEnd('\r', '\n');
-            Log.Verbose($"fileList to check: {fileList}");
-
-            //convert fileList string to string array
-            string[] fileListArray = fileList.Split(
-                new[] { "\r\n", "\r", "\n" },
-                StringSplitOptions.None
-            );
-
             //remove duplicate elements in fileListArray
-            fileListArray = fileListArray.Distinct().ToArray();
-
+            var fileListArray = fileList
+                .Select(x => x.ToLowerInvariant())
+                .Distinct()
+                .ToArray();
+            
             return fileListArray;
         }
 
@@ -434,7 +413,7 @@ namespace WinFIM.NET_Service
 
         private static string[] GetExcludeList(string[] lines)
         {
-            string exFileList = string.Empty;
+            var exFileList = new List<string>();
             //get the full exclude file list for further processing
             foreach (string line in lines)
             {
@@ -444,29 +423,15 @@ namespace WinFIM.NET_Service
                 }
                 try
                 {
-                    //1. check the line entry is a file or a directory
-                    FileAttributes attr = File.GetAttributes(line);
-                    if (attr.HasFlag(FileAttributes.Directory))
+                    var fileOrDirectory = new FileInfo(line);
+                    if (fileOrDirectory.Attributes.HasFlag(FileAttributes.Directory))
                     {
-                        //2. if it is a directory
-                        //try to use cmd to get a full files (including hidden files) and all level of sub-directories list from a directory
-                        using (Process process = new Process())
-                        {
-                            process.StartInfo.FileName = @"cmd.exe";
-                            process.StartInfo.Arguments = @"/c dir /a: /b /s " + "\"" + line + "\"";
-                            process.StartInfo.CreateNoWindow = true;
-                            process.StartInfo.UseShellExecute = false;
-                            process.StartInfo.RedirectStandardOutput = true;
-                            process.Start();
-                            exFileList = exFileList + line + "\n"; //make sure the most outer directory is included in the list
-                            exFileList += process.StandardOutput.ReadToEnd();
-                            process.WaitForExit();
-                        }
+                        var files = GetFiles(line);
+                        exFileList.AddRange(files);
                     }
                     else
                     {
-                        //3. if it is a file
-                        exFileList = exFileList + line + "\n";
+                        exFileList.Add(fileOrDirectory.FullName);
                     }
 
                 }
@@ -478,18 +443,38 @@ namespace WinFIM.NET_Service
                 }
             }
             //change all string in exFileList to lowercase for easy comparison to exclusion list
-            exFileList = exFileList.ToLower();
-            exFileList = exFileList.TrimEnd('\r', '\n');
-            Log.Verbose($"exclude_path.txt contents: {exFileList}");
+            
+            var exFileListArray = exFileList
+                .Select(x => x.ToLowerInvariant())
+                .Distinct()
+                .ToArray();
 
-            //convert exFileList string to string array
-            string[] exFileListArray = exFileList.Split(
-                new[] { "\r\n", "\r", "\n" },
-                StringSplitOptions.None
-            );
-            //remove duplicate element in exFileListArray
-            exFileListArray = exFileListArray.Distinct().ToArray();
             return exFileListArray;
+        }
+        
+        private static ICollection<string> GetFiles(string path)
+        {
+            var files = new List<string>();
+            string[] directories = Array.Empty<string>();
+            try
+            {
+                files.AddRange(Directory.GetFiles(path, "*", SearchOption.TopDirectoryOnly));
+                directories = Directory.GetDirectories(path);
+            }
+            // Ignore inaccessible paths
+            catch (UnauthorizedAccessException) { }
+
+            foreach (var directory in directories)
+            {
+                try
+                {
+                    files.AddRange(GetFiles(directory));
+                }
+                // Ignore inaccessible paths
+                catch (UnauthorizedAccessException) { }
+            }
+
+            return files;
         }
 
         private bool CheckBaseLine()

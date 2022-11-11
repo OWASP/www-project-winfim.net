@@ -166,9 +166,9 @@ namespace WinFIM.NET_Service
             {
                 using (SQLiteCommand command = new SQLiteCommand(Connection))
                 {
-                    Log.Verbose($"Running ExecuteScalarAsync {sql}");
+                    Log.Verbose($"Running ExecuteScalar {sql}");
                     command.CommandText = sql;
-                    output = command.ExecuteScalarAsync().Result;
+                    output = command.ExecuteScalar();
                 }
             }
             catch (Exception e)
