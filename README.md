@@ -127,13 +127,11 @@ Therse are the configured Windows event Log ID types:
 - Filename: fimdb.db
 - database type: SQLite version 3
 - Tables:
-  - baseline_table
+  - BASELINE_PATH
     - Stores the details of paths that were checked in the previous run. At the end of the current run, the contents are deleted then copied from current_table
-  - conf_file_checksum
+  - CONF_FILE_CHECKSUM
     - Stores checksums for the config files, e.g. monlist.txt, exclude_extension.txt, exclude_path.txt, monlist.txt
-  - current_table
+  - CURRENT_PATH
     - Stores the details of the the paths as they are being being checked, so it can be checked against the file details in the baseline_table. The contents are deleted at the end of the current run
-  - monlist
-    - Stores information about paths in the monlist table - Checks if a path in monlist.txt was deleted or created since the last run, or already exists
-  - version_control
+  - VERSION_CONTROL
     - Stores the schema version and notes about changes

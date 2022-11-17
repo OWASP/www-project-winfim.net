@@ -59,19 +59,22 @@ function Get-FluentBit {
     # Download a popular opensource log processor and forwarder called Fluent Bit
     param ($TargetDirName)
     [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-    $version = "1.9.9"
-    $DownloadUrl = "https://fluentbit.io/releases/1.9/fluent-bit-${version}-win64.zip"
-    $DownloadFileName = "fluent-bit-${version}-win64.zip"
+    $fullVersion = "2.0.4"
+    $regexPatternMajorMinorVersion = [Regex]::new('^(\d+).(\d+)') # Pattern match example: matches "2.0" from "2.0.4"
+    $majorMinorVersion = $regexPatternMajorMinorVersion.Matches($fullVersion).Value
+    $DownloadUrl = "https://fluentbit.io/releases/${majorMinorVersion}/fluent-bit-${fullVersion}-win64.zip"
+    $DownloadFileName = "fluent-bit-${fullVersion}-win64.zip"
     $TempDir = Join-Path "$Env:Temp" "fluent-bit"
     Remove-Directory $TempDir
     New-Directory $TempDir
     New-Directory $TargetDirName
-    Write-Host "Downloading file $DownloadFileName to: $TargetDirName"
+    Write-Host "Downloading file $DownloadFileName to temp directory: $TempDir"
     $DownloadedFilePath = Join-Path "$TempDir" "$DownloadFileName"
     Invoke-WebRequest $DownloadUrl -OutFile "$DownloadedFilePath"
     Expand-Archive -LiteralPath "$DownloadedFilePath" -DestinationPath $TempDir
-    Move-Item $TempDir\fluent-bit-${version}-win64\bin\* $TargetDirName -Force
-    Move-Item $TempDir\fluent-bit-${version}-win64\conf\* $TargetDirName -Force
+    Write-Host "Moving extracted FluentBit files to: $TargetDirName"
+    Move-Item $TempDir\fluent-bit-${fullVersion}-win64\bin\* $TargetDirName -Force
+    Move-Item $TempDir\fluent-bit-${fullVersion}-win64\conf\* $TargetDirName -Force
     Remove-Directory $TempDir
 }
 function Get-Vim {
