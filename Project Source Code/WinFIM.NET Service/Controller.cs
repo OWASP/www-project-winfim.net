@@ -539,7 +539,7 @@ namespace WinFIM.NET_Service
             if (haveBaseLinePath)
             {
                 string sql = $"INSERT INTO CURRENT_PATH (pathname, pathexists, filesize, owner, checktime, filehash, pathtype) " +
-                             $"VALUES ('{path}',true,0,'{directoryOwner}','(UTC){DateTime.UtcNow:yyyy/dd/MM hh:mm:ss tt}','NA','Directory')";
+                             $"VALUES ('{path}',true,0,'{directoryOwner}','(UTC){DateTime.UtcNow:yyyy/MM/dd hh:mm:ss tt}','NA','Directory')";
                 SQLiteHelper1.ExecuteNonQuery(sql);
 
                 //compare with BASELINE_PATH
@@ -561,7 +561,7 @@ namespace WinFIM.NET_Service
             else
             {
                 string sql = $"INSERT INTO BASELINE_PATH (pathname, pathexists, filesize, owner, checktime, filehash, pathtype) " +
-                             $"VALUES ('{path}',true,0,'{directoryOwner}','(UTC){DateTime.UtcNow:yyyy/dd/MM hh:mm:ss tt}','NA','Directory')";
+                             $"VALUES ('{path}',true,0,'{directoryOwner}','(UTC){DateTime.UtcNow:yyyy/MM/dd hh:mm:ss tt}','NA','Directory')";
                 SQLiteHelper1.ExecuteScalar(sql);
                 Log.Debug($"Directory {path} exists");
             }
@@ -595,7 +595,7 @@ namespace WinFIM.NET_Service
                 if (haveBaseLinePath)
                 {
                     string sql = $"INSERT INTO CURRENT_PATH (pathname, pathexists, filesize, owner, checktime, filehash, pathtype) " +
-                                 $"VALUES ('{path}',true,'{GetFileSize(path)}','{fileOwner}','(UTC){DateTime.UtcNow:yyyy/dd/MM hh:mm:ss tt}','{tempHash}','File'";
+                                 $"VALUES ('{path}',true,'{GetFileSize(path)}','{fileOwner}','(UTC){DateTime.UtcNow:yyyy/MM/dd hh:mm:ss tt}','{tempHash}','File'";
                     SQLiteHelper1.ExecuteNonQuery(sql);
 
                     //compare with BASELINE_PATH
@@ -641,7 +641,7 @@ namespace WinFIM.NET_Service
                 else
                 {
                     string sql = $"INSERT INTO BASELINE_PATH (pathname, pathexists, filesize, owner, checktime, filehash, pathtype) " +
-                                 $"VALUES ('{path}',true,{GetFileSize(path)},'{fileOwner}','(UTC){DateTime.UtcNow:yyyy/dd/MM hh:mm:ss tt}','{tempHash}','File')";
+                                 $"VALUES ('{path}',true,{GetFileSize(path)},'{fileOwner}','(UTC){DateTime.UtcNow:yyyy/MM/dd hh:mm:ss tt}','{tempHash}','File')";
                     Log.Verbose(sql);
                     try
                     {
@@ -675,7 +675,7 @@ namespace WinFIM.NET_Service
                     if (haveBaseLinePath)
                     {
                         string sql = $"INSERT INTO CURRENT_PATH (pathname, pathexists, filesize, owner, checktime, filehash, pathtype) " +
-                                     $"VALUES ('{path}',true,{GetFileSize(path)},'{fileOwner}','(UTC){DateTime.UtcNow:yyyy/dd/MM hh:mm:ss tt}','{tempHash}','File')";
+                                     $"VALUES ('{path}',true,{GetFileSize(path)},'{fileOwner}','(UTC){DateTime.UtcNow:yyyy/MM/dd hh:mm:ss tt}','{tempHash}','File')";
                         try
                         {
                             SQLiteHelper1.ExecuteNonQuery(sql);
@@ -729,7 +729,7 @@ namespace WinFIM.NET_Service
                     else
                     {
                         string sql = $"INSERT INTO BASELINE_PATH (pathname, pathexists, filesize, owner, checktime, filehash, pathtype) " +
-                                     $"VALUES ('{path}',true,{GetFileSize(path)},'{fileOwner}','(UTC){DateTime.UtcNow:yyyy/dd/MM hh:mm:ss tt}','{tempHash}','File')";
+                                     $"VALUES ('{path}',true,{GetFileSize(path)},'{fileOwner}','(UTC){DateTime.UtcNow:yyyy/MM/dd hh:mm:ss tt}','{tempHash}','File')";
                         try
                         {
                             SQLiteHelper1.ExecuteNonQuery(sql);
