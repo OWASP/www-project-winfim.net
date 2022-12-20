@@ -111,8 +111,7 @@ namespace WinFIM.NET_Service
         protected override void OnStop()
         {
             string serviceStopMessage = Properties.Settings.Default.service_stop_message +
-                                        $": (UTC) {DateTime.UtcNow:
-                                        /MM hh:mm:ss tt}";
+                                        $": (UTC) {DateTime.UtcNow:yyyy/MM/dd hh:mm:ss tt}";
             serviceStopMessage += LogHelper.GetRemoteConnections();
             Log.Information(serviceStopMessage);
             LogHelper.WriteEventLog(serviceStopMessage, EventLogEntryType.Information, 7770);
