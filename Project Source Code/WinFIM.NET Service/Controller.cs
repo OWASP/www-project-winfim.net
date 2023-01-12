@@ -619,10 +619,10 @@ namespace WinFIM.NET_Service
                             dataReader = command.ExecuteReader();
                             if (dataReader.Read())
                             {
-                                message = $"File: '{path}' is modified. Previous check at:{dataReader.GetValue(5)} \n" +
-                                          $"File hash: (Previous){dataReader.GetValue(4)} (Current){tempHash} \n" +
-                                          $"File Size: (Previous){dataReader.GetValue(2)}MB (Current){GetFileSize(path)}MB \n" +
-                                          $"File Owner: (Previous)" + dataReader.GetValue(3) + " (Current){fileOwner}";
+                                message = $"File: '{path}' is modified. Previous-check: {dataReader.GetValue(5)} " +
+                                          $"Hash: (Previous){dataReader.GetValue(4)} (Current){tempHash} " +
+                                          $"Size: (Previous){dataReader.GetValue(2)}MB (Current){GetFileSize(path)}MB " +
+                                          $"Owner: (Previous)" + dataReader.GetValue(3) + " (Current){fileOwner}";
                                 Log.Warning(message);
                                 LogHelper.WriteEventLog(message, EventLogEntryType.Warning, 7777);
                             }
@@ -634,7 +634,7 @@ namespace WinFIM.NET_Service
                     {
                         message = $"File: '{path}' is newly created. Owner: {fileOwner} Hash: {tempHash}";
                         Log.Warning(message);
-                        LogHelper.WriteEventLog($"File: '{path}' is newly created.\nOwner: {fileOwner} Hash:{tempHash}", EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
+                        LogHelper.WriteEventLog($"File: '{path}' is newly created.\nOwner: {fileOwner} Hash: {tempHash}", EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
                     }
                 }
                 //if there is no content in BASELINE_PATH, write to BASELINE_PATH instead
