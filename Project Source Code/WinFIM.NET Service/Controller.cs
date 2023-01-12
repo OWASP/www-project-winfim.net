@@ -707,10 +707,10 @@ namespace WinFIM.NET_Service
                                 dataReader = command.ExecuteReader();
                                 if (dataReader.Read())
                                 {
-                                    message = $"File: '{path}' is modified. Previous check at:{dataReader.GetValue(5)} \n" +
-                                              $"File hash: (Previous){dataReader.GetValue(4)} (Current){tempHash} \n" +
-                                              $"File Size: (Previous){dataReader.GetValue(2)}MB (Current){GetFileSize(path)}MB \n" +
-                                              $"File Owner: (Previous)" + dataReader.GetValue(3) + " (Current){fileOwner}";
+                                    message = $"File: '{path}' is modified. Previous check at:{dataReader.GetValue(5)} " +
+                                              $"Hash: (Previous){dataReader.GetValue(4)} (Current){tempHash} " +
+                                              $"Size: (Previous){dataReader.GetValue(2)}MB (Current){GetFileSize(path)}MB " +
+                                              $"Owner: (Previous)" + dataReader.GetValue(3) + " (Current){fileOwner}";
                                     Log.Warning(message);
                                     LogHelper.WriteEventLog(message, EventLogEntryType.Warning, 7777); //setting the Event ID as 7777
                                 }
@@ -758,7 +758,7 @@ namespace WinFIM.NET_Service
             {
                 string deletedPathName = dataReader.GetValue(0).ToString();
                 string deletedPathType = dataReader.GetValue(1).ToString();
-                string deletedMessage = $"The base {deletedPathType} '{deletedPathName}' listed in monlist.txt is deleted.";
+                string deletedMessage = $"{deletedPathType}: '{deletedPathName}' has been deleted.";
                 Log.Warning(deletedMessage);
                 LogHelper.WriteEventLog(deletedMessage, EventLogEntryType.Warning, 7778); //setting the Event ID as 7778
             }
