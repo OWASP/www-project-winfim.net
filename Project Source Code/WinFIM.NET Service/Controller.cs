@@ -548,11 +548,11 @@ namespace WinFIM.NET_Service
                 string output = SQLiteHelper1.ExecuteScalar(sql).ToString();
                 if (!output.Equals("0"))
                 {
-                    Log.Verbose($"Directory :'{path}' has no change.");
+                    Log.Verbose($"Directory: '{path}' has no change.");
                 }
                 else
                 {
-                    string message = $"Directory :'{path}' is newly created. Owner: {directoryOwner}";
+                    string message = $"Directory: '{path}' is newly created. Owner: {directoryOwner}";
                     Log.Warning(message);
                     LogHelper.WriteEventLog(message, EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
                 }
