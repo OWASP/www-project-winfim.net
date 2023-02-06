@@ -32,7 +32,7 @@ namespace WinFIM.NET_Service
             int schedulerMin = LogHelper.GetSchedule();
             string serviceStartMessage = Properties.Settings.Default.service_start_message +
                                          $": (UTC) {DateTime.UtcNow:yyyy/MM/dd hh:mm:ss tt}";
-            serviceStartMessage = serviceStartMessage + LogHelper.GetRemoteConnections() +
+            serviceStartMessage = $"{serviceStartMessage + LogHelper.GetRemoteConnections()} " +
                                   "This console started service will run every " + schedulerMin.ToString() +
                                   " minute(s).";
             Log.Information(serviceStartMessage);
