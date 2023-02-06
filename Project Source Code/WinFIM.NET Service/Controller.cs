@@ -539,7 +539,7 @@ namespace WinFIM.NET_Service
             if (haveBaseLinePath)
             {
                 string sql = $"INSERT INTO CURRENT_PATH (pathname, pathexists, filesize, owner, checktime, filehash, pathtype) " +
-                             $"VALUES ('{path}',true,0,'{directoryOwner}','(UTC){DateTime.UtcNow:yyyy/dd/MM hh:mm:ss tt}','NA','Directory')";
+                             $"VALUES ('{path}',true,0,'{directoryOwner}','(UTC){DateTime.UtcNow:yyyy/MM/dd hh:mm:ss tt}','NA','Directory')";
                 SQLiteHelper1.ExecuteNonQuery(sql);
 
                 //compare with BASELINE_PATH
@@ -548,11 +548,11 @@ namespace WinFIM.NET_Service
                 string output = SQLiteHelper1.ExecuteScalar(sql).ToString();
                 if (!output.Equals("0"))
                 {
-                    Log.Verbose($"Directory :'{path}' has no change.");
+                    Log.Verbose($"Directory: '{path}' has no change.");
                 }
                 else
                 {
-                    string message = $"Directory :'{path}' is newly created. Owner: {directoryOwner}";
+                    string message = $"Directory: '{path}' is newly created. Owner: {directoryOwner}";
                     Log.Warning(message);
                     LogHelper.WriteEventLog(message, EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
                 }
@@ -561,7 +561,7 @@ namespace WinFIM.NET_Service
             else
             {
                 string sql = $"INSERT INTO BASELINE_PATH (pathname, pathexists, filesize, owner, checktime, filehash, pathtype) " +
-                             $"VALUES ('{path}',true,0,'{directoryOwner}','(UTC){DateTime.UtcNow:yyyy/dd/MM hh:mm:ss tt}','NA','Directory')";
+                             $"VALUES ('{path}',true,0,'{directoryOwner}','(UTC){DateTime.UtcNow:yyyy/MM/dd hh:mm:ss tt}','NA','Directory')";
                 SQLiteHelper1.ExecuteScalar(sql);
                 Log.Debug($"Directory {path} exists");
             }
@@ -595,7 +595,7 @@ namespace WinFIM.NET_Service
                 if (haveBaseLinePath)
                 {
                     string sql = $"INSERT INTO CURRENT_PATH (pathname, pathexists, filesize, owner, checktime, filehash, pathtype) " +
-                                 $"VALUES ('{path}',true,'{GetFileSize(path)}','{fileOwner}','(UTC){DateTime.UtcNow:yyyy/dd/MM hh:mm:ss tt}','{tempHash}','File'";
+                                 $"VALUES ('{path}',true,'{GetFileSize(path)}','{fileOwner}','(UTC){DateTime.UtcNow:yyyy/MM/dd hh:mm:ss tt}','{tempHash}','File'";
                     SQLiteHelper1.ExecuteNonQuery(sql);
 
                     //compare with BASELINE_PATH
@@ -619,10 +619,10 @@ namespace WinFIM.NET_Service
                             dataReader = command.ExecuteReader();
                             if (dataReader.Read())
                             {
-                                message = $"File: '{path}' is modified. Previous check at:{dataReader.GetValue(5)} \n" +
-                                          $"File hash: (Previous){dataReader.GetValue(4)} (Current){tempHash} \n" +
-                                          $"File Size: (Previous){dataReader.GetValue(2)}MB (Current){GetFileSize(path)}MB \n" +
-                                          $"File Owner: (Previous)" + dataReader.GetValue(3) + " (Current){fileOwner}";
+                                message = $"File: '{path}' is modified. Previous-check: {dataReader.GetValue(5)} " +
+                                          $"Hash: (Previous){dataReader.GetValue(4)} (Current){tempHash} " +
+                                          $"Size: (Previous){dataReader.GetValue(2)}MB (Current){GetFileSize(path)}MB " +
+                                          $"Owner: (Previous)" + dataReader.GetValue(3) + " (Current){fileOwner}";
                                 Log.Warning(message);
                                 LogHelper.WriteEventLog(message, EventLogEntryType.Warning, 7777);
                             }
@@ -634,14 +634,14 @@ namespace WinFIM.NET_Service
                     {
                         message = $"File: '{path}' is newly created. Owner: {fileOwner} Hash: {tempHash}";
                         Log.Warning(message);
-                        LogHelper.WriteEventLog($"File: '{path}' is newly created.\nOwner: {fileOwner} Hash:{tempHash}", EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
+                        LogHelper.WriteEventLog($"File: '{path}' is newly created.\nOwner: {fileOwner} Hash: {tempHash}", EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
                     }
                 }
                 //if there is no content in BASELINE_PATH, write to BASELINE_PATH instead
                 else
                 {
                     string sql = $"INSERT INTO BASELINE_PATH (pathname, pathexists, filesize, owner, checktime, filehash, pathtype) " +
-                                 $"VALUES ('{path}',true,{GetFileSize(path)},'{fileOwner}','(UTC){DateTime.UtcNow:yyyy/dd/MM hh:mm:ss tt}','{tempHash}','File')";
+                                 $"VALUES ('{path}',true,{GetFileSize(path)},'{fileOwner}','(UTC){DateTime.UtcNow:yyyy/MM/dd hh:mm:ss tt}','{tempHash}','File')";
                     Log.Verbose(sql);
                     try
                     {
@@ -675,7 +675,7 @@ namespace WinFIM.NET_Service
                     if (haveBaseLinePath)
                     {
                         string sql = $"INSERT INTO CURRENT_PATH (pathname, pathexists, filesize, owner, checktime, filehash, pathtype) " +
-                                     $"VALUES ('{path}',true,{GetFileSize(path)},'{fileOwner}','(UTC){DateTime.UtcNow:yyyy/dd/MM hh:mm:ss tt}','{tempHash}','File')";
+                                     $"VALUES ('{path}',true,{GetFileSize(path)},'{fileOwner}','(UTC){DateTime.UtcNow:yyyy/MM/dd hh:mm:ss tt}','{tempHash}','File')";
                         try
                         {
                             SQLiteHelper1.ExecuteNonQuery(sql);
@@ -707,10 +707,10 @@ namespace WinFIM.NET_Service
                                 dataReader = command.ExecuteReader();
                                 if (dataReader.Read())
                                 {
-                                    message = $"File: '{path}' is modified. Previous check at:{dataReader.GetValue(5)} \n" +
-                                              $"File hash: (Previous){dataReader.GetValue(4)} (Current){tempHash} \n" +
-                                              $"File Size: (Previous){dataReader.GetValue(2)}MB (Current){GetFileSize(path)}MB \n" +
-                                              $"File Owner: (Previous)" + dataReader.GetValue(3) + " (Current){fileOwner}";
+                                    message = $"File: '{path}' is modified. Previous check at:{dataReader.GetValue(5)} " +
+                                              $"Hash: (Previous){dataReader.GetValue(4)} (Current){tempHash} " +
+                                              $"Size: (Previous){dataReader.GetValue(2)}MB (Current){GetFileSize(path)}MB " +
+                                              $"Owner: (Previous)" + dataReader.GetValue(3) + " (Current){fileOwner}";
                                     Log.Warning(message);
                                     LogHelper.WriteEventLog(message, EventLogEntryType.Warning, 7777); //setting the Event ID as 7777
                                 }
@@ -729,7 +729,7 @@ namespace WinFIM.NET_Service
                     else
                     {
                         string sql = $"INSERT INTO BASELINE_PATH (pathname, pathexists, filesize, owner, checktime, filehash, pathtype) " +
-                                     $"VALUES ('{path}',true,{GetFileSize(path)},'{fileOwner}','(UTC){DateTime.UtcNow:yyyy/dd/MM hh:mm:ss tt}','{tempHash}','File')";
+                                     $"VALUES ('{path}',true,{GetFileSize(path)},'{fileOwner}','(UTC){DateTime.UtcNow:yyyy/MM/dd hh:mm:ss tt}','{tempHash}','File')";
                         try
                         {
                             SQLiteHelper1.ExecuteNonQuery(sql);
@@ -758,7 +758,7 @@ namespace WinFIM.NET_Service
             {
                 string deletedPathName = dataReader.GetValue(0).ToString();
                 string deletedPathType = dataReader.GetValue(1).ToString();
-                string deletedMessage = $"The base {deletedPathType} '{deletedPathName}' listed in monlist.txt is deleted.";
+                string deletedMessage = $"{deletedPathType}: '{deletedPathName}' has been deleted.";
                 Log.Warning(deletedMessage);
                 LogHelper.WriteEventLog(deletedMessage, EventLogEntryType.Warning, 7778); //setting the Event ID as 7778
             }
