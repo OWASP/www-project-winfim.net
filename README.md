@@ -40,10 +40,6 @@ The characteristics of this application are:
 - Switch to the "Docker Compose" project
 - Select the Release profile
 - Click Build > Build Solution
-- To run the Docker image, run from a command prompt:
-  ```
-  docker run --name winfim --volume "C:\:C:\host:ro" --rm -it winfim.net:latest
-  ```
 
 ## Build Docker image from commandline
 To build the Docker image, from the compiled WinFIM directory:
@@ -54,10 +50,6 @@ To build the Docker image, from the compiled WinFIM directory:
 - Run:
   ```
   docker build --tag winfim.net:latest . 
-  ```
-- To run the Docker image, run from a command prompt:
-  ```
-  docker run --name winfim --volume "C:\:C:\host:ro" --rm -it winfim.net:latest
   ```
 
 # Configuation
@@ -96,6 +88,18 @@ To build the Docker image, from the compiled WinFIM directory:
 - If the Windows service has been installed, WinFIM.NET will automatically start on system startup
 - If the Windows service has not been installed, or if it is not started, executing the file `WinFIM.NET Service.exe` will launch WinFIM.NET as a console application
 
+# Running in Docker
+``` powershell
+# Run in interactive mode (show a Powershell prompt)
+docker run --name winfim --volume "C:\:C:\host:ro" --rm -it winfim.net:latest powershell
+
+# Run in interactive mode (show a Powershell prompt), with Internet access from a Windows host
+docker run --name winfim --volume "C:\:C:\host:ro" --net "Default Switch" --rm -it winfim.net:latest powershell
+
+# View live logs
+docker run --name winfim --volume "C:\:C:\host:ro" --rm -it winfim.net:latest winfim.net:latest Powershell Get-Content -Path "*.log" -Wait
+```
+
 # Uninstallation
 ## Option 1: Via Add or Remove Programs
 Locate the program "WinFIM.NET" and click Uninstall
@@ -127,13 +131,11 @@ Therse are the configured Windows event Log ID types:
 - Filename: fimdb.db
 - database type: SQLite version 3
 - Tables:
-  - baseline_table
+  - BASELINE_PATH
     - Stores the details of paths that were checked in the previous run. At the end of the current run, the contents are deleted then copied from current_table
-  - conf_file_checksum
+  - CONF_FILE_CHECKSUM
     - Stores checksums for the config files, e.g. monlist.txt, exclude_extension.txt, exclude_path.txt, monlist.txt
-  - current_table
+  - CURRENT_PATH
     - Stores the details of the the paths as they are being being checked, so it can be checked against the file details in the baseline_table. The contents are deleted at the end of the current run
-  - monlist
-    - Stores information about paths in the monlist table - Checks if a path in monlist.txt was deleted or created since the last run, or already exists
-  - version_control
+  - VERSION_CONTROL
     - Stores the schema version and notes about changes

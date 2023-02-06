@@ -73,7 +73,7 @@ namespace WinFIM.NET_Service
             int checkedDatabaseVersion = 0;
             try
             {
-                string sql = $"SELECT version FROM VERSION_CONTROL order by version desc limit 1";
+                const string sql = "SELECT version FROM VERSION_CONTROL order by version desc limit 1";
                 object output = ExecuteScalar(sql, false) ?? 0;
                 checkedDatabaseVersion = Convert.ToInt32(output); // try convert to integer, or output 0
                 Log.Debug($"Database version for {DbFilePath}: {checkedDatabaseVersion}");
