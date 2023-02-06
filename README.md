@@ -96,8 +96,8 @@ docker run --name winfim --volume "C:\:C:\host:ro" --rm -it winfim.net:latest po
 # Run in interactive mode (show a Powershell prompt), with Internet access from a Windows host
 docker run --name winfim --volume "C:\:C:\host:ro" --net "Default Switch" --rm -it winfim.net:latest powershell
 
-# View live logs
-docker run --name winfim --volume "C:\:C:\host:ro" --rm -it winfim.net:latest winfim.net:latest Powershell Get-Content -Path "*.log" -Wait
+# Run in interactive mode, viewing live logs
+docker run --name winfim --volume "C:\:C:\host:ro" --rm -it winfim.net:latest
 ```
 
 # Uninstallation
