@@ -56,5 +56,5 @@ CMD     c:\tools\fluent-bit\fluent-bit.exe -c c:\tools\fluent-bit\fluent-bit.con
 # Cleanup
 RUN     Stop-Service -Name "WinFIM.NET` Service"; \
         Remove-Item *.log; \
-        Remove-Item fimdb.db; \
+        Remove-Item fimdb.db*; \
         remove-item c:\tools\fluent-bit\fluent-bit.db*
