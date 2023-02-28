@@ -37,9 +37,7 @@ The characteristics of this application are:
 - Requirements: Docker Desktop is installed on the host computer
 ## Build Docker image from Visual Studio
 - Launch visual Studio
-- Switch to the "Docker Compose" project
-- Select the Release profile
-- Click Build > Build Solution
+- In Solution Explorer, right click on the `docker-compose` project, and click `Build`
 
 ## Build Docker image from commandline
 To build the Docker image, from the compiled WinFIM directory:
