@@ -34,7 +34,7 @@
             // Service1
             // 
             this.CanPauseAndContinue = true;
-            this.ServiceName = "WinFIM.NET Service";
+            this.ServiceName = "WinFIM.NET.Service";
             ((System.ComponentModel.ISupportInitialize)(this.eventLog1)).EndInit();
 
         }

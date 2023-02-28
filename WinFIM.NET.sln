@@ -1,19 +1,20 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.3.32901.215
+VisualStudioVersion = 17.5.33414.496
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WinFIM.NET Service", "WinFIM.NET Service.csproj", "{1ED9757B-64B5-4139-B683-7ECD29EB900E}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WinFIM.NET.Service", "WinFIM.NET.Service\WinFIM.NET.Service.csproj", "{1ED9757B-64B5-4139-B683-7ECD29EB900E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F33DDEB4-6F74-4986-8AF8-82AF2419DBB8}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
-		..\..\README.md = ..\..\README.md
+		.gitignore = .gitignore
+		README.md = README.md
 	EndProjectSection
 EndProject
-Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose.dcproj", "{0EBECC41-2AEC-42CB-9BF3-2F9C2C1B514E}"
+Project("{E53339B2-1760-4266-BCC7-CA923CBCF16C}") = "docker-compose", "docker-compose\docker-compose.dcproj", "{0EBECC41-2AEC-42CB-9BF3-2F9C2C1B514E}"
 EndProject
-Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "WinFIM.NET-setup", "..\WinFIM.NET-setup\WinFIM.NET-setup.vdproj", "{1305FBA3-2F7A-496A-AA92-885A879E1BDA}"
+Project("{54435603-DBB4-11D2-8724-00A0C9A8B90C}") = "WinFIM.NET.Setup", "WinFIM.NET.Setup\WinFIM.NET.Setup.vdproj", "{1305FBA3-2F7A-496A-AA92-885A879E1BDA}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

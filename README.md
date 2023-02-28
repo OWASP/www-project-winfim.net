@@ -26,10 +26,10 @@ The characteristics of this application are:
 
 # Installation (local machine)
 ## Option 1: Via MSI / setup.exe installer
-1. Double click the setup.exe or WinFIM.NET-setup.msi file and follow the prompts to install WinFIM and setup the service
+1. Double click the setup.exe or WinFIM.NET.Setup.msi file and follow the prompts to install WinFIM and setup the service
 ## Option 2: Manual install
 1. Download the zip file to the destination computer and extract the contents
-2. Unblock the `WinFIM.NET Service.exe` (if required)
+2. Unblock the `WinFIM.NET.Service.exe` (if required)
 3. In an Administrator command prompt, execute the file `install_service.bat`
   
 # Installation (Docker)
@@ -62,13 +62,13 @@ To build the Docker image, from the compiled WinFIM directory:
         - Put a number (in minute) for the time separation of each run. e.g. 30 (that means file checksum will be run every 30 minutes).
 2. Configure Windows Event logs
    1. Windows Event logging is enabled by default. 
-      1. To disable, edit the file `WinFIM.NET Service.exe.config` (Sourcecode filename: `App.config`
+      1. To disable, edit the file `WinFIM.NET.Service.exe.config` (Sourcecode filename: `App.config`
          1. Change the entry `is_log_to_windows_eventlog` to `False`
    2. If you want to log to Windows Event logs, make sure that the maximum log size is configured according to your deployment environment. By default, only 1MB is reserved for Windows Event logs.
    3. The Windows Event log file is located here: `%SystemRoot%\System32\Winevt\Logs\WinFIM.NET.evtx`
 3. File and console level logs use the [Serilog](https://serilog.net/) logging framework.
    1. The Serilog configuration is stored in the a text file called the app.config file. To modify:
-      1. Edit the file `WinFIM.NET Service.exe.config` (Sourcecode filename: `App.config`)
+      1. Edit the file `WinFIM.NET.Service.exe.config` (Sourcecode filename: `App.config`)
          1. Review the entries starting with `<add key="serilog:`
             1. Example: The log file location is defined in setting `<add key="serilog:write-to:File.path" value="c:\tools\WinFIM.NET\.log" />`
                1. Note that the date in `yyyymmdd` format is automatically inserted into the filename before the dot, e.g. `20221004.log`
@@ -81,12 +81,12 @@ To build the Docker image, from the compiled WinFIM directory:
    1. WinFIM.NET can capture the current remote connection status at the beginning of every file checking cycle.  
       When suspicious file changes are identified, this information may able to speed up the whole forensic / threat hunting process.
       1. This is disabled by default. To enable:
-         1. Edit the file `WinFIM.NET Service.exe.config` (Sourcecode filename: `App.config`
+         1. Edit the file `WinFIM.NET.Service.exe.config` (Sourcecode filename: `App.config`
          2. To enable, edit app.config file, change the entry `is_capture_remote_connection_status` to `True`
 
 # Running
 - If the Windows service has been installed, WinFIM.NET will automatically start on system startup
-- If the Windows service has not been installed, or if it is not started, executing the file `WinFIM.NET Service.exe` will launch WinFIM.NET as a console application
+- If the Windows service has not been installed, or if it is not started, executing the file `WinFIM.NET.Service.exe` will launch WinFIM.NET as a console application
 
 # Running in Docker
 ``` powershell

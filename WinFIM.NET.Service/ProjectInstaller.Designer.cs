@@ -42,9 +42,9 @@ namespace WinFIM.NET_Service
             // 
             // serviceInstaller1
             // 
-            this.serviceInstaller1.Description = "WinFIM.NET Service";
-            this.serviceInstaller1.DisplayName = "WinFIM.NET Service";
-            this.serviceInstaller1.ServiceName = "WinFIM.NET Service";
+            this.serviceInstaller1.Description = "WinFIM.NET.Service";
+            this.serviceInstaller1.DisplayName = "WinFIM.NET.Service";
+            this.serviceInstaller1.ServiceName = "WinFIM.NET.Service";
             this.serviceInstaller1.StartType = System.ServiceProcess.ServiceStartMode.Automatic;
             this.serviceInstaller1.AfterInstall += new System.Configuration.Install.InstallEventHandler(this.ServiceInstaller_AfterInstall);
             // 

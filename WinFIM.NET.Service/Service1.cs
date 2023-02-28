@@ -25,7 +25,7 @@ namespace WinFIM.NET_Service
             //this.OnStop();
         }
 
-        // run in scheduled / continuous mode if the "WinFIM.NET Service.exe" executable is directly run as a console app (as opposed to running as a service)
+        // run in scheduled / continuous mode if the "WinFIM.NET.Service.exe" executable is directly run as a console app (as opposed to running as a service)
         internal void ConsoleScheduled()
         {
             _controller.Initialise();

@@ -5,4 +5,4 @@ services:
     image: ${DOCKER_REGISTRY-}winfim.net
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: ..\WinFIM.NET.Service\Dockerfile

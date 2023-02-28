@@ -3,7 +3,7 @@
 "VSVersion" = "3:800"
 "ProjectType" = "8:{978C614F-708E-4E1A-B201-565925725DBA}"
 "IsWebType" = "8:FALSE"
-"ProjectName" = "8:WinFIM.NET-setup"
+"ProjectName" = "8:WinFIM.NET.Setup"
 "LanguageId" = "3:1033"
 "CodePage" = "3:1252"
 "UILanguageId" = "3:1033"
@@ -309,7 +309,7 @@
         "DisplayName" = "8:Debug"
         "IsDebugOnly" = "11:TRUE"
         "IsReleaseOnly" = "11:FALSE"
-        "OutputFilename" = "8:Debug\\WinFIM.NET-setup.msi"
+        "OutputFilename" = "8:Debug\\WinFIM.NET.Setup.msi"
         "PackageFilesAs" = "3:2"
         "PackageFileSize" = "3:-2147483648"
         "CabType" = "3:1"
@@ -341,7 +341,7 @@
         "DisplayName" = "8:Release"
         "IsDebugOnly" = "11:FALSE"
         "IsReleaseOnly" = "11:TRUE"
-        "OutputFilename" = "8:Release\\WinFIM.NET-setup.msi"
+        "OutputFilename" = "8:Release\\WinFIM.NET.Setup.msi"
         "PackageFilesAs" = "3:2"
         "PackageFileSize" = "3:-2147483648"
         "CabType" = "3:1"
@@ -375,7 +375,7 @@
         {
             "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_388C2BB78C8B4348BFF49A73D283824C"
             {
-            "Name" = "8:Primary output from WinFIM.NET Service (Active)"
+            "Name" = "8:Primary output from WinFIM.NET.Service (Active)"
             "Condition" = "8:"
             "Object" = "8:_80C4E341B3FD404DBA5577CB9C47E7D9"
             "FileType" = "3:2"
@@ -389,7 +389,7 @@
             }
             "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_70512FAD60704704B2FA352BD50E87E3"
             {
-            "Name" = "8:Primary output from WinFIM.NET Service (Active)"
+            "Name" = "8:Primary output from WinFIM.NET.Service (Active)"
             "Condition" = "8:"
             "Object" = "8:_80C4E341B3FD404DBA5577CB9C47E7D9"
             "FileType" = "3:2"
@@ -403,7 +403,7 @@
             }
             "{4AA51A2D-7D85-4A59-BA75-B0809FC8B380}:_E6C1E83C1EBE4765980D2C0732979BB4"
             {
-            "Name" = "8:Primary output from WinFIM.NET Service (Active)"
+            "Name" = "8:Primary output from WinFIM.NET.Service (Active)"
             "Condition" = "8:"
             "Object" = "8:_80C4E341B3FD404DBA5577CB9C47E7D9"
             "FileType" = "3:2"
@@ -502,7 +502,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_34892FC4CBD74E7CA560A05A77FC92B0"
             {
-            "SourcePath" = "8:..\\WinFIM.NET Service\\bin\\Release\\x64\\SQLite.Interop.dll"
+            "SourcePath" = "8:..\\WinFIM.NET.Service\\bin\\Release\\x64\\SQLite.Interop.dll"
             "TargetName" = "8:SQLite.Interop.dll"
             "Tag" = "8:"
             "Folder" = "8:_C0ECC42D0D3B4904AFFC8B17A21440F7"
@@ -770,7 +770,7 @@
             }
             "{1FB2D0AE-D3B9-43D4-B9DD-F88EC61E35DE}:_9D20C1216DC34DA49015276B0749AB1E"
             {
-            "SourcePath" = "8:..\\WinFIM.NET Service\\bin\\Release\\x86\\SQLite.Interop.dll"
+            "SourcePath" = "8:..\\WinFIM.NET.Service\\bin\\Release\\x86\\SQLite.Interop.dll"
             "TargetName" = "8:SQLite.Interop.dll"
             "Tag" = "8:"
             "Folder" = "8:_9E907A9CAD5849CA858AD51322D401C4"

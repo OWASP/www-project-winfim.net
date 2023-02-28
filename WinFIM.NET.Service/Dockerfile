@@ -33,11 +33,11 @@ COPY    ${source:-obj/Docker/publish} .
 
 SHELL   ["powershell", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
-# Install WinFIM.NET service. 
+# Install WinFIM.NET.Service. 
 # Note the required ` character before the space in the service name and BinaryPathName
 RUN     New-Service -Name "WinFIM.NET` Service" -BinaryPathName "c:\tools\WinFIM.NET\WinFIM.NET` Service.exe"
 
-# Set the WinFIM.NET service to delayed start, to give time for the host directories to be recognized by the container
+# Set the WinFIM.NET.Service to delayed start, to give time for the host directories to be recognized by the container
 # RUN   sc.exe config "WinFIM.NET` Service" start=delayed-auto
 
 # Restart the Windows service if it fails, where the Failure count is reset to 0 after 30 seconds, Restart the failed service after 5 seconds.
@@ -50,7 +50,7 @@ RUN     .\Update-DockerImage.ps1"; \
         Remove-Item "Update-DockerImage.ps1"
 
 # Commands to launch on container startup. 
-# Start the WinFIM.NET service with a short delay so there are no conflicts with other starting up processes, e.g. networking.
+# Start the WinFIM.NET.Service with a short delay so there are no conflicts with other starting up processes, e.g. networking.
 CMD     c:\tools\fluent-bit\fluent-bit.exe -c c:\tools\fluent-bit\fluent-bit.conf
 
 # Cleanup
