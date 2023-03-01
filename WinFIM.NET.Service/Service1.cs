@@ -1,8 +1,6 @@
 ﻿using Serilog;
-using System;
 using System.Diagnostics;
 using System.ServiceProcess;
-using System.Threading;
 using System.Timers;
 // ReSharper disable FunctionNeverReturns
 

@@ -1,7 +1,5 @@
 ﻿using Serilog;
-using System;
 using System.Data.SQLite;
-using System.IO;
 
 namespace WinFIM.NET_Service
 {

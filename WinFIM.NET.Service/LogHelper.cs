@@ -1,9 +1,6 @@
 ﻿using Serilog;
-using System;
 using System.Configuration;
 using System.Diagnostics;
-using System.IO;
-using System.Linq;
 using System.Reflection;
 using System.Runtime.InteropServices;
 
@@ -16,7 +13,7 @@ namespace WinFIM.NET_Service
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern int Wow64DisableWow64FsRedirection(ref IntPtr ptr);
 
-        private static readonly EventLog EventLog1 = new EventLog();
+        private static readonly EventLog EventLog1 = new();
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern int Wow64EnableWow64FsRedirection(ref IntPtr ptr);

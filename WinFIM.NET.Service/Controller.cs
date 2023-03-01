@@ -1,19 +1,14 @@
 ﻿using Serilog;
-using System;
-using System.Collections.Generic;
 using System.Data;
 using System.Data.SQLite;
 using System.Diagnostics;
 using System.Globalization;
-using System.IO;
-using System.Linq;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
-using System.Threading;
 
 namespace WinFIM.NET_Service
 {
-    internal class Controller
+    public sealed class Controller
     {
         private SQLiteHelper SQLiteHelper1 { get; set; }
 
@@ -21,20 +16,24 @@ namespace WinFIM.NET_Service
         private static string GetFileOwner(string path)
         {
             string fileOwner;
+            if (path == null) throw new ArgumentNullException(nameof(path));
+            if (!(File.Exists(path)))
+            {
+                fileOwner = $"File not found: {path}";
+                return fileOwner;
+            }
             try
             {
-                if (!(File.Exists(path)))
-                {
-                    fileOwner = $"File not found: {path}";
-                    return fileOwner;
-                }
-                fileOwner = File.GetAccessControl(path).GetOwner(typeof(System.Security.Principal.NTAccount)).ToString();
+                var ac = new FileInfo(path).GetAccessControl();
+                fileOwner = new FileInfo(path).GetAccessControl().GetOwner(typeof(System.Security.Principal.NTAccount))?.ToString();
+                //fileOwner = File.GetAccessControl(path).GetOwner(typeof(System.Security.Principal.NTAccount)).ToString();
             }
             catch
             {
                 try
                 {
-                    fileOwner = File.GetAccessControl(path).GetOwner(typeof(System.Security.Principal.SecurityIdentifier)).ToString();
+                    fileOwner = new FileInfo(path).GetAccessControl().GetOwner(typeof(System.Security.Principal.SecurityIdentifier))?.ToString();
+                    //fileOwner = File.GetAccessControl(path).GetOwner(typeof(System.Security.Principal.SecurityIdentifier)).ToString();
                 }
                 catch (Exception e)
                 {
@@ -49,6 +48,7 @@ namespace WinFIM.NET_Service
         //get directory owner information
         private static string GetDirectoryOwner(string path)
         {
+            if (path == null) throw new ArgumentNullException(nameof(path));
             string directoryOwner;
             try
             {
@@ -57,13 +57,16 @@ namespace WinFIM.NET_Service
                     directoryOwner = $"Directory not found: {path}";
                     return directoryOwner;
                 }
-                directoryOwner = Directory.GetAccessControl(path).GetOwner(typeof(System.Security.Principal.NTAccount)).ToString();
+                var dac = new DirectoryInfo(path).GetAccessControl();
+                directoryOwner = new DirectoryInfo(path).GetAccessControl().GetOwner(typeof(System.Security.Principal.NTAccount))?.ToString();
+                //directoryOwner = Directory.GetAccessControl(path).GetOwner(typeof(System.Security.Principal.NTAccount)).ToString();
             }
             catch
             {
                 try
                 {
-                    directoryOwner = Directory.GetAccessControl(path).GetOwner(typeof(System.Security.Principal.SecurityIdentifier)).ToString();
+                    directoryOwner = new DirectoryInfo(path).GetAccessControl().GetOwner(typeof(System.Security.Principal.SecurityIdentifier))?.ToString();
+                    //directoryOwner = Directory.GetAccessControl(path).GetOwner(typeof(System.Security.Principal.SecurityIdentifier)).ToString();
                 }
                 catch (Exception e)
                 {
@@ -367,7 +370,7 @@ namespace WinFIM.NET_Service
                 }
 
                 var fileOrDirectory = new FileInfo(line);
-                
+
                 if (fileOrDirectory.Attributes.HasFlag(FileAttributes.Directory))
                 {
                     var files = GetFiles(line);
@@ -385,7 +388,7 @@ namespace WinFIM.NET_Service
                 .Select(x => x.ToLowerInvariant())
                 .Distinct()
                 .ToArray();
-            
+
             return fileListArray;
         }
 
@@ -442,7 +445,7 @@ namespace WinFIM.NET_Service
                 }
             }
             //change all string in exFileList to lowercase for easy comparison to exclusion list
-            
+
             var exFileListArray = exFileList
                 .Select(x => x.ToLowerInvariant())
                 .Distinct()
@@ -450,7 +453,7 @@ namespace WinFIM.NET_Service
 
             return exFileListArray;
         }
-        
+
         private static ICollection<string> GetFiles(string path)
         {
             var files = new List<string>();

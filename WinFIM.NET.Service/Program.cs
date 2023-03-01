@@ -1,44 +1,28 @@
-﻿using Serilog;
-using System;
-using System.Diagnostics;
-using System.ServiceProcess;
+﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Configuration;
+using Microsoft.Extensions.Logging.EventLog;
+using WinFIM.NET_Service;
 
-namespace WinFIM.NET_Service
-{
-    internal static class Program
+IHost host = Host.CreateDefaultBuilder(args)
+    .UseWindowsService(options =>
     {
-        /// <summary>
-        /// The main entry point for the application.
-        /// </summary>
-        private static void Main()
-        {
-            LogHelper.ConfigureLogging();
-            string currentProcessName = Process.GetCurrentProcess().ProcessName;
-            if (Process.GetProcessesByName(currentProcessName).Length > 1)
-            {
-                Log.Error($"Application {currentProcessName} already running. Only one instance of this application is allowed. Exiting");
-                return;
-            }
+        options.ServiceName = "WinFIM.NET.Service";
+    })
+    .ConfigureServices(services =>
+    {
+        LoggerProviderOptions.RegisterProviderOptions<
+            EventLogSettings, EventLogLoggerProvider>(services);
 
-            if (Environment.UserInteractive)
-            {
-                // Startup as application
-                using (Service1 service1 = new Service1())
-                {
-                    Log.Debug(("Starting WinFIM.NET in console mode"));
-                    service1.ConsoleScheduled();
-                    Log.Debug(("Exiting WinFIM.NET console mode"));
-                }
-            }
-            else
-            {
-                // Startup as service
-                ServiceBase[] servicesToRun = new ServiceBase[]
-                {
-                    new Service1()
-                };
-                ServiceBase.Run(servicesToRun);
-            }
-        }
-    }
-}
+        services.AddSingleton<Controller>();
+        services.AddHostedService<WindowsBackgroundService>();
+    })
+    .ConfigureLogging((context, logging) =>
+    {
+        // See: https://github.com/dotnet/runtime/issues/47303
+        logging.AddConfiguration(
+            context.Configuration.GetSection("Logging"));
+    })
+    .Build();
+await host.RunAsync();
