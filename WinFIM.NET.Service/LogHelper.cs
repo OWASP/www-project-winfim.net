@@ -2,9 +2,11 @@
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 namespace WinFIM.NET_Service
 {
+    [SupportedOSPlatform("windows")]
     internal static class LogHelper
     {
         internal static readonly string? WorkDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
@@ -96,27 +98,25 @@ namespace WinFIM.NET_Service
                 return string.Empty;
             try
             {
-                using (Process process = new Process())
-                {
-                    IntPtr val = IntPtr.Zero;
-                    _ = Wow64DisableWow64FsRedirection(ref val);
-                    process.StartInfo.FileName = @"cmd.exe";
-                    process.StartInfo.Arguments =
-                        "/c \"@echo off & @for /f \"tokens=1,2,3,4,5\" %A in ('netstat -ano ^| findstr ESTABLISHED ^| findstr /v 127.0.0.1') do (@for /f \"tokens=1,2,5\" %F in ('qprocess \"%E\"') do (@IF NOT %H==IMAGE @echo %A , %B , %C , %D , %E , %F , %G , %H))\"";
-                    process.StartInfo.CreateNoWindow = true;
-                    process.StartInfo.UseShellExecute = false;
-                    process.StartInfo.RedirectStandardOutput = true;
-                    process.Start();
-                    // Synchronously read the standard output of the spawned process. 
-                    output = "Established Remote Connection (snapshot)" + "\n";
-                    output = output + "========================================" + "\n" +
-                             "Proto | Local Address | Foreign Address | State | PID | USERNAME | SESSION NAME | IMAGE\n";
-                    output += process.StandardOutput.ReadToEnd() + "\n";
-                    Log.Verbose(output);
-                    process.WaitForExit();
-                    _ = Wow64EnableWow64FsRedirection(ref val);
-                    return output;
-                }
+                using Process process = new();
+                IntPtr val = IntPtr.Zero;
+                _ = Wow64DisableWow64FsRedirection(ref val);
+                process.StartInfo.FileName = @"cmd.exe";
+                process.StartInfo.Arguments =
+                    "/c \"@echo off & @for /f \"tokens=1,2,3,4,5\" %A in ('netstat -ano ^| findstr ESTABLISHED ^| findstr /v 127.0.0.1') do (@for /f \"tokens=1,2,5\" %F in ('qprocess \"%E\"') do (@IF NOT %H==IMAGE @echo %A , %B , %C , %D , %E , %F , %G , %H))\"";
+                process.StartInfo.CreateNoWindow = true;
+                process.StartInfo.UseShellExecute = false;
+                process.StartInfo.RedirectStandardOutput = true;
+                process.Start();
+                // Synchronously read the standard output of the spawned process. 
+                output = "Established Remote Connection (snapshot)" + "\n";
+                output = output + "========================================" + "\n" +
+                         "Proto | Local Address | Foreign Address | State | PID | USERNAME | SESSION NAME | IMAGE\n";
+                output += process.StandardOutput.ReadToEnd() + "\n";
+                Log.Verbose(output);
+                process.WaitForExit();
+                _ = Wow64EnableWow64FsRedirection(ref val);
+                return output;
 
             }
             catch (Exception e)

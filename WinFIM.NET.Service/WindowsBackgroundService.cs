@@ -1,9 +1,11 @@
 ﻿using Microsoft.Extensions.Hosting;
 using Serilog;
 using System.Diagnostics;
+using System.Runtime.Versioning;
 
 namespace WinFIM.NET_Service
 {
+    [SupportedOSPlatform("windows")]
     public sealed class WindowsBackgroundService : BackgroundService
     {
         private readonly Controller _controller;

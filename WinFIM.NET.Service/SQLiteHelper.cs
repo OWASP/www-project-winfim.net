@@ -1,5 +1,6 @@
 ﻿using Serilog;
 using System.Data.SQLite;
+using System.Runtime.Versioning;
 
 namespace WinFIM.NET_Service
 {
@@ -21,11 +22,12 @@ namespace WinFIM.NET_Service
 
         private bool _disposed;
 
+        [SupportedOSPlatform("windows")]
         internal SQLiteHelper()
         {
             DbFilePath = LogHelper.WorkDir + "\\fimdb.db";
             ConnectionString = @"URI=file:" + DbFilePath + ";PRAGMA journal_mode=WAL;";
-            Connection = new SQLiteConnection(ConnectionString);
+            Connection = new(ConnectionString);
         }
 
         internal void Open()
@@ -45,13 +47,13 @@ namespace WinFIM.NET_Service
                 {
                     string dbFileName = Path.GetFileNameWithoutExtension(DbFilePath);
                     string dbFileExt = Path.GetExtension(DbFilePath);
-                    string dbDirName = Path.GetDirectoryName(DbFilePath);
+                    string dbDirName = Path.GetDirectoryName(DbFilePath) ?? string.Empty;
                     string currentFileFriendlyDateTime = DateTime.Now.ToString("yyyyMMdd-HHmmss");
                     string backupDbFileName = $"{dbFileName}-old-version-v{checkedDatabaseVersion}-{currentFileFriendlyDateTime}{dbFileExt}";
                     string backupDbPath = $"{dbDirName}\\{backupDbFileName}";
                     Log.Information($"SQLite database {DbFilePath} is version {checkedDatabaseVersion}. Required version {CurrentDatabaseVersion}. Renaming to {backupDbPath}");
                     Connection.Close();
-                    if (DbFilePath != null) File.Move(DbFilePath, backupDbPath);
+                    File.Move(DbFilePath, backupDbPath);
                     Connection.Open();
                     EnsureTablesExist();
                 }
@@ -140,12 +142,10 @@ namespace WinFIM.NET_Service
         {
             try
             {
-                using (SQLiteCommand command = new SQLiteCommand(Connection))
-                {
-                    Log.Verbose($"Running ExecuteNonQuery {sql}");
-                    command.CommandText = sql;
-                    command.ExecuteNonQuery();
-                }
+                using SQLiteCommand command = new(Connection);
+                Log.Verbose($"Running ExecuteNonQuery {sql}");
+                command.CommandText = sql;
+                command.ExecuteNonQuery();
             }
             catch (Exception e)
             {
@@ -157,17 +157,15 @@ namespace WinFIM.NET_Service
         }
 
         // A query that returns the first value in the first row as an object
-        internal object ExecuteScalar(string sql, bool isLogError = true)
+        internal object? ExecuteScalar(string sql, bool isLogError = true)
         {
-            object output;
+            object? output;
             try
             {
-                using (SQLiteCommand command = new SQLiteCommand(Connection))
-                {
-                    Log.Verbose($"Running ExecuteScalar {sql}");
-                    command.CommandText = sql;
-                    output = command.ExecuteScalar();
-                }
+                using SQLiteCommand command = new(Connection);
+                Log.Verbose($"Running ExecuteScalar {sql}");
+                command.CommandText = sql;
+                output = command.ExecuteScalar();
             }
             catch (Exception e)
             {

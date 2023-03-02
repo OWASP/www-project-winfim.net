@@ -3,13 +3,20 @@ using System.Data;
 using System.Data.SQLite;
 using System.Diagnostics;
 using System.Globalization;
+using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 
 namespace WinFIM.NET_Service
 {
+    [SupportedOSPlatform("windows")]
     public sealed class Controller
     {
+        public Controller()
+        {
+            SQLiteHelper1 = new();
+        }
+
         private SQLiteHelper SQLiteHelper1 { get; set; }
 
         //get file owner information
@@ -25,14 +32,14 @@ namespace WinFIM.NET_Service
             try
             {
                 var ac = new FileInfo(path).GetAccessControl();
-                fileOwner = new FileInfo(path).GetAccessControl().GetOwner(typeof(System.Security.Principal.NTAccount))?.ToString();
+                fileOwner = new FileInfo(path).GetAccessControl().GetOwner(typeof(System.Security.Principal.NTAccount))?.ToString() ?? throw new InvalidOperationException();
                 //fileOwner = File.GetAccessControl(path).GetOwner(typeof(System.Security.Principal.NTAccount)).ToString();
             }
             catch
             {
                 try
                 {
-                    fileOwner = new FileInfo(path).GetAccessControl().GetOwner(typeof(System.Security.Principal.SecurityIdentifier))?.ToString();
+                    fileOwner = new FileInfo(path).GetAccessControl().GetOwner(typeof(System.Security.Principal.SecurityIdentifier))?.ToString() ?? throw new InvalidOperationException();
                     //fileOwner = File.GetAccessControl(path).GetOwner(typeof(System.Security.Principal.SecurityIdentifier)).ToString();
                 }
                 catch (Exception e)
@@ -46,10 +53,10 @@ namespace WinFIM.NET_Service
         }
 
         //get directory owner information
-        private static string GetDirectoryOwner(string path)
+        private static string? GetDirectoryOwner(string path)
         {
             if (path == null) throw new ArgumentNullException(nameof(path));
-            string directoryOwner;
+            string? directoryOwner;
             try
             {
                 if (!(Directory.Exists(path)))
@@ -95,14 +102,14 @@ namespace WinFIM.NET_Service
 
         //get file extension exclusion list and construct regex
         //the return string will be "EMPTY", if there is no file extension exclusion
-        private string ExcludeExtensionRegex()
+        private static string ExcludeExtensionRegex()
         {
             try
             {
                 string excludeExtensionPath = LogHelper.WorkDir + "\\exclude_extension.txt";
                 string[] lines = File.ReadAllLines(excludeExtensionPath);
                 lines = lines.Distinct().ToArray();
-                List<string> extName = new List<string>();
+                List<string> extName = new();
 
                 foreach (string line in lines)
                 {
@@ -170,7 +177,6 @@ namespace WinFIM.NET_Service
 
         internal void Initialise()
         {
-            SQLiteHelper1 = new SQLiteHelper();
             SQLiteHelper1.EnsureDatabaseExists();
             string exExtHash = "";
             string exPathHash = "";
@@ -334,7 +340,7 @@ namespace WinFIM.NET_Service
             return false;
         }
 
-        private string[] GetFileMonList()
+        private static string[] GetFileMonList()
         {
             //read the monitoring list (line by line)
             string monListPath = LogHelper.WorkDir + "\\monlist.txt";
@@ -392,7 +398,7 @@ namespace WinFIM.NET_Service
             return fileListArray;
         }
 
-        private string[] GetFileExcludePath()
+        private static string[] GetFileExcludePath()
         {
             //read the exclude list (line by line)
             string excludePathFilePath = LogHelper.WorkDir + "\\exclude_path.txt";
@@ -536,7 +542,7 @@ namespace WinFIM.NET_Service
 
         private void CheckDirectory(bool haveBaseLinePath, string path)
         {
-            string directoryOwner = GetDirectoryOwner(path);
+            string? directoryOwner = GetDirectoryOwner(path);
             //if there is content in BASELINE_PATH before, write to CURRENT_PATH
             if (haveBaseLinePath)
             {
@@ -547,7 +553,7 @@ namespace WinFIM.NET_Service
                 //compare with BASELINE_PATH
                 //1. check if the file exist in BASELINE_PATH
                 sql = $"SELECT COUNT(*) FROM BASELINE_PATH WHERE pathname='{path}'";
-                string output = SQLiteHelper1.ExecuteScalar(sql).ToString();
+                string output = SQLiteHelper1.ExecuteScalar(sql)?.ToString() ?? throw new InvalidOperationException();
                 if (!output.Equals("0"))
                 {
                     Log.Verbose($"Directory: '{path}' has no change.");
@@ -616,7 +622,7 @@ namespace WinFIM.NET_Service
                         else
                         {
                             sql = "SELECT pathname, pathexists, filesize, owner, filehash, checktime FROM BASELINE_PATH WHERE pathname=@path";
-                            command = new SQLiteCommand(sql, SQLiteHelper1.Connection);
+                            command = new(sql, SQLiteHelper1.Connection);
                             command.Parameters.Add("@path", DbType.String).Value = path;
                             dataReader = command.ExecuteReader();
                             if (dataReader.Read())
@@ -704,7 +710,7 @@ namespace WinFIM.NET_Service
                             else
                             {
                                 sql = "SELECT pathname, pathexists, filesize, owner, filehash, checktime FROM BASELINE_PATH WHERE pathname=@path";
-                                command = new SQLiteCommand(sql, SQLiteHelper1.Connection);
+                                command = new(sql, SQLiteHelper1.Connection);
                                 command.Parameters.Add("@path", DbType.String).Value = path;
                                 dataReader = command.ExecuteReader();
                                 if (dataReader.Read())
@@ -754,12 +760,12 @@ namespace WinFIM.NET_Service
             }
 
             string sql = "SELECT BASELINE_PATH.pathname, BASELINE_PATH.pathtype FROM BASELINE_PATH LEFT JOIN CURRENT_PATH ON BASELINE_PATH.pathname = CURRENT_PATH.pathname WHERE CURRENT_PATH.pathname IS NULL";
-            SQLiteCommand command = new SQLiteCommand(sql, SQLiteHelper1.Connection);
+            SQLiteCommand command = new(sql, SQLiteHelper1.Connection);
             SQLiteDataReader dataReader = command.ExecuteReader();
             while (dataReader.Read())
             {
-                string deletedPathName = dataReader.GetValue(0).ToString();
-                string deletedPathType = dataReader.GetValue(1).ToString();
+                string deletedPathName = dataReader.GetValue(0).ToString() ?? throw new InvalidOperationException();
+                string deletedPathType = dataReader.GetValue(1).ToString() ?? throw new InvalidOperationException();
                 string deletedMessage = $"{deletedPathType}: '{deletedPathName}' has been deleted.";
                 Log.Warning(deletedMessage);
                 LogHelper.WriteEventLog(deletedMessage, EventLogEntryType.Warning, 7778); //setting the Event ID as 7778
@@ -775,7 +781,7 @@ namespace WinFIM.NET_Service
             }
             //delete all rows in BASELINE_PATH, copy all rows from CURRENT_PATH to BASELINE_PATH, then clear CURRENT_PATH
             string sql = "DELETE FROM BASELINE_PATH";
-            SQLiteCommand command = new SQLiteCommand(sql, SQLiteHelper1.Connection);
+            SQLiteCommand command = new(sql, SQLiteHelper1.Connection);
             try
             {
                 command.ExecuteNonQuery();
@@ -788,7 +794,7 @@ namespace WinFIM.NET_Service
             }
 
             sql = "INSERT INTO BASELINE_PATH SELECT * FROM CURRENT_PATH";
-            command = new SQLiteCommand(sql, SQLiteHelper1.Connection);
+            command = new(sql, SQLiteHelper1.Connection);
             try
             {
                 command.ExecuteNonQuery();
@@ -801,7 +807,7 @@ namespace WinFIM.NET_Service
             }
 
             sql = "DELETE FROM CURRENT_PATH";
-            command = new SQLiteCommand(sql, SQLiteHelper1.Connection);
+            command = new(sql, SQLiteHelper1.Connection);
             try
             {
                 command.ExecuteNonQuery();
@@ -816,7 +822,7 @@ namespace WinFIM.NET_Service
 
         internal void FileIntegrityCheck()
         {
-            SQLiteHelper1 = new SQLiteHelper();
+            SQLiteHelper1 = new();
             SQLiteHelper1.Open();
             int schedulerMin = LogHelper.GetSchedule();
             Log.Information($"Starting FIM checks on a {schedulerMin} minute timer");
@@ -824,7 +830,7 @@ namespace WinFIM.NET_Service
                 Log.Information(LogHelper.GetRemoteConnections());
             bool haveBaseLinePath = CheckBaseLine(); //check if there is already data in the BASELINE_PATH table from a previous FIM check
 
-            Stopwatch watch = new Stopwatch();
+            Stopwatch watch = new();
             watch.Start();
 
             try
