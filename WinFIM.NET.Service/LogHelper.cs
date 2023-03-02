@@ -2,9 +2,6 @@
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
-using Microsoft.Extensions.Configuration;
-using Serilog.Events;
-using System.Configuration;
 
 namespace WinFIM.NET_Service
 {
