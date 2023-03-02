@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Serilog;
 using System.Diagnostics;
 
@@ -8,12 +7,11 @@ namespace WinFIM.NET_Service
     public sealed class WindowsBackgroundService : BackgroundService
     {
         private readonly Controller _controller;
-        private readonly ILogger<WindowsBackgroundService> _logger;
+        private readonly ILogger _logger;
 
         public WindowsBackgroundService(
             Controller controller,
-            ILogger<WindowsBackgroundService> logger) =>
-            (_controller, _logger) = (controller, logger);
+            ILogger logger) => (_controller, _logger) = (controller, logger);
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
@@ -39,7 +37,7 @@ namespace WinFIM.NET_Service
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "{Message}", ex.Message);
+                _logger.Error(ex, "{Message}", ex.Message);
 
                 // Terminates this process and returns an exit code to the operating system.
                 // This is required to avoid the 'BackgroundServiceExceptionBehavior', which

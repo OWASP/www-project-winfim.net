@@ -1,14 +1,16 @@
 ﻿using Serilog;
-using System.Configuration;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
+using Microsoft.Extensions.Configuration;
+using Serilog.Events;
+using System.Configuration;
 
 namespace WinFIM.NET_Service
 {
     internal static class LogHelper
     {
-        internal static readonly string WorkDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        internal static readonly string? WorkDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern int Wow64DisableWow64FsRedirection(ref IntPtr ptr);
@@ -18,53 +20,57 @@ namespace WinFIM.NET_Service
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern int Wow64EnableWow64FsRedirection(ref IntPtr ptr);
 
-        private static void AddOrUpdateAppSettings(string key, string value)
-        {
-            try
-            {
-                var configFile = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
-                var settings = configFile.AppSettings.Settings;
-                if (settings[key] == null)
-                {
-                    settings.Add(key, value);
-                }
-                else
-                {
-                    settings[key].Value = value;
-                }
-                configFile.Save(ConfigurationSaveMode.Modified);
-                ConfigurationManager.RefreshSection(configFile.AppSettings.SectionInformation.Name);
-            }
-            catch (ConfigurationErrorsException)
-            {
-                Log.Error("Error writing app settings");
-            }
-        }
+        //private static void AddOrUpdateAppSettings(string key, string value)
+        //{
+        //    try
+        //    {
+        //        var configFile = ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+        //        var settings = configFile.AppSettings.Settings;
+        //        if (settings[key] == null)
+        //        {
+        //            settings.Add(key, value);
+        //        }
+        //        else
+        //        {
+        //            settings[key].Value = value;
+        //        }
+        //        configFile.Save(ConfigurationSaveMode.Modified);
+        //        ConfigurationManager.RefreshSection(configFile.AppSettings.SectionInformation.Name);
+        //    }
+        //    catch (ConfigurationErrorsException)
+        //    {
+        //        Log.Error("Error writing app settings");
+        //    }
+        //}
 
-        internal static void ConfigureLogging()
-        {
-            string logFilePath = ConfigurationManager.AppSettings["serilog:write-to:File.path"];
-            if (!(string.IsNullOrEmpty(logFilePath)))
-            {
+        //internal static void ConfigureLogging()
+        //{
+        //    string logFilePath = ConfigurationManager.AppSettings["serilog:write-to:File.path"];
+        //    if (!(string.IsNullOrEmpty(logFilePath)))
+        //    {
 
-                //if the configured log file path has a filename but not directory, set the directory to the same directory as this WinFIM.NET binary file
-                string[] directoryDelimeters = { "/", "\\" };
-                if (!(directoryDelimeters.Any(logFilePath.Contains)))
-                {
-                    logFilePath = Path.Combine(LogHelper.WorkDir, logFilePath);
-                    AddOrUpdateAppSettings("serilog:write-to:File.path", logFilePath);
-                }
-            }
-            Log.Logger = new LoggerConfiguration()
-                .ReadFrom.AppSettings()
-                .CreateLogger();
+        //        //if the configured log file path has a filename but not directory, set the directory to the same directory as this WinFIM.NET binary file
+        //        string[] directoryDelimeters = { "/", "\\" };
+        //        if (!(directoryDelimeters.Any(logFilePath.Contains)))
+        //        {
+        //            logFilePath = Path.Combine(LogHelper.WorkDir, logFilePath);
+        //            AddOrUpdateAppSettings("serilog:write-to:File.path", logFilePath);
+        //        }
+        //    }
+        //    var configuration = new ConfigurationBuilder()
+        //        .AddJsonFile("appsettings.json")
+        //        .AddJsonFile($"appsettings.{env}.json", optional: true, reloadOnChange: true)
+        //        .Build();
+        //    Log.Logger = new LoggerConfiguration()
+        //        .ReadFrom.AppSettings()
+        //        .CreateLogger();
 
-            if (!(string.IsNullOrEmpty(logFilePath)))
-            {
-                Log.Information($"Logging to file: {logFilePath}");
-            }
+        //    if (!(string.IsNullOrEmpty(logFilePath)))
+        //    {
+        //        Log.Information($"Logging to file: {logFilePath}");
+        //    }
 
-        }
+        //}
 
         internal static void Initialize()
         {
