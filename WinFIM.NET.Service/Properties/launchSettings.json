@@ -1,0 +1,11 @@
+{
+  "profiles": {
+    "WinFIM.NET.Service": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "DOTNET_ENVIRONMENT": "Development"
+      },
+      "dotnetRunMessages": true
+    }
+  }
+}
