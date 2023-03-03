@@ -6,15 +6,21 @@ using System.Globalization;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
+using Microsoft.Extensions.Configuration;
 
 namespace WinFIM.NET_Service
 {
     [SupportedOSPlatform("windows")]
-    public sealed class Controller
+    public class Controller
     {
-        public Controller()
+        private readonly ConfigurationOptions _configurationOptions;
+        private readonly LogHelper _logHelper;
+
+        public Controller(ConfigurationOptions configurationOptions, LogHelper logHelper)
         {
-            SQLiteHelper1 = new();
+            _configurationOptions = configurationOptions;
+            _logHelper = logHelper;
+            SQLiteHelper1 = new SQLiteHelper();
         }
 
         private SQLiteHelper SQLiteHelper1 { get; set; }
@@ -102,7 +108,7 @@ namespace WinFIM.NET_Service
 
         //get file extension exclusion list and construct regex
         //the return string will be "EMPTY", if there is no file extension exclusion
-        private static string ExcludeExtensionRegex()
+        private string ExcludeExtensionRegex()
         {
             try
             {
@@ -131,7 +137,7 @@ namespace WinFIM.NET_Service
                     {
                         string errorMessage = "Extension \"" + temp + "\" is invalid, file extension should be alphanumeric and '_' + '-' only.";
                         Log.Error(errorMessage);
-                        LogHelper.WriteEventLog(errorMessage, EventLogEntryType.Error, 7773);
+                        _logHelper.WriteEventLog(errorMessage, EventLogEntryType.Error, 7773);
                     }
                 }
 
@@ -175,7 +181,7 @@ namespace WinFIM.NET_Service
             return result;
         }
 
-        internal void Initialise()
+        public void Initialise()
         {
             SQLiteHelper1.EnsureDatabaseExists();
             string exExtHash = "";
@@ -193,7 +199,7 @@ namespace WinFIM.NET_Service
             {
                 string message = "Exception: " + e.Message + "\nConfig files: exclude_extension.txt | exclude_path.txt | monlist.txt is / are missing or having issue to access.";
                 Log.Error(message);
-                LogHelper.WriteEventLog(message, EventLogEntryType.Error, 7773);
+                _logHelper.WriteEventLog(message, EventLogEntryType.Error, 7773);
             }
 
             //compare the checksum with those stored in the DB
@@ -340,7 +346,7 @@ namespace WinFIM.NET_Service
             return false;
         }
 
-        private static string[] GetFileMonList()
+        private string[] GetFileMonList()
         {
             //read the monitoring list (line by line)
             string monListPath = LogHelper.WorkDir + "\\monlist.txt";
@@ -354,7 +360,7 @@ namespace WinFIM.NET_Service
                 string errorMessage = "Exception : " + e.Message +
                                       "\nPlease make sure all input entries are correct under \"monlist.txt\".\nPlease restart the service after correction.";
                 Log.Error(errorMessage);
-                LogHelper.WriteEventLog(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                _logHelper.WriteEventLog(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
                 throw;
             }
             return monFileLines;
@@ -398,7 +404,7 @@ namespace WinFIM.NET_Service
             return fileListArray;
         }
 
-        private static string[] GetFileExcludePath()
+        private string[] GetFileExcludePath()
         {
             //read the exclude list (line by line)
             string excludePathFilePath = LogHelper.WorkDir + "\\exclude_path.txt";
@@ -412,7 +418,7 @@ namespace WinFIM.NET_Service
                 string errorMessage = "Exception : " + e.Message +
                                       "\nPlease make sure all input entries are correct under \"exclude_path.txt\".\nPlease restart the service after correction.";
                 Log.Error(errorMessage);
-                LogHelper.WriteEventLog(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                _logHelper.WriteEventLog(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
                 throw;
             }
 
@@ -499,7 +505,7 @@ namespace WinFIM.NET_Service
             {
                 string errorMessage = $"Exception : {e.Message} \nPlease make sure local database file \"fimdb.db\" exists.";
                 Log.Error(errorMessage);
-                LogHelper.WriteEventLog(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                _logHelper.WriteEventLog(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
                 return false;
             }
             return haveBaseline;
@@ -534,7 +540,7 @@ namespace WinFIM.NET_Service
                     string errorMessage =
                         $"File '{path}' could be renamed / deleted during the hash calculation. This file is ignored in this checking cycle - {e.Message}.";
                     Log.Error(errorMessage);
-                    LogHelper.WriteEventLog(errorMessage, EventLogEntryType.Error,
+                    _logHelper.WriteEventLog(errorMessage, EventLogEntryType.Error,
                         7773); //setting the Event ID as 7773
                 }
             }
@@ -562,7 +568,7 @@ namespace WinFIM.NET_Service
                 {
                     string message = $"Directory: '{path}' is newly created. Owner: {directoryOwner}";
                     Log.Warning(message);
-                    LogHelper.WriteEventLog(message, EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
+                    _logHelper.WriteEventLog(message, EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
                 }
             }
             //if there is no content in BASELINE_PATH, write to BASELINE_PATH instead
@@ -597,7 +603,7 @@ namespace WinFIM.NET_Service
                     tempHash = "UNKNOWN";
                     string errorMessage = $"File '{path}' is locked and not accessible for Hash calculation - {e.Message}.";
                     Log.Error(errorMessage);
-                    LogHelper.WriteEventLog(errorMessage, EventLogEntryType.Error, 7773);
+                    _logHelper.WriteEventLog(errorMessage, EventLogEntryType.Error, 7773);
                 }
                 //if there is content in BASELINE_PATH before, write to CURRENT_PATH
                 if (haveBaseLinePath)
@@ -632,7 +638,7 @@ namespace WinFIM.NET_Service
                                           $"Size: (Previous){dataReader.GetValue(2)}MB (Current){GetFileSize(path)}MB " +
                                           $"File Owner: (Previous){dataReader.GetValue(3)} (Current){fileOwner}";
                                 Log.Warning(message);
-                                LogHelper.WriteEventLog(message, EventLogEntryType.Warning, 7777);
+                                _logHelper.WriteEventLog(message, EventLogEntryType.Warning, 7777);
                             }
                             dataReader.Close();
                             command.Dispose();
@@ -642,7 +648,7 @@ namespace WinFIM.NET_Service
                     {
                         message = $"File: '{path}' is newly created. \nOwner: {fileOwner} \nHash: {tempHash}";
                         Log.Warning(message);
-                        LogHelper.WriteEventLog($"File: '{path}' is newly created.\nOwner: {fileOwner} Hash: {tempHash}", EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
+                        _logHelper.WriteEventLog($"File: '{path}' is newly created.\nOwner: {fileOwner} Hash: {tempHash}", EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
                     }
                 }
                 //if there is no content in BASELINE_PATH, write to BASELINE_PATH instead
@@ -678,7 +684,7 @@ namespace WinFIM.NET_Service
                         tempHash = "UNKNOWN";
                         message = $"File '{path}' is locked and not accessible for Hash calculation - {e.Message}.";
                         Log.Error(message);
-                        LogHelper.WriteEventLog(message, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                        _logHelper.WriteEventLog(message, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
                     }
                     if (haveBaseLinePath)
                     {
@@ -720,7 +726,7 @@ namespace WinFIM.NET_Service
                                               $"Size: (Previous){dataReader.GetValue(2)}MB (Current){GetFileSize(path)}MB " +
                                               $"File Owner: (Previous){dataReader.GetValue(3)} (Current){fileOwner}";
                                     Log.Warning(message);
-                                    LogHelper.WriteEventLog(message, EventLogEntryType.Warning, 7777); //setting the Event ID as 7777
+                                    _logHelper.WriteEventLog(message, EventLogEntryType.Warning, 7777); //setting the Event ID as 7777
                                 }
                                 dataReader.Close();
                                 command.Dispose();
@@ -730,7 +736,7 @@ namespace WinFIM.NET_Service
                         {
                             message = $"File: '{path}' is newly created. Owner: {fileOwner} Hash: {tempHash}";
                             Log.Warning(message);
-                            LogHelper.WriteEventLog(message, EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
+                            _logHelper.WriteEventLog(message, EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
                         }
                     }
                     //if there is no content in BASELINE_PATH, write to BASELINE_PATH instead
@@ -768,7 +774,7 @@ namespace WinFIM.NET_Service
                 string deletedPathType = dataReader.GetValue(1).ToString() ?? throw new InvalidOperationException();
                 string deletedMessage = $"{deletedPathType}: '{deletedPathName}' has been deleted.";
                 Log.Warning(deletedMessage);
-                LogHelper.WriteEventLog(deletedMessage, EventLogEntryType.Warning, 7778); //setting the Event ID as 7778
+                _logHelper.WriteEventLog(deletedMessage, EventLogEntryType.Warning, 7778); //setting the Event ID as 7778
             }
             dataReader.Close();
         }
@@ -826,8 +832,8 @@ namespace WinFIM.NET_Service
             SQLiteHelper1.Open();
             int schedulerMin = LogHelper.GetSchedule();
             Log.Information($"Starting FIM checks on a {schedulerMin} minute timer");
-            if (Properties.Settings.Default.is_capture_remote_connection_status)
-                Log.Information(LogHelper.GetRemoteConnections());
+            if (_configurationOptions.IsLogToWindowsEventLog)
+                Log.Information(_logHelper.GetRemoteConnections());
             bool haveBaseLinePath = CheckBaseLine(); //check if there is already data in the BASELINE_PATH table from a previous FIM check
 
             Stopwatch watch = new();
@@ -859,9 +865,9 @@ namespace WinFIM.NET_Service
                                      watch.ElapsedMilliseconds + "ms (" +
                                      Math.Round(Convert.ToDouble(watch.ElapsedMilliseconds) / 1000, 3)
                                          .ToString(CultureInfo.InvariantCulture) + "s).\n" +
-                                     LogHelper.GetRemoteConnections();
+                                     _logHelper.GetRemoteConnections();
                 Log.Debug(stopMessage);
-                LogHelper.WriteEventLog(stopMessage, EventLogEntryType.Information,
+                _logHelper.WriteEventLog(stopMessage, EventLogEntryType.Information,
                     7771); //setting the Event ID as 7771
                 Log.Verbose("Total time consumed in this round file integrity checking  = " +
                             watch.ElapsedMilliseconds + "ms (" +
@@ -873,7 +879,7 @@ namespace WinFIM.NET_Service
                 string errorMessage = "Exception : " + e.Message +
                                       "\nPlease make sure all input entries are correct under \"monlist.txt\", \"exclude_path.txt\" and \"exclude_extension.txt\".\nPlease restart the service after correction.";
                 Log.Error(errorMessage);
-                LogHelper.WriteEventLog(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                _logHelper.WriteEventLog(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
             }
             finally
             {

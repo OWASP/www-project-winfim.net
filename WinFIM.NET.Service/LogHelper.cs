@@ -1,4 +1,5 @@
-﻿using Serilog;
+﻿using Microsoft.Extensions.Configuration;
+using Serilog;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;
@@ -7,9 +8,15 @@ using System.Runtime.Versioning;
 namespace WinFIM.NET_Service
 {
     [SupportedOSPlatform("windows")]
-    internal static class LogHelper
+    public class LogHelper
     {
         internal static readonly string? WorkDir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+        private readonly ConfigurationOptions _configurationOptions;
+
+        public LogHelper(ConfigurationOptions configurationOptions)
+        {
+            _configurationOptions = configurationOptions;
+        }
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern int Wow64DisableWow64FsRedirection(ref IntPtr ptr);
@@ -80,21 +87,19 @@ namespace WinFIM.NET_Service
         }
 
 
-        internal static void WriteEventLog(string message, EventLogEntryType eventType, int eventId)
+        internal void WriteEventLog(string message, EventLogEntryType eventType, int eventId)
         {
-            if (Properties.Settings.Default.is_log_to_windows_eventlog)
-            {
-                EventLog1.Source = "WinFIM.NET";
-                EventLog1.Log = "WinFIM.NET";
-                message = message.Truncate(32768); // Windows Event log strings are limited to a maximum of 32768 characters
-                EventLog1.WriteEntry(message, eventType, eventId);
-            }
+            if (!_configurationOptions.IsLogToWindowsEventLog) return;
+            EventLog1.Source = "WinFIM.NET";
+            EventLog1.Log = "WinFIM.NET";
+            message = message.Truncate(32768); // Windows Event log strings are limited to a maximum of 32768 characters
+            EventLog1.WriteEntry(message, eventType, eventId);
         }
 
-        internal static string GetRemoteConnections()
+        internal string GetRemoteConnections()
         {
             string output = "ERROR in running CMD \"query user\"";
-            if (!Properties.Settings.Default.is_capture_remote_connection_status)
+            if (!_configurationOptions.IsCaptureRemoteConnectionStatus)
                 return string.Empty;
             try
             {
@@ -113,7 +118,7 @@ namespace WinFIM.NET_Service
                 output = output + "========================================" + "\n" +
                          "Proto | Local Address | Foreign Address | State | PID | USERNAME | SESSION NAME | IMAGE\n";
                 output += process.StandardOutput.ReadToEnd() + "\n";
-                Log.Verbose(output);
+                Log.Information(output);
                 process.WaitForExit();
                 _ = Wow64EnableWow64FsRedirection(ref val);
                 return output;

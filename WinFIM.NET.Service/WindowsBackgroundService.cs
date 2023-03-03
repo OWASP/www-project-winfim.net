@@ -9,11 +9,13 @@ namespace WinFIM.NET_Service
     public sealed class WindowsBackgroundService : BackgroundService
     {
         private readonly Controller _controller;
-        private readonly ILogger _logger;
+        private readonly LogHelper _logHelper;
 
-        public WindowsBackgroundService(
-            Controller controller,
-            ILogger logger) => (_controller, _logger) = (controller, logger);
+        public WindowsBackgroundService(Controller controller, LogHelper logHelper)
+        {
+            _controller = controller;
+            _logHelper = logHelper;
+        }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
@@ -22,13 +24,13 @@ namespace WinFIM.NET_Service
                 _controller.Initialise();
                 LogHelper.Initialize();
                 int schedulerMin = LogHelper.GetSchedule();
-                string serviceStartMessage = Properties.Settings.Default.service_start_message +
+                string serviceStartMessage = "WinFIM.NET Started" +
                                              $": (UTC) {DateTime.UtcNow:yyyy/MM/dd hh:mm:ss tt}";
-                serviceStartMessage = $"{serviceStartMessage + LogHelper.GetRemoteConnections()} " +
+                serviceStartMessage = $"{serviceStartMessage + _logHelper.GetRemoteConnections()} " +
                                       "This console started service will run every " + schedulerMin.ToString() +
                                       " minute(s).";
                 Log.Information(serviceStartMessage);
-                LogHelper.WriteEventLog(serviceStartMessage, EventLogEntryType.Information, 7771);
+                _logHelper.WriteEventLog(serviceStartMessage, EventLogEntryType.Information, 7771);
 
                 while (!stoppingToken.IsCancellationRequested)
                 {
@@ -39,7 +41,7 @@ namespace WinFIM.NET_Service
             }
             catch (Exception ex)
             {
-                _logger.Error(ex, "{Message}", ex.Message);
+                Log.Error(ex, "{Message}", ex.Message);
 
                 // Terminates this process and returns an exit code to the operating system.
                 // This is required to avoid the 'BackgroundServiceExceptionBehavior', which
