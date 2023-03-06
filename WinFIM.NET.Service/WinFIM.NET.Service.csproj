@@ -13,9 +13,6 @@
     <RunCodeAnalysis>false</RunCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup>
-    <StartupObject></StartupObject>
-  </PropertyGroup>
-  <PropertyGroup>
     <ApplicationIcon>icon.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
@@ -39,6 +36,8 @@
     <AssemblyVersion>2.0.0.0</AssemblyVersion>
     <FileVersion>2.0.0.0</FileVersion>
     <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
+    <DockerDefaultTargetOS>Windows</DockerDefaultTargetOS>
+    <Title>WinFIM.NET</Title>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="appsettings.json">
@@ -75,6 +74,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
     <PackageReference Include="Microsoft.Extensions.Hosting.WindowsServices" Version="6.0.0" />
+    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.17.2" />
     <PackageReference Include="Serilog" Version="2.12.0" />
     <PackageReference Include="Serilog.Extensions.Hosting" Version="5.0.1" />
     <PackageReference Include="Serilog.Settings.Configuration" Version="3.4.0" />
@@ -82,4 +82,10 @@
     <PackageReference Include="Serilog.Sinks.File" Version="5.0.0" />
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.117.0" />
   </ItemGroup>
+  <PropertyGroup>
+	<ContentSQLiteInteropFiles>true</ContentSQLiteInteropFiles>
+	<CopySQLiteInteropFiles>false</CopySQLiteInteropFiles>
+	<CleanSQLiteInteropFiles>false</CleanSQLiteInteropFiles>
+	<CollectSQLiteInteropFiles>false</CollectSQLiteInteropFiles>
+  </PropertyGroup>
 </Project>

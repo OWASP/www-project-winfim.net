@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using Serilog;
+﻿using Serilog;
 using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.InteropServices;

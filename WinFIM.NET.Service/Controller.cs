@@ -6,7 +6,6 @@ using System.Globalization;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
-using Microsoft.Extensions.Configuration;
 
 namespace WinFIM.NET_Service
 {

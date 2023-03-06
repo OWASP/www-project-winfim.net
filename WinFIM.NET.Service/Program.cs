@@ -3,7 +3,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using System.Runtime.Versioning;
-using WinFIM.NET_Service;
 
 namespace WinFIM.NET_Service
 {
@@ -13,14 +12,14 @@ namespace WinFIM.NET_Service
         private static async Task Main(string[] args)
         {
             var builder = new ConfigurationBuilder();
-            BuildConfig(builder,args);
+            BuildConfig(builder, args);
             var configuration = builder.Build();
 
             Log.Logger = new LoggerConfiguration()
                 .ReadFrom.Configuration(configuration)
                 .CreateLogger();
             Log.Information("Application Starting");
-            
+
             var configurationOptions = new ConfigurationOptions(configuration);
             IHost host = Host.CreateDefaultBuilder(args)
                 .UseWindowsService(options => { options.ServiceName = "WinFIM.NET.Service"; })
@@ -28,7 +27,7 @@ namespace WinFIM.NET_Service
                 {
                     services.AddSingleton(configurationOptions);
                     services.AddSingleton<LogHelper>();
-                    services.AddSingleton <Controller>();
+                    services.AddSingleton<Controller>();
                     services.AddHostedService<WindowsBackgroundService>();
                 })
                 .UseSerilog()

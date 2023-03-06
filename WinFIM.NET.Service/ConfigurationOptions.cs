@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 
 namespace WinFIM.NET_Service
 {
@@ -14,7 +9,7 @@ namespace WinFIM.NET_Service
 
         public ConfigurationOptions(IConfiguration configuration)
         {
-            configuration.Bind("ConfigurationOptions",this);
+            configuration.Bind("ConfigurationOptions", this);
         }
 
     }
