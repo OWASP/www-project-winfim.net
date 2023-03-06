@@ -9,7 +9,7 @@
     <GenerateAssemblyInfo>True</GenerateAssemblyInfo>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>icon\icon.ico</ApplicationIcon>
+    <ApplicationIcon>images\icon.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
     <ManifestCertificateThumbprint>36982A3B46CF9DC1956E16B4C0016864C04E8EA1</ManifestCertificateThumbprint>
@@ -45,7 +45,8 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <DependentUpon>appsettings.json</DependentUpon>
     </Content>
-    <Content Include="icon\icon.ico" />
+    <None Remove="images\icon.png" />
+    <Content Include="images\icon.ico" />
     <Content Include="Update-DockerImage.ps1">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -88,11 +89,13 @@
     <PackageReference Include="System.Data.SQLite.Core" Version="1.0.117.0" PrivateAssets="none" />
   </ItemGroup>
   <ItemGroup>
-    <None Update="icon\icon.ico">
+    <Resource Include="images\icon.png">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
-    </None>
-    <None Update="icon\icon.png">
+    </Resource>
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="images\icon.ico">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
     </None>

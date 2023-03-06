@@ -18,8 +18,11 @@ COPY . .
 WORKDIR "/src/WinFIM.NET.Service"
 RUN dotnet build "WinFIM.NET.Service.csproj" -c Release -o /app/build
 #ENTRYPOINT ["cmd"]
+
 FROM build AS publish
-RUN dotnet publish "WinFIM.NET.Service.csproj" -c Release -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "WinFIM.NET.Service.csproj" -c Release -o /app/publish
+# RUN dotnet publish "WinFIM.NET.Service.csproj" -c Release -o /app/publish /p:UseAppHost=false
+# where /p:UseAppHost=false = do not publish as an EXE file
 
 FROM base AS final
 WORKDIR /app
