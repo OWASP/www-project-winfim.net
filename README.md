@@ -35,67 +35,62 @@ The characteristics of this application are:
 # Installation (Docker)
 - To Build and run the WinFIM.NET Docker image
 - Requirements: Docker Desktop is installed on the host computer
-## Build Docker image from Visual Studio
-- Launch visual Studio
-- In Solution Explorer, right click on the `docker-compose` project, and click `Build`
 
 ## Build Docker image from commandline
-To build the Docker image, from the compiled WinFIM directory:
-- Edit Dockerfile
-  - Replace the COPY command with: COPY  . C:\\Tools\WinFIM.NET
-- Edit .dockerignore
-  - replace the contents with: Dockerfile
-- Run:
-  ```
-  docker build --tag winfim.net:latest . 
-  ```
+To build the Docker image, run the Powershell file `Build-DockerImage.ps1`
 
 # Configuation
 1. Configure WinFIM.NET to suit your own environment
-    1. `monlist.txt` – put your in-scope monitoring files / directories (Absolute path) line by line under this file
-    2. `exclude_path.txt` – put your exclusion (Absolute path) line by line under this file (the exclusion should be overlapped with the paths in `monlist.txt` (e.g. Sub-directory of the in-scope directory)
-    3. `exclude_extension.txt` – put all whitelisted file extension (normally, those extensions should be related to some frequent changing files, e.g. *.log, *.tmp)
-    4. `scheduler.txt` – This file is to control whether the WinFIM.NET will be run in schedule mode or continuous mode.
-        - Put a number `0` to the file, if you want the WinFIM.NET keep running.
-        - Put a number (in minute) for the time separation of each run. e.g. 30 (that means file checksum will be run every 30 minutes).
+    1. `monlist.txt` – put your in-scope monitoring files / directories (Absolute path) one per line in this file
+    2. `exclude_path.txt` – put your exclusion list (Absolute path), one per line in this file
+    3. `exclude_extension.txt` – list excluded file extensionsm one per line in this file (normally, these extensions should be related to some frequent changing files, e.g. *.log, *.tmp)
 2. Configure Windows Event logs
    1. Windows Event logging is enabled by default. 
-      1. To disable, edit the file `WinFIM.NET.Service.exe.config` (Sourcecode filename: `App.config`
-         1. Change the entry `is_log_to_windows_eventlog` to `False`
+      1. To disable, edit the file `appsettings.json`
+         1. Change the entry `IsLogToWindowsEventLog` to `False`
    2. If you want to log to Windows Event logs, make sure that the maximum log size is configured according to your deployment environment. By default, only 1MB is reserved for Windows Event logs.
    3. The Windows Event log file is located here: `%SystemRoot%\System32\Winevt\Logs\WinFIM.NET.evtx`
 3. File and console level logs use the [Serilog](https://serilog.net/) logging framework.
    1. The Serilog configuration is stored in the a text file called the app.config file. To modify:
-      1. Edit the file `WinFIM.NET.Service.exe.config` (Sourcecode filename: `App.config`)
-         1. Review the entries starting with `<add key="serilog:`
-            1. Example: The log file location is defined in setting `<add key="serilog:write-to:File.path" value="c:\tools\WinFIM.NET\.log" />`
+      1. Edit the file `appsettings.json`
+         1. Review the `ConfigurationOptions.Timer` entry
+           - This entry controsl whether WinFIM.NET will be run in schedule mode or continuous mode.
+            - Put a number `0` to the file, if you want the WinFIM.NET keep running.
+            - Put a number (in minute) for the time separation of each run. e.g. 30 (that means file checksum will be run every 30 minutes). 
+         1. Review the entries in the "Serilog" section
+            1. Example log file location in setting `Serilog.WriteTo[Name: File].Args.path:"c:\\tools\\WinFIM.NET\\.log"`
                1. Note that the date in `yyyymmdd` format is automatically inserted into the filename before the dot, e.g. `20221004.log`
-      2. More information about configuring log settings are here:  https://github.com/serilog/serilog-settings-appsettings
+      2. More information about configuring log settings are here:  https://github.com/serilog/serilog-settings-configuration
       3. The following Serilog plugins have been installed: 
-         1. Serilog.Settings.AppSettings - enables the Serilog settings to be stored in the .NET framework app.config file
+         1. Serilog.Settings.Configuration - enables the Serilog settings to be configured in appsettings.json
          2. Serilog.Sinks.Console - outputs logs to the console when running the .exe file directly (rather than running as a service)
          3. Serilog.Sinks.File - outputs logs to a file
+
+         4. Serilog.Extensions.Hosting - routes framework log messages through Serilog
 4. Configuring the capture of remote connections
    1. WinFIM.NET can capture the current remote connection status at the beginning of every file checking cycle.  
       When suspicious file changes are identified, this information may able to speed up the whole forensic / threat hunting process.
       1. This is disabled by default. To enable:
-         1. Edit the file `WinFIM.NET.Service.exe.config` (Sourcecode filename: `App.config`
-         2. To enable, edit app.config file, change the entry `is_capture_remote_connection_status` to `True`
+         1. Edit the file `appsettings.json`
+         2. To enable, change the entry `IsCaptureRemoteConnectionStatus` to `true`
 
 # Running
 - If the Windows service has been installed, WinFIM.NET will automatically start on system startup
-- If the Windows service has not been installed, or if it is not started, executing the file `WinFIM.NET.Service.exe` will launch WinFIM.NET as a console application
+- If the Windows service has not been installed, or if it is not started, executing the file `WinFIM.NET.Service.exe` or running `dotnet WinFIM.NET.Service.exe` will launch WinFIM.NET as a console application
 
 # Running in Docker
 ``` powershell
-# Run in interactive mode (show a Powershell prompt)
-docker run --name winfim --volume "C:\:C:\host:ro" --rm -it winfim.net:latest powershell
+# Run the container in detached mode, mounting the host operating system's c:\ drive as a readonly drive in the container's "c:\host" directory
+docker run --name winfim --volume "C:\:C:\host:ro" -d --rm winfimnetservice:latest
 
-# Run in interactive mode (show a Powershell prompt), with Internet access from a Windows host
-docker run --name winfim --volume "C:\:C:\host:ro" --net "Default Switch" --rm -it winfim.net:latest powershell
+# Run the container in interactive mode - you see the logs - if you press CTRL+C it stops and deletes the container
+docker run --name winfim --volume "C:\:C:\host:ro" --rm -it winfimnetservice:latest
 
-# Run in interactive mode, viewing live logs
-docker run --name winfim --volume "C:\:C:\host:ro" --rm -it winfim.net:latest
+# connect to the container in interactive mode, with a Powershell prompt
+docker exec -it winfim powershell
+
+# View live logs
+docker logs winfim --follow
 ```
 
 # Uninstallation
@@ -120,7 +115,7 @@ Therse are the configured Windows event Log ID types:
 
 # Development notes
 - Source code available in Github project [OWASP/www-project-winfim.net](https://github.com/OWASP/www-project-winfim.net)
-- Targets the .NET 4.8 framework
+- Targets the .NET 7 framework
 - The current database is a SQLite 3 database, and is built if not exist on program startup
 - Is currently built with Visual Studio 2022
 - Uses the Visual Studio Addon [Microsoft Visual Studio Installer Projects](https://marketplace.visualstudio.com/items?itemName=VisualStudioClient.MicrosoftVisualStudio2022InstallerProjects) to build the MSI installer

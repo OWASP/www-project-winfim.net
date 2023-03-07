@@ -18,7 +18,7 @@
 
 # Build the Docker image
 $imageName = "winfimnetservice"
-$tag = "dev"
+$tag = "latest"
 Write-Host "Building Docker image ${ImageName}:${tag}"
 
 docker build -f .\WinFIM.NET.Service\Dockerfile --force-rm --tag ${ImageName}:${tag} .

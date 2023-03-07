@@ -131,19 +131,18 @@ namespace WinFIM.NET_Service
             }
         }
 
-        internal static int GetSchedule()
+        internal int GetSchedule()
         {
-            string schedulerConf = LogHelper.WorkDir + "\\scheduler.txt";
             int schedulerMin = 0;
             try
             {
-                string timerMinute = File.ReadLines(schedulerConf).First();
-                timerMinute = timerMinute.Trim();
-                schedulerMin = Convert.ToInt32(timerMinute);
+                string timer = _configurationOptions.Timer;
+                timer = timer.Trim();
+                schedulerMin = Convert.ToInt32(timer);
             }
             catch (IOException e)
             {
-                string message = $"Please check if the file '{WorkDir}\\scheduler.txt' exists or a numeric value is input into the file 'scheduler.txt'. Defaulting to a timer of 0 minutes.";
+                string message = $"Please check if appsettings.json has an option called ConfigurationOptions.Timer with a numeric value. Defaulting to a timer of 0 minutes.";
                 Log.Error(e, message);
             }
             return schedulerMin;

@@ -2,6 +2,7 @@
 using System.Data;
 using System.Data.SQLite;
 using System.Diagnostics;
+using System.Diagnostics.Eventing.Reader;
 using System.Globalization;
 using System.Runtime.Versioning;
 using System.Security.Cryptography;
@@ -339,7 +340,12 @@ namespace WinFIM.NET_Service
                 string output = SQLiteHelper1.ExecuteScalar(sql)?.ToString() ?? "";
                 if (!output.Equals("0"))
                 {
-                    Log.Warning($"Base path from monlist.txt:'{path}' has been deleted.");
+                    string operation = "deleted";
+                    string sourceFile = "monlist.txt";
+                    string target = "Base path";
+                    Log.Warning("{target} from {sourceFile}:{path} has been {operation}", target, sourceFile, path, operation);
+                    string eventLogMessage = $"{target} from {sourceFile}:{path} has been {operation}";
+                    _logHelper.WriteEventLog(eventLogMessage, EventLogEntryType.Warning, 7778);
                 }
             }
             return false;
@@ -536,11 +542,13 @@ namespace WinFIM.NET_Service
                 }
                 else
                 {
-                    string errorMessage =
-                        $"File '{path}' could be renamed / deleted during the hash calculation. This file is ignored in this checking cycle - {e.Message}.";
-                    Log.Error(errorMessage);
-                    _logHelper.WriteEventLog(errorMessage, EventLogEntryType.Error,
-                        7773); //setting the Event ID as 7773
+                    string pathType = "file";
+                    string likelyReason= "may have been renamed / deleted during the hash calculation";
+                    string mitigation = "This file is ignored in this checking cycle";
+                    string errorMessage = e.Message;
+                    Log.Error("{pathType} {path} {likelyReason}. {mitigation} - {errorMessage}", pathType, path, likelyReason, mitigation, errorMessage);
+                    string eventLogMessage = $"{pathType} {path} {likelyReason}. {mitigation} - {errorMessage}";
+                    _logHelper.WriteEventLog(eventLogMessage, EventLogEntryType.Error,7773);
                 }
             }
         }
@@ -565,9 +573,11 @@ namespace WinFIM.NET_Service
                 }
                 else
                 {
-                    string message = $"Directory: '{path}' is newly created. Owner: {directoryOwner}";
-                    Log.Warning(message);
-                    _logHelper.WriteEventLog(message, EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
+                    string pathType = "directory";
+                    string operation = "created";
+                    Log.Warning("{pathType}: '{path}' is {operation}. Owner: {directoryOwner}", pathType, path, operation, directoryOwner);
+                    string eventLogMessage = $"{pathType}: '{path}' is {operation}. Owner: {directoryOwner}";
+                    _logHelper.WriteEventLog(eventLogMessage, EventLogEntryType.Warning, 7776);
                 }
             }
             //if there is no content in BASELINE_PATH, write to BASELINE_PATH instead
@@ -632,12 +642,16 @@ namespace WinFIM.NET_Service
                             dataReader = command.ExecuteReader();
                             if (dataReader.Read())
                             {
-                                message = $"File: '{path}' is modified. Previous-check: {dataReader.GetValue(5)} " +
-                                          $"Hash: (Previous){dataReader.GetValue(4)} (Current){tempHash} " +
-                                          $"Size: (Previous){dataReader.GetValue(2)}MB (Current){GetFileSize(path)}MB " +
-                                          $"File Owner: (Previous){dataReader.GetValue(3)} (Current){fileOwner}";
-                                Log.Warning(message);
-                                _logHelper.WriteEventLog(message, EventLogEntryType.Warning, 7777);
+                                string? previousCheck = dataReader.GetValue(5).ToString();
+                                string? hashPrevious = dataReader.GetValue(4).ToString();
+                                string? sizePrevious = dataReader.GetValue(2).ToString();
+                                string sizeCurrent = GetFileSize(path);
+                                string? ownerPrevious = dataReader.GetValue(3).ToString();
+                                string operation = "modified";
+
+                                Log.Warning("File: {path} is {operation}. Previous check at:{previousCheck}. Hash: (Previous){hashPrevious} (Current){tempHash}. Size: (Previous) {sizePrevious}MB (Current){sizeCurrent}MB File Owner: (Previous){ownerPrevious} (Current){fileOwner}", path, operation, previousCheck, hashPrevious, tempHash, sizePrevious, sizeCurrent, ownerPrevious, fileOwner);
+                                string eventLogMessage = $"File: {path} is modified. Previous check at:{previousCheck}. Hash: (Previous){hashPrevious} (Current){tempHash}. Size: (Previous) {sizePrevious}MB (Current){sizeCurrent}MB File Owner: (Previous){ownerPrevious} (Current){fileOwner}";
+                                _logHelper.WriteEventLog(eventLogMessage, EventLogEntryType.Warning, 7777);
                             }
                             dataReader.Close();
                             command.Dispose();
@@ -645,9 +659,11 @@ namespace WinFIM.NET_Service
                     }
                     else
                     {
-                        message = $"File: '{path}' is newly created. \nOwner: {fileOwner} \nHash: {tempHash}";
-                        Log.Warning(message);
-                        _logHelper.WriteEventLog($"File: '{path}' is newly created.\nOwner: {fileOwner} Hash: {tempHash}", EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
+                        string pathType = "file";
+                        string operation = "created";
+                        Log.Warning("{pathType}: '{path}' is {operation}. Owner: {fileOwner}. Hash: {tempHash}", pathType, path, operation, fileOwner, tempHash);
+                        string eventLogMessage = $"{pathType}: '{path}' is {operation}. Owner: {fileOwner}. Hash: {tempHash}";
+                        _logHelper.WriteEventLog(eventLogMessage, EventLogEntryType.Warning, 7776);
                     }
                 }
                 //if there is no content in BASELINE_PATH, write to BASELINE_PATH instead
@@ -720,12 +736,16 @@ namespace WinFIM.NET_Service
                                 dataReader = command.ExecuteReader();
                                 if (dataReader.Read())
                                 {
-                                    message = $"File: '{path}' is modified. Previous check at:{dataReader.GetValue(5)} " +
-                                              $"Hash: (Previous){dataReader.GetValue(4)} (Current){tempHash} " +
-                                              $"Size: (Previous){dataReader.GetValue(2)}MB (Current){GetFileSize(path)}MB " +
-                                              $"File Owner: (Previous){dataReader.GetValue(3)} (Current){fileOwner}";
-                                    Log.Warning(message);
-                                    _logHelper.WriteEventLog(message, EventLogEntryType.Warning, 7777); //setting the Event ID as 7777
+                                    string? previousCheck = dataReader.GetValue(5).ToString();
+                                    string? hashPrevious = dataReader.GetValue(4).ToString();
+                                    string? sizePrevious = dataReader.GetValue(2).ToString();
+                                    string sizeCurrent = GetFileSize(path);
+                                    string? ownerPrevious = dataReader.GetValue(3).ToString();
+                                    string operation = "modified";
+
+                                    Log.Warning("File: {path} is {operation}. Previous check at:{previousCheck}. Hash: (Previous){hashPrevious} (Current){tempHash}. Size: (Previous) {sizePrevious}MB (Current){sizeCurrent}MB File Owner: (Previous){ownerPrevious} (Current){fileOwner}", path, operation, previousCheck, hashPrevious, tempHash, sizePrevious, sizeCurrent, ownerPrevious, fileOwner);
+                                    string eventLogMessage = $"File: {path} is modified. Previous check at:{previousCheck}. Hash: (Previous){hashPrevious} (Current){tempHash}. Size: (Previous) {sizePrevious}MB (Current){sizeCurrent}MB File Owner: (Previous){ownerPrevious} (Current){fileOwner}";
+                                    _logHelper.WriteEventLog(eventLogMessage, EventLogEntryType.Warning, 7777); //setting the Event ID as 7777
                                 }
                                 dataReader.Close();
                                 command.Dispose();
@@ -733,9 +753,9 @@ namespace WinFIM.NET_Service
                         }
                         else
                         {
-                            message = $"File: '{path}' is newly created. Owner: {fileOwner} Hash: {tempHash}";
-                            Log.Warning(message);
-                            _logHelper.WriteEventLog(message, EventLogEntryType.Warning, 7776); //setting the Event ID as 7776
+                            Log.Warning("File: '{path}' is newly created. Owner: {fileOwner} Hash: {tempHash}", path, fileOwner, tempHash);
+                            string eventLogMessage = $"File: '{path}' is newly created. Owner: {fileOwner} Hash: {tempHash}";
+                            _logHelper.WriteEventLog(eventLogMessage, EventLogEntryType.Warning, 7776);
                         }
                     }
                     //if there is no content in BASELINE_PATH, write to BASELINE_PATH instead
@@ -771,9 +791,10 @@ namespace WinFIM.NET_Service
             {
                 string deletedPathName = dataReader.GetValue(0).ToString() ?? throw new InvalidOperationException();
                 string deletedPathType = dataReader.GetValue(1).ToString() ?? throw new InvalidOperationException();
-                string deletedMessage = $"{deletedPathType}: '{deletedPathName}' has been deleted.";
-                Log.Warning(deletedMessage);
-                _logHelper.WriteEventLog(deletedMessage, EventLogEntryType.Warning, 7778); //setting the Event ID as 7778
+                string operation = "deleted";
+                Log.Warning("{deletedPathType}: '{deletedPathName}' has been {operation}", deletedPathType, operation);
+                string eventLogMessage = $"{deletedPathType}: '{deletedPathName}' has been {operation}";
+                _logHelper.WriteEventLog(eventLogMessage, EventLogEntryType.Warning, 7778); //setting the Event ID as 7778
             }
             dataReader.Close();
         }
@@ -829,8 +850,8 @@ namespace WinFIM.NET_Service
         {
             SQLiteHelper1 = new();
             SQLiteHelper1.Open();
-            int schedulerMin = LogHelper.GetSchedule();
-            Log.Information($"Starting FIM checks on a {schedulerMin} minute timer");
+            int frequencyInMinutes = _logHelper.GetSchedule();
+            Log.Information("Starting FIM checks on a {frequencyInMinutes} minute timer", frequencyInMinutes);
             if (_configurationOptions.IsLogToWindowsEventLog)
                 Log.Information(_logHelper.GetRemoteConnections());
             bool haveBaseLinePath = CheckBaseLine(); //check if there is already data in the BASELINE_PATH table from a previous FIM check

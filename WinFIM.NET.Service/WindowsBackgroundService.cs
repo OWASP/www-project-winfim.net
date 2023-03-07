@@ -23,20 +23,18 @@ namespace WinFIM.NET_Service
             {
                 _controller.Initialise();
                 LogHelper.Initialize();
-                int schedulerMin = LogHelper.GetSchedule();
-                string serviceStartMessage = "WinFIM.NET Started" +
-                                             $": (UTC) {DateTime.UtcNow:yyyy/MM/dd hh:mm:ss tt}";
-                serviceStartMessage = $"{serviceStartMessage + _logHelper.GetRemoteConnections()} " +
-                                      "This console started service will run every " + schedulerMin.ToString() +
-                                      " minute(s).";
-                Log.Information(serviceStartMessage);
-                _logHelper.WriteEventLog(serviceStartMessage, EventLogEntryType.Information, 7771);
+                int frequencyInMinutes = _logHelper.GetSchedule();
+                string startTime = DateTime.UtcNow.ToString("yyyy/MM/dd hh:mm:ss tt");
+                string remoteConnections = _logHelper.GetRemoteConnections();
+                Log.Information("WinFIM.NET Started: (UTC) {StartTime}. Frequency: {frequencyInMinutes} minutes. Remote connections: {RemoteConnections}", startTime, frequencyInMinutes, remoteConnections);
+                string eventLogMessage = $"WinFIM.NET Started: (UTC) {startTime}. Frequency: {frequencyInMinutes} minutes\n {_logHelper.GetRemoteConnections()}";
+                _logHelper.WriteEventLog(eventLogMessage, EventLogEntryType.Information, 7771);
 
                 while (!stoppingToken.IsCancellationRequested)
                 {
                     _controller.FileIntegrityCheck();
 
-                    await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+                    await Task.Delay(TimeSpan.FromMinutes(frequencyInMinutes), stoppingToken);
                 }
             }
             catch (Exception ex)
