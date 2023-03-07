@@ -30,7 +30,6 @@
     <PackageLicenseExpression>GPL-3.0-or-later</PackageLicenseExpression>
     <DockerDefaultTargetOS>Windows</DockerDefaultTargetOS>
     <Title>WinFIM.NET</Title>
-    <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <Description>File Integrity Monitoring for Windows</Description>
     <PackageIcon>icon.png</PackageIcon>
     <PackageReadmeFile>README.md</PackageReadmeFile>

@@ -21,11 +21,12 @@ RUN dotnet build "WinFIM.NET.Service.csproj" -c Release -o /app/build
 ENTRYPOINT ["cmd"]
 
 FROM build AS publish
-RUN dotnet publish "WinFIM.NET.Service.csproj" -c Release -o /app/publish /p:UseAppHost=false
-# where /p:UseAppHost=false = do not publish as an EXE file
+RUN dotnet publish "WinFIM.NET.Service.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
+# copy files from the "publish" docker stage in the "c:\app\publish" directory to the "c:\app" directory
+
 # ENTRYPOINT ["dotnet", "WinFIM.NET.Service.dll"]
 ENTRYPOINT ["cmd"]
