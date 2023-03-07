@@ -23,10 +23,31 @@ ENTRYPOINT ["cmd"]
 FROM build AS publish
 RUN dotnet publish "WinFIM.NET.Service.csproj" -c Release -o /app/publish
 
-FROM base AS final
+FROM mcr.microsoft.com/windows/servercore:ltsc2022 AS final
+# using the full server 2022 image to get around the following error when using the smaller base image:
+# "Unhandled exception. System.DllNotFoundException: Unable to load DLL 'SQLite.Interop.dll' or one of its dependencies" 
+## FROM base AS final
+
+RUN setx /M PATH "%PATH%;C:\Program Files\dotnet;C:\nodejs"
+
+SHELL ["powershell", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
+
+# Install .NET 7.0 for x64
+RUN Invoke-WebRequest -UseBasicParsing -Uri https://dot.net/v1/dotnet-install.ps1 \
+    -OutFile dotnet-install.ps1; \
+    ./dotnet-install.ps1 \
+    -InstallDir '/Program Files/dotnet' \
+    -Channel 7.0 \
+    -Architecture x64 \
+    -Runtime dotnet
+
 WORKDIR /app
 COPY --from=publish /app/publish .
 # copy files from the "publish" docker stage in the "c:\app\publish" directory to the "c:\app" directory
 
-# ENTRYPOINT ["dotnet", "WinFIM.NET.Service.dll"]
-ENTRYPOINT ["cmd"]
+# Run a script to install Fluent-bit, VIM and replace monlist.txt with watched paths that make sense for a Docker container watching it's host's C drive
+RUN     .\Update-DockerImage.ps1; \
+        Remove-Item "Update-DockerImage.ps1"
+
+ENTRYPOINT ["dotnet", "WinFIM.NET.Service.dll"]
+# ENTRYPOINT ["cmd"]

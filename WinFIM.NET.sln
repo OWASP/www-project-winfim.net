@@ -3,14 +3,14 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33414.496
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WinFIM.NET.Service", "WinFIM.NET.Service\WinFIM.NET.Service.csproj", "{1ED9757B-64B5-4139-B683-7ECD29EB900E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WinFIM.NET.Service", "WinFIM.NET.Service\WinFIM.NET.Service.csproj", "{1ED9757B-64B5-4139-B683-7ECD29EB900E}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{F33DDEB4-6F74-4986-8AF8-82AF2419DBB8}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
 		.gitignore = .gitignore
-		BuildDockerImage.ps1 = BuildDockerImage.ps1
 		README.md = README.md
+		Build-DockerImage.ps1 = Build-DockerImage.ps1
 	EndProjectSection
 EndProject
 Global
