@@ -24,10 +24,9 @@ namespace WinFIM.NET_Service
                 _controller.Initialise();
                 LogHelper.Initialize();
                 int frequencyInMinutes = _logHelper.GetSchedule();
-                string startTime = DateTime.UtcNow.ToString("yyyy/MM/dd hh:mm:ss tt");
                 string remoteConnections = _logHelper.GetRemoteConnections();
-                Log.Information("WinFIM.NET Started: (UTC) {StartTime}. Frequency: {frequencyInMinutes} minutes. Remote connections: {RemoteConnections}", startTime, frequencyInMinutes, remoteConnections);
-                string eventLogMessage = $"WinFIM.NET Started: (UTC) {startTime}. Frequency: {frequencyInMinutes} minutes\n {_logHelper.GetRemoteConnections()}";
+                Log.Information("WinFIM.NET Started. Frequency: {frequencyInMinutes} minutes. Remote connections: {RemoteConnections}", frequencyInMinutes, remoteConnections);
+                string eventLogMessage = $"WinFIM.NET Started. Frequency: {frequencyInMinutes} minutes\n {_logHelper.GetRemoteConnections()}";
                 _logHelper.WriteEventLog(eventLogMessage, EventLogEntryType.Information, 7771);
 
                 while (!stoppingToken.IsCancellationRequested)

@@ -62,11 +62,11 @@ To build the Docker image, run the Powershell file `Build-DockerImage.ps1`
                1. Note that the date in `yyyymmdd` format is automatically inserted into the filename before the dot, e.g. `20221004.log`
       2. More information about configuring log settings are here:  https://github.com/serilog/serilog-settings-configuration
       3. The following Serilog plugins have been installed: 
-         1. Serilog.Settings.Configuration - enables the Serilog settings to be configured in appsettings.json
-         2. Serilog.Sinks.Console - outputs logs to the console when running the .exe file directly (rather than running as a service)
+         1. Serilog.Settings.Configuration - Serilog configured in appsettings.json
+         2. Serilog.Sinks.Console - outputs logs to the console
          3. Serilog.Sinks.File - outputs logs to a file
-
-         4. Serilog.Extensions.Hosting - routes framework log messages through Serilog
+         4. Serilog.Expressions - customisable log formatting
+         5. Serilog.Extensions.Hosting - routes framework log messages through Serilog
 4. Configuring the capture of remote connections
    1. WinFIM.NET can capture the current remote connection status at the beginning of every file checking cycle.  
       When suspicious file changes are identified, this information may able to speed up the whole forensic / threat hunting process.
