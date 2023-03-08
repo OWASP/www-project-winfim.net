@@ -39,7 +39,7 @@ namespace WinFIM.NET_Service
         private static void BuildConfig(IConfigurationBuilder builder, string[] args)
         {
             string? env = Environment.GetEnvironmentVariable("DOTNET_ENVIRONMENT");
-            builder.SetBasePath(Directory.GetCurrentDirectory())
+            builder.SetBasePath(System.AppContext.BaseDirectory)
                 .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{env}.json", optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables()

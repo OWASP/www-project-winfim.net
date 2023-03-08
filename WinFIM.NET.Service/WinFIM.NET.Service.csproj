@@ -45,12 +45,6 @@
     </Content>
     <None Remove="images\icon.png" />
     <Content Include="images\icon.ico" />
-    <Content Include="install_service.bat">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
-    <Content Include="uninstall_service.bat">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
   </ItemGroup>
   <ItemGroup>
     <Content Include="exclude_extension.txt">
@@ -92,6 +86,12 @@
     <None Update="images\icon.ico">
       <Pack>True</Pack>
       <PackagePath>\</PackagePath>
+    </None>
+    <None Update="Install-WindowsService.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="Uninstall-WindowsService.ps1">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
     <None Update="Update-DockerImage.ps1">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

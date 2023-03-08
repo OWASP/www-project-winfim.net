@@ -107,12 +107,11 @@ If you manually installed WinFIM.NET:
 
 # Windows Event Log IDs
 Therse are the configured Windows event Log ID types:
-- 7771 - remote connection status. Potentially useful for threat hunting if suspicious file changes are identified
-- 7772 - service heartbeat message
-- 7773 - errors
-- 7776 - File / directory creation
-- 7777 - File modification
-- 7778 - File / directory deletion  
+- 7772 - Information - Service heartbeat message
+- 7773 - Error
+- 7776 - Warning - File / directory creation
+- 7777 - Warning - File modification
+- 7778 - Warning - File / directory deletion  
 
 # Development notes
 - Source code available in Github project [OWASP/www-project-winfim.net](https://github.com/OWASP/www-project-winfim.net)

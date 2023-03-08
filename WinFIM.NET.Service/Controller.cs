@@ -365,7 +365,7 @@ namespace WinFIM.NET_Service
                 string errorMessage = "Exception : " + e.Message +
                                       "\nPlease make sure all input entries are correct under \"monlist.txt\".\nPlease restart the service after correction.";
                 Log.Error(errorMessage);
-                _logHelper.WriteEventLog(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                _logHelper.WriteEventLog(errorMessage, EventLogEntryType.Error, 7773);
                 throw;
             }
             return monFileLines;
@@ -423,7 +423,7 @@ namespace WinFIM.NET_Service
                 string errorMessage = "Exception : " + e.Message +
                                       "\nPlease make sure all input entries are correct under \"exclude_path.txt\".\nPlease restart the service after correction.";
                 Log.Error(errorMessage);
-                _logHelper.WriteEventLog(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                _logHelper.WriteEventLog(errorMessage, EventLogEntryType.Error, 7773);
                 throw;
             }
 
@@ -510,7 +510,7 @@ namespace WinFIM.NET_Service
             {
                 string errorMessage = $"Exception : {e.Message} \nPlease make sure local database file \"fimdb.db\" exists.";
                 Log.Error(errorMessage);
-                _logHelper.WriteEventLog(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                _logHelper.WriteEventLog(errorMessage, EventLogEntryType.Error, 7773);
                 return false;
             }
             return haveBaseline;
@@ -699,7 +699,7 @@ namespace WinFIM.NET_Service
                         tempHash = "UNKNOWN";
                         message = $"File '{path}' is locked and not accessible for Hash calculation - {e.Message}.";
                         Log.Error(message);
-                        _logHelper.WriteEventLog(message, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                        _logHelper.WriteEventLog(message, EventLogEntryType.Error, 7773);
                     }
                     if (haveBaseLinePath)
                     {
@@ -745,7 +745,7 @@ namespace WinFIM.NET_Service
 
                                     Log.Warning("File: {path} is {operation}. Previous check at:{previousCheck}. Hash: (Previous){hashPrevious} (Current){tempHash}. Size: (Previous) {sizePrevious}MB (Current){sizeCurrent}MB File Owner: (Previous){ownerPrevious} (Current){fileOwner}", path, operation, previousCheck, hashPrevious, tempHash, sizePrevious, sizeCurrent, ownerPrevious, fileOwner);
                                     string eventLogMessage = $"File: {path} is modified. Previous check at:{previousCheck}. Hash: (Previous){hashPrevious} (Current){tempHash}. Size: (Previous) {sizePrevious}MB (Current){sizeCurrent}MB File Owner: (Previous){ownerPrevious} (Current){fileOwner}";
-                                    _logHelper.WriteEventLog(eventLogMessage, EventLogEntryType.Warning, 7777); //setting the Event ID as 7777
+                                    _logHelper.WriteEventLog(eventLogMessage, EventLogEntryType.Warning, 7777);
                                 }
                                 dataReader.Close();
                                 command.Dispose();
@@ -794,7 +794,7 @@ namespace WinFIM.NET_Service
                 string operation = "deleted";
                 Log.Warning("{deletedPathType}: '{deletedPathName}' has been {operation}", deletedPathType, operation);
                 string eventLogMessage = $"{deletedPathType}: '{deletedPathName}' has been {operation}";
-                _logHelper.WriteEventLog(eventLogMessage, EventLogEntryType.Warning, 7778); //setting the Event ID as 7778
+                _logHelper.WriteEventLog(eventLogMessage, EventLogEntryType.Warning, 7778);
             }
             dataReader.Close();
         }
@@ -887,8 +887,7 @@ namespace WinFIM.NET_Service
                                          .ToString(CultureInfo.InvariantCulture) + "s).\n" +
                                      _logHelper.GetRemoteConnections();
                 Log.Debug(stopMessage);
-                _logHelper.WriteEventLog(stopMessage, EventLogEntryType.Information,
-                    7771); //setting the Event ID as 7771
+                _logHelper.WriteEventLog(stopMessage, EventLogEntryType.Information,7772);
                 Log.Verbose("Total time consumed in this round file integrity checking  = " +
                             watch.ElapsedMilliseconds + "ms (" +
                             Math.Round(Convert.ToDouble(watch.ElapsedMilliseconds) / 1000, 3)
@@ -899,7 +898,7 @@ namespace WinFIM.NET_Service
                 string errorMessage = "Exception : " + e.Message +
                                       "\nPlease make sure all input entries are correct under \"monlist.txt\", \"exclude_path.txt\" and \"exclude_extension.txt\".\nPlease restart the service after correction.";
                 Log.Error(errorMessage);
-                _logHelper.WriteEventLog(errorMessage, EventLogEntryType.Error, 7773); //setting the Event ID as 7773
+                _logHelper.WriteEventLog(errorMessage, EventLogEntryType.Error, 7773);
             }
             finally
             {
