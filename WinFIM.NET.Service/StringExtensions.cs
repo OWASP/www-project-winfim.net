@@ -1,4 +1,4 @@
-﻿namespace WinFIM.NET_Service
+﻿namespace WinFIM.NET.Service
 {
     public static class StringExtensions
     {

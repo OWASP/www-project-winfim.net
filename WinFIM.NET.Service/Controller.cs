@@ -8,7 +8,7 @@ using System.Runtime.Versioning;
 using System.Security.Cryptography;
 using System.Text.RegularExpressions;
 
-namespace WinFIM.NET_Service
+namespace WinFIM.NET.Service
 {
     [SupportedOSPlatform("windows")]
     public class Controller

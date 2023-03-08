@@ -4,7 +4,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Runtime.Versioning;
 
-namespace WinFIM.NET_Service
+namespace WinFIM.NET.Service
 {
     [SupportedOSPlatform("windows")]
     public class LogHelper

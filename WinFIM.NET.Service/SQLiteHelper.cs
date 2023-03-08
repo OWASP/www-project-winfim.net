@@ -2,7 +2,7 @@
 using System.Data.SQLite;
 using System.Runtime.Versioning;
 
-namespace WinFIM.NET_Service
+namespace WinFIM.NET.Service
 {
     internal sealed class SQLiteHelper : IDisposable
     {

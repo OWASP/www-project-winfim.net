@@ -4,7 +4,7 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using System.Runtime.Versioning;
 
-namespace WinFIM.NET_Service
+namespace WinFIM.NET.Service
 {
     [SupportedOSPlatform("windows")]
     internal static class Program

@@ -3,7 +3,7 @@ using Serilog;
 using System.Diagnostics;
 using System.Runtime.Versioning;
 
-namespace WinFIM.NET_Service
+namespace WinFIM.NET.Service
 {
     [SupportedOSPlatform("windows")]
     public sealed class WindowsBackgroundService : BackgroundService

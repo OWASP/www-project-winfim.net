@@ -12,8 +12,8 @@ $ServiceName = "WinFIM.NET.Service"
 
 $Service = Get-Service $ServiceName -ErrorAction SilentlyContinue
 if($Service) {
-    if ($targetService.Status -eq "Running") {
-        write-host "Stopping Windows Service $ServiceName if running..."
+    if ($Service.Status -eq "Running") {
+        write-host "Stopping Windows Service $ServiceName..."
         Stop-Service -Name $ServiceName
     }
     write-host "Removing Windows Service $ServiceName..."
