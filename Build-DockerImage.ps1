@@ -17,7 +17,7 @@
 #>
 
 # Build the Docker image
-$imageName = "winfimnetservice"
+$imageName = "winfim.net"
 $tag = "latest"
 Write-Host "Building Docker image ${ImageName}:${tag}"
 
@@ -26,5 +26,4 @@ docker build -f .\WinFIM.NET.Service\Dockerfile --force-rm --tag ${ImageName}:${
 Write-Host "To run a container from this image, type:"
 Write-Host "docker run --name winfim --volume ""C:\:C:\host:ro"" --rm -it ${ImageName}:${tag} powershell"
 
-Write-Host "Press ENTER to exit..."
-Read-Host
+Write-Host "Finished"
