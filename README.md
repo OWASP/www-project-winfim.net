@@ -67,6 +67,7 @@ To build the Docker image, run the Powershell file `Build-DockerImage.ps1`
          3. Serilog.Sinks.File - outputs logs to a file
          4. Serilog.Expressions - customisable log formatting
          5. Serilog.Extensions.Hosting - routes framework log messages through Serilog
+         5. Serilog.Enrichers.Environment - enriches logs, e.g. by adding the machine name to logs
 4. Configuring the capture of remote connections
    1. WinFIM.NET can capture the current remote connection status at the beginning of every file checking cycle.  
       When suspicious file changes are identified, this information may able to speed up the whole forensic / threat hunting process.
