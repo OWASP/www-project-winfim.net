@@ -12,72 +12,76 @@ A small application named [WinFIM.NET](https://github.com/OWASP/www-project-winf
 The characteristics of this application are:
 
 - Identify added / removed / modified files and directories since the previous run
-- The monitoring scope can be easily customized
-- Path exclusion (e.g. sub-directory) could be configured
-- File extension exclusion could be configured (e.g. *.bak, *.tmp, *.log, *.mdf, *.ldf, *.xel, *. installlog)
-- Can be launched as a Windows service or as a console application
+- Select paths to monitor (files / directories)
+- Path exclusions  (files / directories)
+- File extension exclusions
+- Can be launched as a console application or Windows service
 - Logging is configurable, with the following defaults:
-  - Logs to Native Windows Events, which can integrate with existing log management mechanisms (e.g. Windows Event Subscription, Winlogbeat , nxlog, etc.)
-  - Logs to file and the console with customisable logging levels (verbose, debug, information, warning, error)
+  - Logs to file 
+  - Logs to the console
     - The file path and format is customisable (text, JSON)
     - Logs to the console (when the file `WinFIM Service.exe` is launched directly rather than as a windows service. 
-- Deployment friendly
-- Uses SHA256 for hashing
+    - Logs Windows Events
+    - Customisable logging levels (verbose, debug, information, warning, error)
+- Uses SHA256 for comparing file hashes
 
-# Installation (local machine)
+# Installing (local machine)
 ## Option 1: Via MSI / setup.exe installer
 1. Double click the setup.exe or WinFIM.NET.Setup.msi file and follow the prompts to install WinFIM and setup the service
 ## Option 2: Manual install
 1. Download the zip file to the destination computer and extract the contents
 2. Unblock the `WinFIM.NET.Service.exe` (if required)
-3. In an Administrator command prompt, execute the file `install_service.bat`
+3. Launch Powershell as an administrator and run `.\Install-WindowsService.ps1`
   
-# Installation (Docker)
-- To Build and run the WinFIM.NET Docker image
-- Requirements: Docker Desktop is installed on the host computer
-
+# Installing (As a Docker container)
 ## Build Docker image from commandline
-To build the Docker image, run the Powershell file `Build-DockerImage.ps1`
+- Launch the Powershell file `Build-DockerImage.ps1` to build the docker file
+- Requirements: Docker Desktop is installed on the host computer
 
 # Configuation
 1. Configure WinFIM.NET to suit your own environment
-    1. `monlist.txt` – put your in-scope monitoring files / directories (Absolute path) one per line in this file
+    1. `monlist.txt` – List the files files / directories (Absolute path) you want monitored, one per line in this file
     2. `exclude_path.txt` – put your exclusion list (Absolute path), one per line in this file
     3. `exclude_extension.txt` – list excluded file extensionsm one per line in this file (normally, these extensions should be related to some frequent changing files, e.g. *.log, *.tmp)
 2. Configure Windows Event logs
    1. Windows Event logging is enabled by default. 
       1. To disable, edit the file `appsettings.json`
-         1. Change the entry `IsLogToWindowsEventLog` to `False`
+         1. Change the entry `IsLogToWindowsEventLog` to `false`
    2. If you want to log to Windows Event logs, make sure that the maximum log size is configured according to your deployment environment. By default, only 1MB is reserved for Windows Event logs.
    3. The Windows Event log file is located here: `%SystemRoot%\System32\Winevt\Logs\WinFIM.NET.evtx`
-3. File and console level logs use the [Serilog](https://serilog.net/) logging framework.
-   1. The Serilog configuration is stored in the a text file called the app.config file. To modify:
+3. File and console level logs use the [Serilog](https://serilog.net/) logging library.
+   1. The Serilog configuration is stored in the a text file called `appsettings.json`. To modify:
       1. Edit the file `appsettings.json`
          1. Review the `ConfigurationOptions.Timer` entry
-           - This entry controsl whether WinFIM.NET will be run in schedule mode or continuous mode.
-            - Put a number `0` to the file, if you want the WinFIM.NET keep running.
-            - Put a number (in minute) for the time separation of each run. e.g. 30 (that means file checksum will be run every 30 minutes). 
-         1. Review the entries in the "Serilog" section
-            1. Example log file location in setting `Serilog.WriteTo[Name: File].Args.path:"c:\\tools\\WinFIM.NET\\.log"`
-               1. Note that the date in `yyyymmdd` format is automatically inserted into the filename before the dot, e.g. `20221004.log`
-      2. More information about configuring log settings are here:  https://github.com/serilog/serilog-settings-configuration
+           - This entry controls whether WinFIM.NET will be run in schedule mode or continuous mode. The value is in minutes.
+            - Example: `0` = run continuously
+            - Example: `30` = run every 30 minutes
+         2. Review the entries in the "Serilog" section
+            1. The log file setting is stored in the section `Serilog.WriteTo.[Name: File].Args.path".
+               1. The default value is `".log"`, which means log to the current directory, with the filename `yyyymmdd.log` 
+                 1. Example log file generated: `c:\tools\winfim.net\20221004.log` for a log file created on 4th October 2022, if WinFIM.NET is installed to the `c:\tools\winfim.net` directory
+                 2. An example log value of: `c:\logs\fim.log` would save log files such as `c:\logs\fim20221004.log`
+                 3. If no directory is specified and WinFIM.NET is run as a service, the logs will be generated in the `c:\windows\system32` folder
+        3. More information about configuring Serilog settings are here:  https://github.com/serilog/serilog-settings-configuration
       3. The following Serilog plugins have been installed: 
-         1. Serilog.Settings.Configuration - Serilog configured in appsettings.json
-         2. Serilog.Sinks.Console - outputs logs to the console
+         1. Serilog.Settings.Configuration - to read Serilog settings stored in appsettings.json
+         2. Serilog.Sinks.Console - outputs log entries to the console
          3. Serilog.Sinks.File - outputs logs to a file
          4. Serilog.Expressions - customisable log formatting
          5. Serilog.Extensions.Hosting - routes framework log messages through Serilog
-         5. Serilog.Enrichers.Environment - enriches logs, e.g. by adding the machine name to logs
+         5. Serilog.Enrichers.Environment - enriches logs, e.g. by adding the machine name to each log entry
 4. Configuring the capture of remote connections
-   1. WinFIM.NET can capture the current remote connection status at the beginning of every file checking cycle.  
+   1. WinFIM.NET can capture the current remote connections at the beginning of every file checking cycle.  
       When suspicious file changes are identified, this information may able to speed up the whole forensic / threat hunting process.
       1. This is disabled by default. To enable:
          1. Edit the file `appsettings.json`
          2. To enable, change the entry `IsCaptureRemoteConnectionStatus` to `true`
 
-# Running
+# Running as a Windows Service
 - If the Windows service has been installed, WinFIM.NET will automatically start on system startup
-- If the Windows service has not been installed, or if it is not started, executing the file `WinFIM.NET.Service.exe` or running `dotnet WinFIM.NET.Service.exe` will launch WinFIM.NET as a console application
+
+# Running as a console application
+- If the Windows service has not been installed, or if the Windows service is not started, launching the file `WinFIM.NET.Service.exe` or running the command `dotnet WinFIM.NET.Service.exe` will launch WinFIM.NET as a console application
 
 # Running in Docker
 ``` powershell
@@ -94,19 +98,32 @@ docker exec -it winfim powershell
 docker logs winfim --follow
 ```
 
-# Uninstallation
-## Option 1: Via Add or Remove Programs
+# Uninstalling
+## Option 1: Uninstall via the Add or Remove Programs in Control Panel
 Locate the program "WinFIM.NET" and click Uninstall
 
-## Option 2: via the MSI installer
+## Option 2: Uninstall via the MSI installer
 1. Run the MSI installer (or setup.exe file) and click "Remove WinFIM.NET"
 
 ## Option 3: Manually uninstall
 If you manually installed WinFIM.NET:
-- Bring up an Administrator command prompt and navigate to the deployed folder, then execute `uninstall_service.bat`
+- Launch Powershell as an administrator and then run `.\Uninstall-WindowsService.ps1`
+- Optional: Delete the WinFIM.NET directory
 
-# Windows Event Log IDs
-Therse are the configured Windows event Log ID types:
+# Logging
+## Console logs
+- If console logging is configured, logs are output to the console.
+  - Logs can be in human friendly text format, or machine friendly JSON format (This is configurable in `appsettings.json`)
+- If the application is run as a console application, it logs to "Standard Out", which is useful for capturing logs in containers (e.g. Docker, Kubernetes)
+
+# File logs
+- If file logging is configured, logs are saved in text files.
+  - the default configuration is 1 file is saved per day in the same directory as the WinFIM.NET executable file, with the date format in `yyyymmdd` format.
+  - The default format of logs saved to file is the machine friendly JSON format
+  - This is configurable in `appsettings.json`
+
+## Windows Event Log IDs
+If Windows Event Logging is configured, These are the configured Windows event Log ID types:
 - 7772 - Information - Service heartbeat message
 - 7773 - Error
 - 7776 - Warning - File / directory creation
@@ -115,7 +132,7 @@ Therse are the configured Windows event Log ID types:
 
 # Development notes
 - Source code available in Github project [OWASP/www-project-winfim.net](https://github.com/OWASP/www-project-winfim.net)
-- Targets the .NET 7 framework
+- Targets the .NET 6 framework
 - The current database is a SQLite 3 database, and is built if not exist on program startup
 - Is currently built with Visual Studio 2022
 - Uses the Visual Studio Addon [Microsoft Visual Studio Installer Projects](https://marketplace.visualstudio.com/items?itemName=VisualStudioClient.MicrosoftVisualStudio2022InstallerProjects) to build the MSI installer

@@ -3,10 +3,10 @@
 #Depending on the operating system of the host machines(s) that will build or run the containers, the image specified in the FROM statement may need to be changed.
 #For more information, please see https://aka.ms/containercompat
 
-FROM mcr.microsoft.com/dotnet/runtime:7.0 AS base
+FROM mcr.microsoft.com/dotnet/runtime:6.0 AS base
 WORKDIR /app
 
-FROM mcr.microsoft.com/dotnet/sdk:7.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:6.0 AS build
 WORKDIR /src
 COPY ["WinFIM.NET.Service/WinFIM.NET.Service.csproj", "WinFIM.NET.Service/"]
 
@@ -32,12 +32,12 @@ RUN setx /M PATH "%PATH%;C:\Program Files\dotnet;C:\nodejs"
 
 SHELL ["powershell", "$ErrorActionPreference = 'Stop'; $ProgressPreference = 'SilentlyContinue';"]
 
-# Install .NET 7.0 for x64
+# Install .NET 6.0 for x64
 RUN Invoke-WebRequest -UseBasicParsing -Uri https://dot.net/v1/dotnet-install.ps1 \
     -OutFile dotnet-install.ps1; \
     ./dotnet-install.ps1 \
     -InstallDir '/Program Files/dotnet' \
-    -Channel 7.0 \
+    -Channel 6.0 \
     -Architecture x64 \
     -Runtime dotnet
 

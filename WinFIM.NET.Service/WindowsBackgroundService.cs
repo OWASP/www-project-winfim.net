@@ -36,6 +36,10 @@ namespace WinFIM.NET.Service
                     await Task.Delay(TimeSpan.FromMinutes(frequencyInMinutes), stoppingToken);
                 }
             }
+            catch (TaskCanceledException)
+            {
+                Log.Information("Task cancelled - exiting");
+            }
             catch (Exception ex)
             {
                 Log.Error(ex, "{Message}", ex.Message);

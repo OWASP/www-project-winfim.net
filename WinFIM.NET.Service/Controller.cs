@@ -852,7 +852,7 @@ namespace WinFIM.NET.Service
             SQLiteHelper1.Open();
             int frequencyInMinutes = _logHelper.GetSchedule();
             Log.Information("Starting FIM checks on a {frequencyInMinutes} minute timer", frequencyInMinutes);
-            if (_configurationOptions.IsLogToWindowsEventLog)
+            if (_configurationOptions.IsCaptureRemoteConnectionStatus)
                 Log.Information(_logHelper.GetRemoteConnections());
             bool haveBaseLinePath = CheckBaseLine(); //check if there is already data in the BASELINE_PATH table from a previous FIM check
 
