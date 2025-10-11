@@ -1,0 +1,18 @@
+audience:
+  - builder
+leaders:
+  - name: Henry Hon
+    email: henry.hon@owasp.org
+level: 2
+name: OWASP WinFIM.NET
+pitch: File Integrity Monitoring For Windows
+repositories:
+  - name: www-project-winfim.net
+    url: https://github.com/OWASP/www-project-winfim.net
+    description: WinFIM.NET - File Integrity Monitoring For Windows
+tags:
+  - deployment-tag
+  - custom-tag-1
+  - custom-tag-2
+type: tool
+website: https://owasp.org/www-project-winfim.net
